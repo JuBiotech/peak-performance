@@ -142,3 +142,15 @@ def postfiltering(t_ret, sn_min):
     Method to skip signals where clearly no peak is present. Saves a lot of computation time.
     """
     pass
+
+def plot_raw_data():
+    """
+    Plot just the raw data in case no peak was found.
+    """
+    pass
+
+def plot_posterior_predictive():
+    pass
+
+def plot_posterior():
+    pass
