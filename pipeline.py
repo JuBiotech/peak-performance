@@ -137,6 +137,32 @@ def sampling():
 def posterior_predictive_sampling():
     pass
 
+def add_nan_to_summary(acquisition, fragment, masstrace, df_summary):
+    """
+    Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
+    """
+    # create DataFrame with correct format and fill it with NaN
+    df = pandas.DataFrame(
+        {
+        "baseline_intercept": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        "baseline_slope": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        "mean": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        "noise": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        "std": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]}, 
+        "area": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]}, 
+        "height": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        "sn": {"mean": [np.nan], "sd": [np.nan], "hdi_3%": [np.nan], "hdi_97%": [np.nan], "mcse_mean": [np.nan], "mcse_sd": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan], "r_hat": [np.nan]},
+        }
+    ).transpose()
+    # add information about the signal
+    df["acquisition"] = 8 * [f"{acquisition}"]
+    df["fragment"] = 8 * [f"{fragment}"]
+    df["mass_trace"] = 8 * [f"{masstrace}"]
+    # concatenate to existing summary DataFrame
+    df_summary = pandas.concat([df_summary,df])
+    return df_summary
+
+
 def postfiltering(t_ret, sn_min):
     """
     Method to skip signals where clearly no peak is present. Saves a lot of computation time.
