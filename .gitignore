@@ -1,3 +1,4 @@
 *.npy
 *.png
 *.svg
+idata_summary_*.xlsx
