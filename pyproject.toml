@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peak_performance"
+version = "0.1.0"
+authors = [
+    {name = "Jochen Nießer", email = "j.niesser@fz-juelich.de"},
+    {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
+]
+description = "A Python toolbox to fit chromatography peaks with uncertainty."
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["hplc", "mass-spectrometry", "uncertainty quantification"]
+license = {text = "AGPLv3"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "arviz",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pymc>=5.0.2",
+    "pytensor",
+    "scipy",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+]
+
+[project.urls]
+homepage = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
+documentation = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
+repository = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
+
+[tool.pytest.ini_options]
+xfail_strict=true
+
+[tool.black]
+line-length = 100
