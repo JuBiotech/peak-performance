@@ -1,0 +1,6 @@
+pre-commit:
+  image: python:3.11
+  script:
+    - pip install pre-commit
+    - pre-commit install
+    - pre-commit run --all
