@@ -1,0 +1,32 @@
+pre-commit:
+  image: python:3.11
+  script:
+    - pip install pre-commit
+    - pre-commit install
+    - pre-commit run --all
+
+test:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install -e .[test]
+    - pytest -v --cov=peak_performance --cov-report term-missing peak_performance
+
+release:
+  needs: ["test"]
+  image: python:3.11
+  script:
+    - pip install twine wheel
+    - python setup.py bdist_wheel && cp dist/*.whl .
+    # Upload to the PyPI registry of this project.
+    # Note: The "Packages" feature must be enabled in the project settings!
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+  artifacts:
+    paths:
+      - ./*.whl
+    expire_in: 30 yrs
+  only:
+    # only run on refs that are named like v1.2 or v1.2.3
+    - /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
+  except:
+    - branches
