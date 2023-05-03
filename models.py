@@ -22,10 +22,10 @@ def initial_guesses(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     Returns
     -------
     slope_guess : float or int
@@ -66,10 +66,10 @@ def define_model_normal(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     Returns
     -------
     pmodel
@@ -114,10 +114,10 @@ def define_model_doublepeak(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     Returns
     -------
     pmodel
@@ -175,10 +175,10 @@ def define_model_skew(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     Returns
     -------
     pmodel
@@ -249,5 +249,5 @@ def define_model_skew(time_np, intensity_np):
 
         # likelihood
         L = pm.Normal("L", mu=y, sigma=noise, observed=intensity_np)
-    
+
     return pmodel

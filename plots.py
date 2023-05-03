@@ -22,10 +22,10 @@ def plot_raw_data(identifier, time_np, intensity_np):
     ----------
     identifier
         unique identifier of this particular signal
-    
+
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
     """
@@ -38,12 +38,12 @@ def plot_raw_data(identifier, time_np, intensity_np):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_No_Peak.png")
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_No_Peak.svg", format="svg")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.png")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
-    
+
     return
 
 
@@ -58,10 +58,7 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
     step_mode = samples.shape[1] == x.shape[0] - 1
     fill_kwargs = {}
     if step_mode:
-        samples = np.hstack([
-            samples,
-            samples[:, -1][:, None]
-        ])
+        samples = np.hstack([samples, samples[:, -1][:, None]])
         fill_kwargs["step"] = "post"
 
     # Plot the density band
@@ -73,7 +70,7 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
         plot_samples=False,
         palette=pyplot.cm.Blues,
         fill_kwargs=fill_kwargs,
-        **kwargs
+        **kwargs,
     )
 
     # Add percentiles for orientation
@@ -96,24 +93,29 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
 def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
-    
+
     Parameters
     ----------
     identifier
         unique identifier of this particular signal
-    
+
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     idata
-        infernce data object 
+        infernce data object
     """
     fig, ax = pyplot.subplots()
     # plot the posterior predictive
-    plot_density(ax=ax, x=time_np, samples=idata.posterior_predictive.L.stack(sample=("chain", "draw")).T.values, percentiles=(2.5,97.5))
+    plot_density(
+        ax=ax,
+        x=time_np,
+        samples=idata.posterior_predictive.L.stack(sample=("chain", "draw")).T.values,
+        percentiles=(2.5, 97.5),
+    )
     # plot the raw data points
     ax.scatter(time_np, intensity_np, marker="x", color="black", label="data")
     ax.set_xlabel("time / min", fontsize=11.5, fontweight="bold")
@@ -121,8 +123,10 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     pyplot.legend()
     pyplot.tight_layout()
     # TODO: fix paths
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.png")
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.svg", format="svg")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.png")
+    pyplot.savefig(
+        rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.svg", format="svg"
+    )
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -133,20 +137,20 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
 def plot_posterior(identifier, time_np, intensity_np, idata):
     """
     Save plot of posterior, estimated baseline and original data points.
-    
+
     Parameters
     ----------
     identifier
         unique identifier of this particular signal
-    
+
     time_np
         numpy array with the time values of the relevant timeframe
-    
+
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-    
+
     idata
-        infernce data object 
+        infernce data object
     """
     fig, ax = pyplot.subplots()
     # plot the posterior
@@ -159,7 +163,10 @@ def plot_posterior(identifier, time_np, intensity_np, idata):
     ax.scatter(time_np, intensity_np, marker="x", color="black", label="data")
     # plot the baseline
     x = np.array(ax.get_xlim())
-    y = az.summary(idata).loc["baseline_intercept","mean"] + az.summary(idata).loc["baseline_slope","mean"] * x
+    y = (
+        az.summary(idata).loc["baseline_intercept", "mean"]
+        + az.summary(idata).loc["baseline_slope", "mean"] * x
+    )
     pyplot.plot(x, y)
     pyplot.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
@@ -167,8 +174,8 @@ def plot_posterior(identifier, time_np, intensity_np, idata):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_posterior.png")
-    pyplot.savefig(fr"./230427_Pipeline_test_Part1/{identifier}_posterior.svg", format="svg")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.png")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
