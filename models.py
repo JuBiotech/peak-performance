@@ -17,6 +17,25 @@ from matplotlib import pyplot
 def initial_guesses(time_np, intensity_np):
     """
     Provide initial guesses for priors.
+
+    Parameters
+    ----------
+    time_np
+        numpy array with the time values of the relevant timeframe
+    
+    intensity_np
+        numpy array with the intensity values of the relevant timeframe
+    
+    Returns
+    -------
+    slope_guess : float or int
+        guess for the slope of the linear baseline
+
+    intercept_guess : float or int
+        guess for the intercept of the linear baseline
+
+    noise_width_guess : float or int
+        guess for the width of the noise
     """
     # select lowest third of all data points as noise -> noise_tuple
     intensity_tuple = list(enumerate(intensity_np))
@@ -36,12 +55,25 @@ def initial_guesses(time_np, intensity_np):
     )
     # TODO: somehow save the guesses? Or discard them, after all?
 
-    return intercept_guess, slope_guess, noise_width_guess
+    return slope_guess, intercept_guess, noise_width_guess
 
 
 def define_model_normal(time_np, intensity_np):
     """
     Define a model for fitting a normal distribution to the peak data.
+
+    Parameters
+    ----------
+    time_np
+        numpy array with the time values of the relevant timeframe
+    
+    intensity_np
+        numpy array with the intensity values of the relevant timeframe
+    
+    Returns
+    -------
+    pmodel
+        pymc model
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
@@ -77,6 +109,19 @@ def define_model_normal(time_np, intensity_np):
 def define_model_doublepeak(time_np, intensity_np):
     """
     Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
+
+    Parameters
+    ----------
+    time_np
+        numpy array with the time values of the relevant timeframe
+    
+    intensity_np
+        numpy array with the intensity values of the relevant timeframe
+    
+    Returns
+    -------
+    pmodel
+        pymc model
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
@@ -125,6 +170,19 @@ def define_model_doublepeak(time_np, intensity_np):
 def define_model_skew(time_np, intensity_np):
     """
     Define a model for fitting a skew normal distribution to the peak data.
+
+    Parameters
+    ----------
+    time_np
+        numpy array with the time values of the relevant timeframe
+    
+    intensity_np
+        numpy array with the intensity values of the relevant timeframe
+    
+    Returns
+    -------
+    pmodel
+        pymc model
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
