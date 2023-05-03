@@ -48,7 +48,7 @@ def prefiltering(t_ret, sn_min):
     pass
 
 
-def initial_guesses(time_np, intensity_np, unique_identifier):
+def initial_guesses(time_np, intensity_np):
     """
     Provide initial guesses for priors
     """
@@ -63,24 +63,22 @@ def initial_guesses(time_np, intensity_np, unique_identifier):
         np.mean([noise_tuple[n][1] for n in range(len(noise_tuple) - 5, len(noise_tuple))])
         - np.mean([noise_tuple[n][1] for n in range(5)])
     ) / (time_np[-1] - time_np[0])
-    intercept_guess = np.mean([noise_tuple[n][1] for n in range(5)])
+    # calculate intercept_guess based on the slope_guess and the formula for a linear equation
+    intercept_guess = np.mean([noise_tuple[n][1] for n in range(5)]) - slope_guess * time_np[0]
     noise_width_guess = np.max([noise_tuple[n][1] for n in range(len(noise_tuple))]) - np.min(
         [noise_tuple[n][1] for n in range(len(noise_tuple))]
     )
     # TODO: somehow save the guesses? Or discard them, after all?
-    # guess_dict["slope_guess"][f"{unique_identifier}"] = slope_guess
-    # guess_dict["intercept_guess"][f"{unique_identifier}"] = intercept_guess
-    # guess_dict["noise_width_guess"][f"{unique_identifier}"] = noise_width_guess
 
     return intercept_guess, slope_guess, noise_width_guess
 
 
-def define_model_normal(time_np, intensity_np, unique_identifier):
+def define_model_normal(time_np, intensity_np):
     """
     Define a model for fitting a normal distribution to the peak data.
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np, unique_identifier
+        time_np, intensity_np
     )
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
@@ -88,9 +86,9 @@ def define_model_normal(time_np, intensity_np, unique_identifier):
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
         else:
             baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, intercept_guess / 2
+                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
             )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.abs(slope_guess * 2) + 1)
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time_np)
         # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
         if noise_width_guess > 0:
@@ -117,12 +115,23 @@ def define_model_doublepeak(time_np, intensity_np):
     Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np, unique_identifier
+        time_np, intensity_np
     )
     with pm.Model() as pmodel:
-        # priors (two peaks, hence two sets of parameters)
-        baseline = pm.Normal("baseline", 500, 50)
-        noise = pm.LogNormal("noise", np.log(100), 1)
+        # priors plus error handling in case of mathematically impermissible values
+        if intercept_guess == 0:
+            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
+        else:
+            baseline_intercept = pm.Normal(
+                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
+            )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time_np)
+        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
+        if noise_width_guess > 0:
+            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
+        elif noise_width_guess == 0:
+            noise = pm.LogNormal("noise", np.log(10), 1)
         std = pm.HalfNormal("std", np.ptp(time_np) / 3)
         std2 = pm.HalfNormal("std2", np.ptp(time_np) / 3)
         height = pm.HalfNormal("height", 0.95 * np.max(intensity_np))
@@ -156,7 +165,7 @@ def define_model_skew(time_np, intensity_np):
     Define a model for fitting a skew normal distribution to the peak data.
     """
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np, unique_identifier
+        time_np, intensity_np
     )
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
@@ -164,9 +173,9 @@ def define_model_skew(time_np, intensity_np):
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
         else:
             baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, intercept_guess / 2
+                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
             )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.abs(slope_guess * 2) + 1)
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time_np)
         # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
         if noise_width_guess > 0:
