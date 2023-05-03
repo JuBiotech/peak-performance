@@ -177,7 +177,6 @@ def define_model_skew(time_np, intensity_np):
         elif noise_width_guess == 0:
             noise = pm.LogNormal("noise", np.log(10), 1)
         mean = pm.Normal("mean", np.mean(time_np[[0, -1]]), np.ptp(time_np) / 2)
-        mean = pm.Normal("mean", np.mean(time_np[[0, -1]]), np.ptp(time_np) / 2)
         std = pm.HalfNormal("std", np.ptp(time_np) / 3)
         alpha = pm.HalfNormal("alpha", 2.5)
         area = pm.HalfNormal("area", np.max(intensity_np) * 0.9)
