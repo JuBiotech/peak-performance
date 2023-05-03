@@ -77,9 +77,7 @@ def define_model_normal(time_np, intensity_np):
     """
     Define a model for fitting a normal distribution to the peak data.
     """
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np
-    )
+    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
@@ -114,9 +112,7 @@ def define_model_doublepeak(time_np, intensity_np):
     """
     Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
     """
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np
-    )
+    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
@@ -164,9 +160,7 @@ def define_model_skew(time_np, intensity_np):
     """
     Define a model for fitting a skew normal distribution to the peak data.
     """
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(
-        time_np, intensity_np
-    )
+    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time_np, intensity_np)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
