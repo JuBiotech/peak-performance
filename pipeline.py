@@ -155,10 +155,25 @@ def define_model_skew(time_np, intensity_np):
     """
     Define a model for fitting a skew normal distribution to the peak data.
     """
+    intercept_guess, slope_guess, noise_width_guess = initial_guesses(
+        time_np, intensity_np, unique_identifier
+    )
     with pm.Model() as pmodel:
-        # priors
-        baseline = pm.Normal("baseline", 200, 100)
-        noise = pm.LogNormal("noise", np.log(100), 1)
+        # priors plus error handling in case of mathematically impermissible values
+        if intercept_guess == 0:
+            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
+        else:
+            baseline_intercept = pm.Normal(
+                "baseline_intercept", intercept_guess, intercept_guess / 2
+            )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.abs(slope_guess * 2) + 1)
+        baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time_np)
+        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
+        if noise_width_guess > 0:
+            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
+        elif noise_width_guess == 0:
+            noise = pm.LogNormal("noise", np.log(10), 1)
+        mean = pm.Normal("mean", np.mean(time_np[[0, -1]]), np.ptp(time_np) / 2)
         mean = pm.Normal("mean", np.mean(time_np[[0, -1]]), np.ptp(time_np) / 2)
         std = pm.HalfNormal("std", np.ptp(time_np) / 3)
         alpha = pm.HalfNormal("alpha", 2.5)
