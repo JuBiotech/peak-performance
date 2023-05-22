@@ -1,6 +1,5 @@
 import json
 import math
-import time
 
 import arviz as az
 import numpy as np
@@ -14,7 +13,7 @@ import scipy.stats as st
 from matplotlib import pyplot
 
 
-def plot_raw_data(identifier, time_np, intensity_np):
+def plot_raw_data(identifier, time, intensity):
     """
     Plot just the raw data in case no peak was found.
 
@@ -22,14 +21,14 @@ def plot_raw_data(identifier, time_np, intensity_np):
     ----------
     identifier
         unique identifier of this particular signal
-    time_np
+    time
         numpy array with the time values of the relevant timeframe
-    intensity_np
+    intensity
         numpy array with the intensity values of the relevant timeframe
     """
     # plot the data to be able to check if peak detection was correct or not
     fig, ax = pyplot.subplots()
-    ax.scatter(time_np, intensity_np, marker="x", color="black", label="data")
+    ax.scatter(time, intensity, marker="x", color="black", label="data")
     pyplot.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
@@ -88,7 +87,7 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
     return
 
 
-def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
+def plot_posterior_predictive(identifier, time, intensity, idata):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
@@ -96,9 +95,9 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     ----------
     identifier
         unique identifier of this particular signal
-    time_np
+    time
         numpy array with the time values of the relevant timeframe
-    intensity_np
+    intensity
         numpy array with the intensity values of the relevant timeframe
     idata
         infernce data object
@@ -107,12 +106,12 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     # plot the posterior predictive
     plot_density(
         ax=ax,
-        x=time_np,
+        x=time,
         samples=idata.posterior_predictive.L.stack(sample=("chain", "draw")).T.values,
         percentiles=(2.5, 97.5),
     )
     # plot the raw data points
-    ax.scatter(time_np, intensity_np, marker="x", color="black", label="data")
+    ax.scatter(time, intensity, marker="x", color="black", label="data")
     ax.set_xlabel("time / min", fontsize=11.5, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=11.5, fontweight="bold")
     pyplot.legend()
@@ -129,7 +128,7 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     return
 
 
-def plot_posterior(identifier, time_np, intensity_np, idata):
+def plot_posterior(identifier, time, intensity, idata):
     """
     Save plot of posterior, estimated baseline and original data points.
 
@@ -137,9 +136,9 @@ def plot_posterior(identifier, time_np, intensity_np, idata):
     ----------
     identifier
         unique identifier of this particular signal
-    time_np
+    time
         numpy array with the time values of the relevant timeframe
-    intensity_np
+    intensity
         numpy array with the intensity values of the relevant timeframe
     idata
         infernce data object
@@ -148,11 +147,11 @@ def plot_posterior(identifier, time_np, intensity_np, idata):
     # plot the posterior
     pm.gp.util.plot_gp_dist(
         ax=ax,
-        x=time_np,
+        x=time,
         samples=idata.posterior.y.stack(sample=("chain", "draw")).T.values,
     )
     # plot the raw data points
-    ax.scatter(time_np, intensity_np, marker="x", color="black", label="data")
+    ax.scatter(time, intensity, marker="x", color="black", label="data")
     # plot the baseline
     x = np.array(ax.get_xlim())
     y = (
