@@ -22,10 +22,8 @@ def plot_raw_data(identifier, time_np, intensity_np):
     ----------
     identifier
         unique identifier of this particular signal
-
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
     """
@@ -98,13 +96,10 @@ def plot_posterior_predictive(identifier, time_np, intensity_np, idata):
     ----------
     identifier
         unique identifier of this particular signal
-
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-
     idata
         infernce data object
     """
@@ -142,13 +137,10 @@ def plot_posterior(identifier, time_np, intensity_np, idata):
     ----------
     identifier
         unique identifier of this particular signal
-
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
-
     idata
         infernce data object
     """

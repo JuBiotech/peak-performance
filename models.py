@@ -22,7 +22,6 @@ def initial_guesses(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
 
@@ -30,10 +29,8 @@ def initial_guesses(time_np, intensity_np):
     -------
     slope_guess : float or int
         guess for the slope of the linear baseline
-
     intercept_guess : float or int
         guess for the intercept of the linear baseline
-
     noise_width_guess : float or int
         guess for the width of the noise
     """
@@ -66,7 +63,6 @@ def define_model_normal(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
 
@@ -114,7 +110,6 @@ def define_model_doublepeak(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
 
@@ -175,7 +170,6 @@ def define_model_skew(time_np, intensity_np):
     ----------
     time_np
         numpy array with the time values of the relevant timeframe
-
     intensity_np
         numpy array with the intensity values of the relevant timeframe
 
