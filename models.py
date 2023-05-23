@@ -26,10 +26,10 @@ def initial_guesses(time, intensity):
 
     Returns
     -------
-    slope_guess : float or int
-        guess for the slope of the linear baseline
-    intercept_guess : float or int
-        guess for the intercept of the linear baseline
+    baseline_fit.slope : float or int
+        guess for the slope of the linear baseline prior
+    baseline_fit.intercept : float or int
+        guess for the intercept of the linear baseline prior
     noise_width_guess : float or int
         guess for the width of the noise
     """
