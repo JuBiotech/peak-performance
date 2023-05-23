@@ -37,11 +37,15 @@ def initial_guesses(time, intensity):
     # then, use the corrected data to determine which data points are going to be defined as noise
     # this is the only use of the corrected data
     average_initial_intensity = np.mean([intensity[n] for n in range(3)])
-    average_final_intensity = np.mean([intensity[n] for n in range(len(intensity) - 3, len(intensity))])
+    average_final_intensity = np.mean(
+        [intensity[n] for n in range(len(intensity) - 3, len(intensity))]
+    )
     slope_guess = (average_final_intensity - average_initial_intensity) / (time[-1] - time[0])
     # calculate intercept_guess based on the slope_guess and the formula for a linear equation
     first_intercept_guess = average_initial_intensity - slope_guess * time[0]
-    intensity_corrected = [intensity[n] - (slope_guess * time[n] + first_intercept_guess) for n in range(len(time))]
+    intensity_corrected = [
+        intensity[n] - (slope_guess * time[n] + first_intercept_guess) for n in range(len(time))
+    ]
 
     # select lowest 35 % of all data points as noise -> noise_tuple
     intensity_tuple = list(enumerate(intensity_corrected))
