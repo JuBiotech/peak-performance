@@ -26,32 +26,43 @@ def initial_guesses(time, intensity):
 
     Returns
     -------
-    slope_guess : float or int
-        guess for the slope of the linear baseline
-    intercept_guess : float or int
-        guess for the intercept of the linear baseline
+    baseline_fit.slope : float or int
+        guess for the slope of the linear baseline prior
+    baseline_fit.intercept : float or int
+        guess for the intercept of the linear baseline prior
     noise_width_guess : float or int
         guess for the width of the noise
     """
-    # select lowest third of all data points as noise -> noise_tuple
-    intensity_tuple = list(enumerate(intensity))
-    intensity_tuple.sort(key=lambda x: x[1])
-    noise_range = int(np.round(1 / 3 * len(intensity), decimals=0))
-    noise_tuple = intensity_tuple[:noise_range]
-    # sort noise_tuple by time, then use the first and last data points for estimating starting values for the priors of noise width and the slope and intercept of baseline
-    noise_tuple.sort(key=lambda x: x[0])
-    slope_guess = (
-        np.mean([noise_tuple[n][1] for n in range(len(noise_tuple) - 5, len(noise_tuple))])
-        - np.mean([noise_tuple[n][1] for n in range(5)])
-    ) / (time[-1] - time[0])
-    # calculate intercept_guess based on the slope_guess and the formula for a linear equation
-    intercept_guess = np.mean([noise_tuple[n][1] for n in range(5)]) - slope_guess * time[0]
-    noise_width_guess = np.max([noise_tuple[n][1] for n in range(len(noise_tuple))]) - np.min(
-        [noise_tuple[n][1] for n in range(len(noise_tuple))]
+    # first create a simple baseline guess only to be able to "correct" the intensity data (y_corrected = y - y_baseline)
+    # then, use the corrected data to determine which data points are going to be defined as noise
+    # this is the only use of the corrected data
+    average_initial_intensity = np.mean([intensity[n] for n in range(3)])
+    average_final_intensity = np.mean(
+        [intensity[n] for n in range(len(intensity) - 3, len(intensity))]
     )
-    # TODO: somehow save the guesses? Or discard them, after all?
+    slope_guess = (average_final_intensity - average_initial_intensity) / (time[-1] - time[0])
+    # calculate intercept_guess based on the slope_guess and the formula for a linear equation
+    first_intercept_guess = average_initial_intensity - slope_guess * time[0]
+    intensity_corrected = [
+        intensity[n] - (slope_guess * time[n] + first_intercept_guess) for n in range(len(time))
+    ]
 
-    return slope_guess, intercept_guess, noise_width_guess
+    # select lowest 35 % of all data points as noise -> noise_tuple
+    intensity_tuple = list(enumerate(intensity_corrected))
+    intensity_tuple.sort(key=lambda x: x[1])
+    noise_range = int(np.round(0.35 * len(intensity_corrected), decimals=0))
+    noise_tuple = intensity_tuple[:noise_range]
+    noise_index = sorted([x[0] for x in noise_tuple])
+    # use the indeces in noise_index to get the time and intensity of all noise data points
+    noise_time = [time[n] for n in noise_index]
+    noise_intensity = [intensity[n] for n in noise_index]
+    # calculate the width of the noise
+    noise_width_guess = max(noise_intensity) - min(noise_intensity)
+
+    # use scipy to fit a linear regression through the noise as a prior for the eventual baseline
+    baseline_fit = st.linregress(noise_time, noise_intensity)
+
+    return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
 
 def normal_posterior(baseline, height, time, mean, std):
