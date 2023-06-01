@@ -58,6 +58,7 @@ class TestDistributions():
         pass
 
     def test_height_calculation(self):
+        x = np.linspace(-1, 5.5, 10000)
         pass
     
     def test_skew_normal_posterior(self):
