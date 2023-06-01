@@ -80,3 +80,19 @@ class TestDistributions():
         # testing; allow minor difference due to differences in float precision etc.
         np.testing.assert_allclose(expected, actual, atol=0.00000001)
         pass
+
+    def test_compare_normal_and_skew_as_normal(self):
+        """A skew normal distribution with skewness alpha = 0 should be a normal distribution. Test if that is so for our distributions."""
+        x = np.linspace(-10, 10, 10000)
+        y_skew = st.skewnorm.pdf(x, 0, loc=1, scale=1)
+        y = st.norm.pdf(x, loc=1, scale=0.5)
+        height = np.max(y)
+        area = scipy.integrate.quad(lambda x: st.norm.pdf(x, loc=1, scale=1), -10, 10)[0]
+        x = np.linspace(-10, 10, 10000)
+        y_actual_pt = models.normal_posterior(0, height, x, 1, 1)
+        y_skew_actual_pt = models.skew_normal_posterior(0, area, x, 1, 1, 0)
+        y_actual = y_actual_pt.eval().astype(float)
+        y_skew_actual = y_skew_actual_pt.eval().astype(float)
+        # many values are extremely close to zero so rtol was increased. As guaranteed by the absurdly low atol, this will not mask any actual differences
+        np.testing.assert_allclose(y_skew_actual, y_actual, atol=0.00000000000000000001, rtol=0.9)
+
