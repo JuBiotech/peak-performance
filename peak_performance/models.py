@@ -1,16 +1,11 @@
-import json
 import math
 
 import arviz as az
 import numpy as np
-import openpyxl
 import pandas
 import pymc as pm
 import pytensor.tensor as pt
-import scipy.integrate
-import scipy.signal
 import scipy.stats as st
-from matplotlib import pyplot
 
 
 def initial_guesses(time, intensity):
