@@ -1,6 +1,6 @@
 import importlib.metadata
-from . import models
-from . import plots
+
+from . import models, plots
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 """Package version when the install command ran."""
