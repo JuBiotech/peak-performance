@@ -60,5 +60,23 @@ class TestDistributions():
     def test_height_calculation(self):
         pass
     
-    def test_define_skew_normal_posterior(self):
+    def test_skew_normal_posterior(self):
+        x = np.linspace(-1, 5.5, 10000)
+        # test first with positive alpha
+        expected = st.skewnorm.pdf(x, 3, loc=1.2, scale=1.1)
+        actual_pt = models.skew_normal_posterior(0, 1, x, 1.2, 1.1, 3)
+        # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
+        actual = actual_pt.eval().astype(float)
+        expected = expected.astype(float)
+        # testing; allow minor difference due to differences in float precision etc.
+        np.testing.assert_allclose(expected, actual, atol=0.00000001)
+
+        # test again with negative alpha
+        expected = st.skewnorm.pdf(x, -3, loc=1.2, scale=1.1)
+        actual_pt = models.skew_normal_posterior(0, 1, x, 1.2, 1.1, -3)
+        # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
+        actual = actual_pt.eval().astype(float)
+        expected = expected.astype(float)
+        # testing; allow minor difference due to differences in float precision etc.
+        np.testing.assert_allclose(expected, actual, atol=0.00000001)
         pass
