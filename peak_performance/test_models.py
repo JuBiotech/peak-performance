@@ -23,6 +23,14 @@ def test_initial_guesses():
 
 class TestDistributions():
     def test_normal_posterior(self):
+        x = np.linspace(-5, 10, 10000)
+        expected = st.norm.pdf(x, 3, 2)
+        actual_pt = models.normal_posterior(0, np.max(expected), x, 3, 2)
+        # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
+        actual = actual_pt.eval().astype(float)
+        expected = expected.astype(float)
+        # testing; allow minor difference due to differences in float precision etc.
+        np.testing.assert_allclose(expected, actual, atol=0.0000001)
         pass
 
     def test_double_normal_posterior(self):
