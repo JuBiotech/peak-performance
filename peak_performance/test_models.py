@@ -124,5 +124,5 @@ class TestDistributions:
         y_actual = y_actual_pt.eval().astype(float)
         y_skew_actual = y_skew_actual_pt.eval().astype(float)
         # many values are extremely close to zero so rtol was increased. As guaranteed by the absurdly low atol, this will not mask any actual differences
-        np.testing.assert_allclose(y_skew_actual, y_actual, atol=0.00000000000000000001, rtol=0.9)
+        np.testing.assert_allclose(y_skew_actual, y_actual, atol=1e-20, rtol=0.9)
         pass
