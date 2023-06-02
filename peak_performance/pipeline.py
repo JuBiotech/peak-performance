@@ -92,7 +92,7 @@ def resampling(pmodel):
 
 def posterior_predictive_sampling(pmodel, idata):
     with pmodel:
-        idata.extend(pm.sample_posterior_predictive(idata, return_inferencedata=True))
+        idata.extend(pm.sample_posterior_predictive(idata))
     return idata
 
 
