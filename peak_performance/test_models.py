@@ -8,7 +8,7 @@ from peak_performance import models
 
 def test_initial_guesses():
     # define time and intensity for example with known result
-    time = [2 + 0.1 * x for x in range(17)]
+    time = 2 + 0.1 * np.arange(17)
     intensity = [1, 5, 3] + 11 * [1000] + [7, 9, 11]
     # define expected results
     expected_noise_width = np.ptp([1, 5, 3, 7, 9, 11])
