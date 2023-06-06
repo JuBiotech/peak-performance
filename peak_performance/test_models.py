@@ -68,8 +68,7 @@ class TestDistributions:
             lambda x: st.skewnorm.pdf(x, alpha, loc=mean, scale=std), -1, 5.5
         )[0]
         # find the x value to the maximum y value, i.e. the mode
-        diction = dict(zip(x, y))
-        expected_mode_skew = max(diction, key=diction.get)
+        expected_mode_skew = x[np.argmax(y)]
         expected_height = np.max(y)
         mean_skew = models.mean_skew_calculation(mean, std, alpha)
         expected_mode_offset = mean_skew - expected_mode_skew
