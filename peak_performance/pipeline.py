@@ -76,17 +76,12 @@ def prefiltering(intensity, noise_width, t_ret, sn_min, est_width):
     return True
 
 
-def sampling(pmodel):
+def sampling(pmodel, **sample_kwargs):
+    sample_kwargs.setdefault("tune", 2000)
+    sample_kwargs.setdefault("draws", 2000)
     with pmodel:
         idata = pm.sample_prior_predictive()
-        idata.extend(pm.sample(draws=2000, tune=2000))
-    return idata
-
-
-def resampling(pmodel):
-    with pmodel:
-        idata = pm.sample_prior_predictive()
-        idata.extend(pm.sample(draws=2000, tune=4000))
+        idata.extend(pm.sample(**sample_kwargs))
     return idata
 
 
