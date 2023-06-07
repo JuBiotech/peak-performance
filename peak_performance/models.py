@@ -1,16 +1,11 @@
-import json
 import math
 
 import arviz as az
 import numpy as np
-import openpyxl
 import pandas
 import pymc as pm
 import pytensor.tensor as pt
-import scipy.integrate
-import scipy.signal
 import scipy.stats as st
-from matplotlib import pyplot
 
 
 def initial_guesses(time, intensity):
@@ -267,7 +262,11 @@ def mode_skew_calculation(mean_skew, mode_offset, alpha):
 
 
 def height_calculation(area, mean, std, alpha, mode_skew):
-    """Calculate the height of a skew normal distribution."""
+    """
+    Calculate the height of a skew normal distribution.
+    The formula is the result of inserting time = mode_skew into the posterior. Since the mode of a skew normal distribution is calculated as a numerical approximation,
+    its accuracy is not perfect and thus the height's either. In tests, the height was still accurate up to and including the first two decimals.
+    """
     return area * (
         2
         * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((mode_skew - mean) / std) ** 2))
