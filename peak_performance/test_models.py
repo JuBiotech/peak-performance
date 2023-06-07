@@ -35,30 +35,15 @@ class TestDistributions:
         pass
 
     def test_double_normal_posterior(self):
+        x = np.linspace(5, 12, 10000)
+        y1 = st.norm.pdf(x, loc=7.5, scale=0.6)
+        y2 = st.norm.pdf(x, loc=9, scale=0.4) * 2
+        y_double_pt = models.double_normal_posterior(0, np.max(y1), np.max(y2), x, (7.5, 9), 0.6, 0.4)
+        y_double = y_double_pt.eval().astype(float)
+        np.testing.assert_allclose(y1+y2, y_double, rtol=1, atol=1e-20)
         pass
 
-    def test_std_skew_calculation(self):
-        pass
-
-    def test_mean_skew_calculation(self):
-        pass
-
-    def test_mue_z_calculation(self):
-        pass
-
-    def test_sigma_z_calculation(self):
-        pass
-
-    def test_fit_skewness_calculation(self):
-        pass
-
-    def test_mode_offset_calculation(self):
-        pass
-
-    def test_mode_skew_calculation(self):
-        pass
-
-    def test_height_calculation(self):
+    def test_height_calculation_without_baseline(self):
         x = np.linspace(-1, 5.5, 10000)
         mean = 1.2
         std = 1.1
@@ -84,8 +69,37 @@ class TestDistributions:
         actual_mode_skew = mode_skew_pt.eval().astype(float)
         actual_height = height_pt.eval().astype(float)
         # testing; allow minor difference due to differences in float precision etc.
-        # np.testing.assert_allclose(expected_mode_offset, actual_mode_offset, atol=0.00000001)
-        # np.testing.assert_allclose(expected_mode_skew, actual_mode_skew, atol=0.00000001)
+        np.testing.assert_allclose(expected_height, actual_height, atol=0.001)
+        pass
+    
+    def test_height_calculation_with_linear_baseline(self):
+        x = np.linspace(-1, 5.5, 1000000)
+        mean = 1.2
+        std = 1.1
+        alpha = 3
+        baseline = 0.04 * x + 0.3
+        y = st.skewnorm.pdf(x, alpha, loc=mean, scale=std) + baseline
+        area = scipy.integrate.quad(
+            lambda x: st.skewnorm.pdf(x, alpha, loc=mean, scale=std), -1, 5.5
+        )[0]
+        # find the x value to the maximum y value, i.e. the mode
+        expected_mode_skew = x[np.argmax(y)]
+        expected_height = np.max(y)
+        mean_skew = models.mean_skew_calculation(mean, std, alpha)
+        expected_mode_offset = mean_skew - expected_mode_skew
+        # calculate actual values
+        mue_z = models.mue_z_calculation(alpha)
+        sigma_z = models.sigma_z_calculation(mue_z)
+        # skewness calculation depends on y and is influenced by the baseline
+        fit_skewness = models.fit_skewness_calculation(y - baseline)
+        mode_offset_pt = models.mode_offset_calculation(mue_z, fit_skewness, sigma_z, alpha)
+        mode_skew_pt = models.mode_skew_calculation(mean_skew, mode_offset_pt, alpha)
+        height_pt = models.height_calculation(area, mean, std, alpha, mode_skew_pt)
+        # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
+        actual_mode_offset = mode_offset_pt.eval().astype(float)
+        actual_mode_skew = mode_skew_pt.eval().astype(float)
+        actual_height = height_pt.eval().astype(float)
+        # testing; allow minor difference due to differences in float precision etc.
         np.testing.assert_allclose(expected_height, actual_height, atol=0.001)
         pass
 
@@ -98,7 +112,7 @@ class TestDistributions:
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
         # testing; allow minor difference due to differences in float precision etc.
-        np.testing.assert_allclose(expected, actual, atol=0.00000001)
+        np.testing.assert_allclose(expected, actual, atol=1e-8)
 
         # test again with negative alpha
         expected = st.skewnorm.pdf(x, -3, loc=1.2, scale=1.1)
@@ -107,7 +121,7 @@ class TestDistributions:
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
         # testing; allow minor difference due to differences in float precision etc.
-        np.testing.assert_allclose(expected, actual, atol=0.00000001)
+        np.testing.assert_allclose(expected, actual, atol=1e-8)
         pass
 
     def test_compare_normal_and_skew_as_normal(self):
