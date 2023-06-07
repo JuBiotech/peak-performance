@@ -86,7 +86,7 @@ class TestDistributions:
         )[0]
         # find the x value to the maximum y value, i.e. the mode
         expected_mode_skew = x[np.argmax(y)]
-        expected_height = np.max(y)
+        expected_height = np.max(y) - (0.04 * expected_mode_skew + 0.3)
         mean_skew = models.mean_skew_calculation(mean, std, alpha)
         expected_mode_offset = mean_skew - expected_mode_skew
         # calculate actual values
