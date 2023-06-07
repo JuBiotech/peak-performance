@@ -38,9 +38,11 @@ class TestDistributions:
         x = np.linspace(5, 12, 10000)
         y1 = st.norm.pdf(x, loc=7.5, scale=0.6)
         y2 = st.norm.pdf(x, loc=9, scale=0.4) * 2
-        y_double_pt = models.double_normal_posterior(0, np.max(y1), np.max(y2), x, (7.5, 9), 0.6, 0.4)
+        y_double_pt = models.double_normal_posterior(
+            0, np.max(y1), np.max(y2), x, (7.5, 9), 0.6, 0.4
+        )
         y_double = y_double_pt.eval().astype(float)
-        np.testing.assert_allclose(y1+y2, y_double, rtol=1, atol=1e-20)
+        np.testing.assert_allclose(y1 + y2, y_double, rtol=1, atol=1e-20)
         pass
 
     def test_height_calculation_without_baseline(self):
@@ -71,7 +73,7 @@ class TestDistributions:
         # testing; allow minor difference due to differences in float precision etc.
         np.testing.assert_allclose(expected_height, actual_height, atol=0.001)
         pass
-    
+
     def test_height_calculation_with_linear_baseline(self):
         x = np.linspace(-1, 5.5, 1000000)
         mean = 1.2
