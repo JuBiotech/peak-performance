@@ -8,7 +8,7 @@ import pytensor.tensor as pt
 import scipy.stats as st
 
 
-def initial_guesses(time, intensity):
+def initial_guesses(time: np.array, intensity: np.array):
     """
     Provide initial guesses for priors.
 
@@ -204,6 +204,8 @@ def define_model_doublepeak(time, intensity):
         height2 = pm.HalfNormal("height2", 0.95 * np.max(intensity))
         area = pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
         area2 = pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
+        sn = pm.Deterministic("sn", height / noise)
+        sn2 = pm.Deterministic("sn2", height2 / noise)
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
