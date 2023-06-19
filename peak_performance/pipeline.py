@@ -1,7 +1,9 @@
-import datetime
+from datetime import datetime
+from datetime import date
 import os
-import zipfile
 from typing import Any, Dict, List, Sequence, Tuple, Union
+import zipfile
+
 
 import arviz as az
 import numpy as np
@@ -302,17 +304,18 @@ def initiate(path):
         Updated path variable pointing to the newly created folder for this batch.
     """
     # get current date and time
-    today = datetime.date.today()
-    current_date = today.strftime("%Y_%m_%d__%H_%M_%S.")
+    today = str(date.today())
+    now = datetime.now().strftime("%H-%M-%S")
+    timestamp = today + "_" + now
     # create a directory
-    path = path + "/" + current_date + "run"
+    path = path + "/" + timestamp + "run"
     os.mkdir(rf"{path}")
     # write text file, zip it, then delete it (cannot create an empty zip)
     text_file = open(rf"{path}/readme.txt", "w")
-    txt = text_file.write(f"This batch was started on the {current_date}.")
+    txt = text_file.write(f"This batch was started on the {timestamp}.")
     text_file.close()
     with zipfile.ZipFile(rf"{path}/idata.zip", mode="w") as archive:
-        archive.write(txt)
+        archive.write(rf"{path}/readme.txt")
     os.remove(rf"{path}/readme.txt")
     # create DataFrame for data report
     df_summary = pandas.DataFrame(
