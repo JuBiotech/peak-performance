@@ -28,8 +28,8 @@ def plot_raw_data(identifier, time, intensity):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.png")
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.svg", format="svg")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_No_Peak.png")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_No_Peak.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -110,9 +110,9 @@ def plot_posterior_predictive(identifier, time, intensity, idata):
     pyplot.legend()
     pyplot.tight_layout()
     # TODO: fix paths
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.png")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_predictive_posterior.png")
     pyplot.savefig(
-        rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.svg", format="svg"
+        rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_predictive_posterior.svg", format="svg"
     )
     pyplot.cla()
     pyplot.clf()
@@ -158,8 +158,8 @@ def plot_posterior(identifier, time, intensity, idata):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.png")
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.svg", format="svg")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_posterior.png")
+    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier[:-4]}_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
