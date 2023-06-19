@@ -412,8 +412,9 @@ def postfiltering(idata, ui):
     discard
         True: discard sample.
     """
-    # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria (explanation see next comment) were not met
-    if not user_info[fragment]["double_peak"] == True:
+    # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria were not met
+    if not ui.user_info["double_peak"] == True:
+        # for single peak
         if (
             any(list(az.summary(idata).loc[:, "r_hat"])) > 1.05
             or az.summary(idata).loc["std", :]["mean"] <= 0.1
@@ -422,7 +423,7 @@ def postfiltering(idata, ui):
             or az.summary(idata).loc["height", :]["sd"]
             > az.summary(idata).loc["height", :]["mean"] * 0.2
         ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
                 az.summary(idata).loc["std", :]["mean"] <= 0.1
                 or az.summary(idata).loc["area", :]["sd"]
@@ -433,33 +434,17 @@ def postfiltering(idata, ui):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
                 report_add_nan_to_summary()
-                continue
+                resample = False
+                discard = True
+                return resample, discard
             else:
                 # r_hat failed but rest of post-fit check passed
                 # sample again with more tune samples to possibly reach convergence yet
-                with pmodel:
-                    idata2 = pm.sample_prior_predictive()
-                    idata2.extend(pm.sample(draws=2000, tune=4000))
-                # if still no convergence, kick it
-                if any(list(az.summary(idata2).loc[:, "r_hat"])) > 1.05:
-                    # add NaN values to summary DataFrame
-                    report_add_nan_to_summary()
-                    continue
-                # if results still don't meet plausibility/quality criteria, kick it
-                elif (
-                    az.summary(idata2).loc["std", :]["mean"] <= 0.1
-                    or az.summary(idata2).loc["area", :]["sd"]
-                    > az.summary(idata2).loc["area", :]["mean"] * 0.2
-                    or az.summary(idata2).loc["height", :]["sd"]
-                    > az.summary(idata2).loc["height", :]["mean"] * 0.2
-                ):
-                    # add NaN values to summary DataFrame
-                    report_add_nan_to_summary()
-                    continue
-                # if result is improved, accept new inference data and go on
-                else:
-                    idata = idata2
+                resample = True
+                discard = False
+                return resample, discard
     else:
+        # for double peak
         if (
             any(list(az.summary(idata).loc[:, "r_hat"])) > 1.05
             or az.summary(idata).loc["std", :]["mean"] <= 0.1
@@ -473,9 +458,6 @@ def postfiltering(idata, ui):
             or az.summary(idata).loc["height2", :]["sd"]
             > az.summary(idata).loc["height2", :]["mean"] * 0.2
         ):
-            # subdivide name of fragment into its two parts
-            fragment1 = fragment.split("_")[0]
-            fragment2 = fragment.split("_")[1]
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
@@ -489,7 +471,6 @@ def postfiltering(idata, ui):
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                report_add_nan_to_summary()
                 double_not_found_first = True
             if (
                 az.summary(idata).loc["std2", :]["mean"] <= 0.1
@@ -500,17 +481,19 @@ def postfiltering(idata, ui):
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                report_add_nan_to_summary()
                 double_not_found_second = True
-            print(
-                f"end of check 1: {fragment}, {acquisition}: {double_not_found_first}, {double_not_found_second}"
-            )
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                continue
-            # r_hat failed but rest of post-fit check passed
-            # sample again with more tune samples to possibly reach convergence yet
-    return
+                report_add_nan_to_summary()
+                resample = False
+                discard = True
+                return resample, discard
+            else:
+                # r_hat failed but rest of post-fit check passed
+                # sample again with more tune samples to possibly reach convergence yet
+                resample = True
+                discard = False
+                return resample, discard
 
 
 def posterior_predictive_sampling(pmodel, idata):
