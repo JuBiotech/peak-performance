@@ -33,7 +33,14 @@ class UserInput:
         double_peak: List[bool],
         retention_time_estimate: Union[List[float], List[int]],
         peak_width_estimate: Union[float, int],
-        pre_filtering: bool = True,
+        pre_filtering: bool,
+        minimum_sn: Union(float, int),
+        timeseries: np.ndarray, 
+        acquisition: str, 
+        experiment: int, 
+        precursor_mz: Union(float, int), 
+        product_mz_start: Union(float, int), 
+        product_mz_end: Union(float, int),
     ):
         """
         Parameters
@@ -50,6 +57,20 @@ class UserInput:
             Rough estimate of the average peak width in minutes expected for the LC-MS method with which the data was obtained.
         pre_filtering
             If True, potential peaks will be filtered based on retention time and signal to noise ratio before sampling.
+        minimum_sn
+            Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering
+        timeseries
+            Numpy Array containing time (at first position) and intensity (at second position) data as numpy arrays.
+        acquisition
+            Name of a single acquisition.
+        experiment
+            Experiment number of the signal within the acquisition (each experiment = one mass trace).
+        precursor_mz
+            Mass to charge ratio of the precursor ion selected in Q1.
+        product_mz_start
+            Start of the mass to charge ratio range of the product ion in the TOF.
+        product_mz_end
+            End of the mass to charge ratio range of the product ion in the TOF.
         """
         self.path = path
         self.files = files
@@ -57,8 +78,99 @@ class UserInput:
         self.retention_time_estimate = retention_time_estimate
         self.peak_width_estimate = peak_width_estimate
         self.pre_filtering = pre_filtering
+        self.minimum_sn = minimum_sn
+        self.timeseries = timeseries
+        self.acquisition = acquisition
+        self.experiment = experiment
+        self.precursor_mz = precursor_mz
+        self.product_mz_start = product_mz_start
+        self.product_mz_end = product_mz_end
         super().__init__()
 
+    @property
+    def timeseries(self):
+        """Getting the value of the timeseries attribute."""
+        return self._timeseries
+    
+    @timeseries.setter
+    def timeseries(self, data):
+        """Setting the value of the timeseries attribute."""
+        if data is None:
+            raise InputError(f"The timeseries parameter is a None type.")
+        if not isinstance(data[0], np.array) or not isinstance(data[1], np.array):
+            raise InputError(f"The time or intensity array within the 'timeseries' ndarray is not a numpy array.")
+        self._timeseries = data
+ 
+    @property
+    def acquisition(self):
+        """Getting the value of the acquisition attribute."""
+        return self._acquisition
+    
+    @acquisition.setter
+    def acquisition(self, name):
+        """Setting the value of the acquisition attribute."""
+        if not isinstance(name, str):
+            raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
+        if name is None:
+            raise InputError(f"The acquisition parameter is a None type.")
+        self._acquisition = name
+    
+    @property
+    def experiment(self):
+        """Getting the value of the experiment attribute."""
+        return self._experiment
+    
+    @experiment.setter
+    def experiment(self, name):
+        """Setting the value of the experiment attribute."""
+        if not isinstance(name, int):
+            raise InputError(f"The experiment parameter is {type(name)} but needs to be an integer.")
+        if name is None:
+            raise InputError(f"The experiment parameter is a None type.")
+        self._experiment = name
+
+    @property
+    def precursor_mz(self):
+        """Getting the value of the precursor_mz attribute."""
+        return self._precursor_mz
+    
+    @precursor_mz.setter
+    def precursor_mz(self, mz):
+        """Setting the value of the precursor_mz attribute."""
+        if not isinstance(mz, int) and not isinstance(mz, float):
+            raise InputError(f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float.")
+        if mz is None:
+            raise InputError(f"The precursor_mz parameter is a None type.")
+        self._precursor_mz = mz
+    
+    @property
+    def product_mz_start(self):
+        """Getting the value of the product_mz_start attribute."""
+        return self._product_mz_start
+    
+    @product_mz_start.setter
+    def product_mz_start(self, mz):
+        """Setting the value of the product_mz_start attribute."""
+        if not isinstance(mz, int) and not isinstance(mz, float):
+            raise InputError(f"The product_mz_start parameter is {type(mz)} but needs to be an integer or a float.")
+        if mz is None:
+            raise InputError(f"The product_mz_start parameter is a None type.")
+        self._product_mz_start = mz
+
+    @property
+    def product_mz_end(self):
+        """Getting the value of the product_mz_end attribute."""
+        return self._product_mz_end
+    
+    @product_mz_end.setter
+    def product_mz_end(self, mz):
+        """Setting the value of the product_mz_end attribute."""
+        if not isinstance(mz, int) and not isinstance(mz, float):
+            raise InputError(f"The product_mz_end parameter is {type(mz)} but needs to be an integer or a float.")
+        if mz is None:
+            raise InputError(f"The product_mz_end parameter is a None type.")
+        self._product_mz_end = mz
+  
     @property
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
