@@ -34,13 +34,13 @@ class UserInput:
         retention_time_estimate: Union[List[float], List[int]],
         peak_width_estimate: Union[float, int],
         pre_filtering: bool,
-        minimum_sn: Union(float, int),
+        minimum_sn: Union[float, int],
         timeseries: np.ndarray,
         acquisition: str,
         experiment: int,
-        precursor_mz: Union(float, int),
-        product_mz_start: Union(float, int),
-        product_mz_end: Union(float, int),
+        precursor_mz: Union[float, int],
+        product_mz_start: Union[float, int],
+        product_mz_end: Union[float, int],
     ):
         """
         Parameters
