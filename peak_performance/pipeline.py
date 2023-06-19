@@ -250,7 +250,17 @@ def parse_data(filename: str):
     Returns
     -------
     timeseries
-        Numpy array with a time series (time as first, intensity as second element of the array).
+        Numpy Array containing time and intensity data as numpy arrays at fist and second position, respectively.
+    acquisition
+        Name of a single acquisition.
+    experiment
+        Experiment number of the signal within the acquisition (each experiment = one mass trace).
+    precursor_mz
+        Mass to charge ratio of the precursor ion selected in Q1.
+    product_mz_start
+        Start of the mass to charge ratio range of the product ion in the TOF.
+    product_mz_end
+        End of the mass to charge ratio range of the product ion in the TOF.
     """
     # load time series
     timeseries = np.load(f"{filename}")
@@ -267,7 +277,7 @@ def parse_data(filename: str):
 
 def initiate(path):
     """
-    Create a folder for the results. Also create a zip file inside that folder. Also create summary_df.
+    Create a folder for the results. Also create a zip file inside that folder. Also create df_summary.
 
     Parameters
     ----------
@@ -313,7 +323,7 @@ def initiate(path):
     return df_summary, path
 
 
-def prefiltering(filename: str, user_info: dict, timeseries: np.array, noise_width: float):
+def prefiltering(filename: str, ui: UserInput, noise_width_guess: float):
     """
     Optional method to skip signals where clearly no peak is present. Saves a lot of computation time.
 
@@ -321,11 +331,9 @@ def prefiltering(filename: str, user_info: dict, timeseries: np.array, noise_wid
     ----------
     filename
         Name of the raw data file.
-    user_info
-        Dictionary with user specified information.
-    timeseries
-        Numpy array with a time series (time as first, intensity as second element of the array).
-    noise_width
+    ui
+        Instance of the UserInput class
+    noise_width_guess
         Estimated width of the noise of a particular measurement.
 
     Returns
@@ -383,21 +391,26 @@ def sampling(pmodel, **sample_kwargs):
     return idata
 
 
-def postfiltering(idata):
+def postfiltering(idata, ui):
     """
     Method to filter out false positive peaks after sampling based on the obtained uncertainties of several peak parameters.
 
     Parameters
     ----------
     idata
-        Inference data object resulting from sampling
-    user_info
-        Dictionary with user specified information.
+        Inference data object resulting from sampling.
+    ui
+        Instance of the UserInput class.
 
     Returns
     -------
-    Bool
-        True, if the signal passed the test; False, if the signal was not recognized as a peak.
+    acceptance
+        True if the signal was accepted as a peak -> save data and continue with next signal.
+        False if the signal was not accepted as a peak -> re-sampling with more tuning samples or discard signal.
+    resample
+        True: re-sample with more tuning samples, False: don't.
+    discard
+        True: discard sample.
     """
     # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria (explanation see next comment) were not met
     if not user_info[fragment]["double_peak"] == True:
@@ -513,24 +526,31 @@ def report_save_idata(path, idata):
     Parameters
     ----------
     idata
-        Inference data object resulting from sampling
+        Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
     """
     with zipfile.ZipFile(rf"{path}/idata.zip", mode="a") as archive:
         archive.write(idata.to_netcdf("idata"))
     return
 
 
-def report_add_data_to_summary(idata, summary_df, path):
+def report_add_data_to_summary(idata, df_summary, ui):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
 
     Parameters
     ----------
-    path
-        Path to the directory containing the raw data
     idata
         Inference data object resulting from sampling
+    df_summary
+        DataFrame for storing results
+    ui
+        Instance of the UserInput class
+
+    Returns
+    -------          
+    df_summary
+        Updated DataFrame for storing results
     """
     # TODO split double peak up when reporting into first and second peak (when extracting the data from az.summary(idata))
     parameters = [
@@ -580,9 +600,21 @@ def report_area_sheet(path, df_summary):
     return
 
 
-def report_add_nan_to_summary(acquisition, fragment, masstrace, df_summary):
+def report_add_nan_to_summary(ui, df_summary):
     """
     Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
+
+    Parameters
+    ----------
+    ui
+        Instance of the UserInput class.
+    df_summary
+        DataFrame for storing results.
+
+    Returns
+    -------          
+    df_summary
+        Updated DataFrame for storing results.
     """
     # create DataFrame with correct format and fill it with NaN
     df = pandas.DataFrame(
