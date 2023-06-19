@@ -307,9 +307,6 @@ def initiate(path):
     # create DataFrame for data report
     df_summary = pandas.DataFrame(
         columns=[
-            "acquisition",
-            "fragment",
-            "mass_trace",
             "baseline_intercept",
             "baseline_slope",
             "mean",
@@ -317,7 +314,13 @@ def initiate(path):
             "std",
             "area",
             "height",
-            "sn",
+            "sn",          
+            "acquisition",
+            "experiment",
+            "precursor_mz",
+            "product_mz_start",
+            "product_mz_end",
+            "double_peak",
         ]
     )
     return df_summary, path
@@ -502,17 +505,21 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(path, idata):
+def report_save_idata(idata, ui: UserInput, filename: str):
     """
     Saves inference data object within a zip file.
 
     Parameters
     ----------
     idata
+        Inference data object resulting from sampling.
+    ui
+        Instance of the UserInput class.
+    filename
         Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
     """
-    with zipfile.ZipFile(rf"{path}/idata.zip", mode="a") as archive:
-        archive.write(idata.to_netcdf("idata"))
+    with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
+        archive.write(idata.to_netcdf(f"{filename}"))
     return
 
 
@@ -535,31 +542,75 @@ def report_add_data_to_summary(idata, df_summary, ui):
     df_summary
         Updated DataFrame for storing results
     """
-    # TODO split double peak up when reporting into first and second peak (when extracting the data from az.summary(idata))
-    parameters = [
-        "baseline_intercept",
-        "baseline_slope",
-        "mean",
-        "noise",
-        "std",
-        "area",
-        "height",
-        "sn",
-    ]
-    df = az.summary(idata).loc[parameters, :]
-    df["acquisition"] = len(parameters) * [f"{acquisition}"]
-    df["fragment"] = len(parameters) * [f"{fragment}"]
-    df["mass_trace"] = len(parameters) * [f"{mass_trace}"]
-    df_summary = pandas.concat([df_summary, df])
-    pandas.concat(summary_df, df)
+    # split double peak into first and second peak (when extracting the data from az.summary(idata))
+    if ui.double_peak:
+        # first peak of double peak
+        parameters = [
+            "baseline_intercept",
+            "baseline_slope",
+            "mean[0]",
+            "noise",
+            "std",
+            "area",
+            "height",
+            "sn",
+        ]
+        df = az.summary(idata).loc[parameters, :]
+        df.rename(columns={"mean[0]": "mean"})
+        df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
+        df["experiment"] = len(parameters) * [f"{ui.experiment}"]
+        df["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
+        df["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
+        df["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df["double_peak"] = len(parameters) * ["1st"]
+
+        # second peak of double peak
+        parameters = [
+            "baseline_intercept",
+            "baseline_slope",
+            "mean[1]",
+            "noise",
+            "std2",
+            "area2",
+            "height2",
+            "sn2",
+        ]
+        df2 = az.summary(idata).loc[parameters, :]
+        df2.rename(columns={"area2": "area", "height2": "height", "sn2": "sn", "std2": "std", "mean[1]": "mean"})
+        df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
+        df2["experiment"] = len(parameters) * [f"{ui.experiment}"]
+        df2["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
+        df2["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
+        df2["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df2["double_peak"] = len(parameters) * ["2nd"]
+        df_double = pandas.concat([df, df2]) 
+        df_summary = pandas.concat([df_summary, df_double]) 
+    
+    else:
+        # for single peak
+        parameters = [
+            "baseline_intercept",
+            "baseline_slope",
+            "mean",
+            "noise",
+            "std",
+            "area",
+            "height",
+            "sn",
+        ]
+        df = az.summary(idata).loc[parameters, :]
+        df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
+        df["experiment"] = len(parameters) * [f"{ui.experiment}"]
+        df["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
+        df["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
+        df["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df["double_peak"] = len(parameters) * [""]
+        df_summary = pandas.concat([df_summary, df])
+    pandas.concat(df_summary, df)
     # save summary df as Excel file
-    with pandas.ExcelWriter(path=path, engine="openpyxl", mode="w") as writer:
-        summary_df.to_excel(writer)
-    return summary_df
-
-
-def add_double_peak_data_to_summary():
-    return
+    with pandas.ExcelWriter(path=ui.path, engine="openpyxl", mode="w") as writer:
+        df_summary.to_excel(writer)
+    return df_summary
 
 
 def report_area_sheet(path, df_summary):
@@ -569,13 +620,14 @@ def report_area_sheet(path, df_summary):
     Parameters
     ----------
     path
-        Path to the directory containing the raw data
+        Path to the directory containing the raw data.
     df_summary
-        DataFrame for storing results
+        DataFrame for storing results.
     """
     # also save a version of df_summary only for areas with correct order and only necessary data
     df_area_summary = df_summary[df_summary.index == "area"]
-    sorted_area_summary = df_area_summary.sort_values(["acquisition", "mass_trace"])
+    # TODO: test whether this still works with the new layout of the report sheet
+    sorted_area_summary = df_area_summary.sort_values(["acquisition", "precursor_mz", "product_mz_start"])
     sorted_area_summary = sorted_area_summary.drop(
         labels=["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail"], axis=1
     )
@@ -693,9 +745,19 @@ def report_add_nan_to_summary(ui, df_summary):
         }
     ).transpose()
     # add information about the signal
-    df["acquisition"] = 8 * [f"{acquisition}"]
-    df["fragment"] = 8 * [f"{fragment}"]
-    df["mass_trace"] = 8 * [f"{masstrace}"]
+    df["acquisition"] = len(df.keys()) * [f"{ui.acquisition}"]
+    df["experiment"] = len(df.keys()) * [f"{ui.experiment}"]
+    df["precursor_mz"] = len(df.keys()) * [f"{ui.precursor_mz}"]
+    df["product_mz_start"] = len(df.keys()) * [f"{ui.product_mz_start}"]
+    df["product_mz_end"] = len(df.keys()) * [f"{ui.product_mz_end}"]
+    # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
+    if ui.double_peak:
+        df["double_peak"] = len(df.keys()) * [True]
+    else:
+        df["double_peak"] = len(df.keys()) * [False]
     # concatenate to existing summary DataFrame
     df_summary = pandas.concat([df_summary, df])
+    # save summary df as Excel file
+    with pandas.ExcelWriter(path=ui.path, engine="openpyxl", mode="w") as writer:
+        df_summary.to_excel(writer)
     return df_summary
