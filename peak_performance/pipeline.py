@@ -35,11 +35,11 @@ class UserInput:
         peak_width_estimate: Union[float, int],
         pre_filtering: bool,
         minimum_sn: Union(float, int),
-        timeseries: np.ndarray, 
-        acquisition: str, 
-        experiment: int, 
-        precursor_mz: Union(float, int), 
-        product_mz_start: Union(float, int), 
+        timeseries: np.ndarray,
+        acquisition: str,
+        experiment: int,
+        precursor_mz: Union(float, int),
+        product_mz_start: Union(float, int),
         product_mz_end: Union(float, int),
     ):
         """
@@ -91,21 +91,23 @@ class UserInput:
     def timeseries(self):
         """Getting the value of the timeseries attribute."""
         return self._timeseries
-    
+
     @timeseries.setter
     def timeseries(self, data):
         """Setting the value of the timeseries attribute."""
         if data is None:
             raise InputError(f"The timeseries parameter is a None type.")
         if not isinstance(data[0], np.array) or not isinstance(data[1], np.array):
-            raise InputError(f"The time or intensity array within the 'timeseries' ndarray is not a numpy array.")
+            raise InputError(
+                f"The time or intensity array within the 'timeseries' ndarray is not a numpy array."
+            )
         self._timeseries = data
- 
+
     @property
     def acquisition(self):
         """Getting the value of the acquisition attribute."""
         return self._acquisition
-    
+
     @acquisition.setter
     def acquisition(self, name):
         """Setting the value of the acquisition attribute."""
@@ -114,17 +116,19 @@ class UserInput:
         if name is None:
             raise InputError(f"The acquisition parameter is a None type.")
         self._acquisition = name
-    
+
     @property
     def experiment(self):
         """Getting the value of the experiment attribute."""
         return self._experiment
-    
+
     @experiment.setter
     def experiment(self, name):
         """Setting the value of the experiment attribute."""
         if not isinstance(name, int):
-            raise InputError(f"The experiment parameter is {type(name)} but needs to be an integer.")
+            raise InputError(
+                f"The experiment parameter is {type(name)} but needs to be an integer."
+            )
         if name is None:
             raise InputError(f"The experiment parameter is a None type.")
         self._experiment = name
@@ -133,26 +137,30 @@ class UserInput:
     def precursor_mz(self):
         """Getting the value of the precursor_mz attribute."""
         return self._precursor_mz
-    
+
     @precursor_mz.setter
     def precursor_mz(self, mz):
         """Setting the value of the precursor_mz attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float.")
+            raise InputError(
+                f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
+            )
         if mz is None:
             raise InputError(f"The precursor_mz parameter is a None type.")
         self._precursor_mz = mz
-    
+
     @property
     def product_mz_start(self):
         """Getting the value of the product_mz_start attribute."""
         return self._product_mz_start
-    
+
     @product_mz_start.setter
     def product_mz_start(self, mz):
         """Setting the value of the product_mz_start attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(f"The product_mz_start parameter is {type(mz)} but needs to be an integer or a float.")
+            raise InputError(
+                f"The product_mz_start parameter is {type(mz)} but needs to be an integer or a float."
+            )
         if mz is None:
             raise InputError(f"The product_mz_start parameter is a None type.")
         self._product_mz_start = mz
@@ -161,16 +169,18 @@ class UserInput:
     def product_mz_end(self):
         """Getting the value of the product_mz_end attribute."""
         return self._product_mz_end
-    
+
     @product_mz_end.setter
     def product_mz_end(self, mz):
         """Setting the value of the product_mz_end attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(f"The product_mz_end parameter is {type(mz)} but needs to be an integer or a float.")
+            raise InputError(
+                f"The product_mz_end parameter is {type(mz)} but needs to be an integer or a float."
+            )
         if mz is None:
             raise InputError(f"The product_mz_end parameter is a None type.")
         self._product_mz_end = mz
-  
+
     @property
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
@@ -314,7 +324,7 @@ def initiate(path):
             "std",
             "area",
             "height",
-            "sn",          
+            "sn",
             "acquisition",
             "experiment",
             "precursor_mz",
@@ -538,7 +548,7 @@ def report_add_data_to_summary(idata, df_summary, ui):
         Instance of the UserInput class
 
     Returns
-    -------          
+    -------
     df_summary
         Updated DataFrame for storing results
     """
@@ -576,16 +586,24 @@ def report_add_data_to_summary(idata, df_summary, ui):
             "sn2",
         ]
         df2 = az.summary(idata).loc[parameters, :]
-        df2.rename(columns={"area2": "area", "height2": "height", "sn2": "sn", "std2": "std", "mean[1]": "mean"})
+        df2.rename(
+            columns={
+                "area2": "area",
+                "height2": "height",
+                "sn2": "sn",
+                "std2": "std",
+                "mean[1]": "mean",
+            }
+        )
         df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df2["experiment"] = len(parameters) * [f"{ui.experiment}"]
         df2["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
         df2["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
         df2["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
         df2["double_peak"] = len(parameters) * ["2nd"]
-        df_double = pandas.concat([df, df2]) 
-        df_summary = pandas.concat([df_summary, df_double]) 
-    
+        df_double = pandas.concat([df, df2])
+        df_summary = pandas.concat([df_summary, df_double])
+
     else:
         # for single peak
         parameters = [
@@ -627,7 +645,9 @@ def report_area_sheet(path, df_summary):
     # also save a version of df_summary only for areas with correct order and only necessary data
     df_area_summary = df_summary[df_summary.index == "area"]
     # TODO: test whether this still works with the new layout of the report sheet
-    sorted_area_summary = df_area_summary.sort_values(["acquisition", "precursor_mz", "product_mz_start"])
+    sorted_area_summary = df_area_summary.sort_values(
+        ["acquisition", "precursor_mz", "product_mz_start"]
+    )
     sorted_area_summary = sorted_area_summary.drop(
         labels=["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail"], axis=1
     )
@@ -647,7 +667,7 @@ def report_add_nan_to_summary(ui, df_summary):
         DataFrame for storing results.
 
     Returns
-    -------          
+    -------
     df_summary
         Updated DataFrame for storing results.
     """
