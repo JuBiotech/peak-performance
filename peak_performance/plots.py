@@ -120,9 +120,7 @@ def plot_posterior_predictive(identifier, ui, idata, discarded):
         )
     else:
         pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_predictive_posterior.png")
-        pyplot.savefig(
-            rf"{ui.path}/{identifier[:-4]}_predictive_posterior.svg", format="svg"
-        )
+        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_predictive_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -169,13 +167,13 @@ def plot_posterior(identifier, ui, idata, discarded):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-        # if signal was discarded, add a "_NoPeak" to the file name
+    # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
         pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior_NoPeak.png")
         pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
     else:
         pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior.png")
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior.svg", format="svg")        
+        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()

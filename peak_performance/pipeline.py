@@ -1,9 +1,7 @@
-from datetime import datetime
-from datetime import date
 import os
-from typing import Any, Dict, List, Sequence, Tuple, Union
 import zipfile
-
+from datetime import date, datetime
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import arviz as az
 import numpy as np
@@ -220,9 +218,7 @@ class UserInput:
         # if any(self.retention_time_estimate) < 0:
         #     raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
-        user_info = dict(
-            zip(self.files, zip(self.double_peak, self.retention_time_estimate))
-        )
+        user_info = dict(zip(self.files, zip(self.double_peak, self.retention_time_estimate)))
         user_info["peak_width_estimate"] = self.peak_width_estimate
         user_info["pre_filtering"] = self.pre_filtering
         user_info["minimum_sn"] = self.minimum_sn
@@ -649,7 +645,9 @@ def report_add_data_to_summary(filename, idata, df_summary, ui):
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
     # save summary df as Excel file
-    with pandas.ExcelWriter(path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w") as writer:
+    with pandas.ExcelWriter(
+        path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w"
+    ) as writer:
         df_summary.to_excel(writer)
     return df_summary
 
@@ -801,6 +799,8 @@ def report_add_nan_to_summary(filename, ui, df_summary):
     # concatenate to existing summary DataFrame
     df_summary = pandas.concat([df_summary, df])
     # save summary df as Excel file
-    with pandas.ExcelWriter(path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w") as writer:
+    with pandas.ExcelWriter(
+        path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w"
+    ) as writer:
         df_summary.to_excel(writer)
     return df_summary
