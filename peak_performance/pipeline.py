@@ -28,8 +28,8 @@ class UserInput:
 
     def __init__(
         self,
-        path: str,
-        files: list,
+        path: Union[str, os.PathLike],
+        files: Sequence[Union[str, os.PathLike]],
         double_peak: List[bool],
         retention_time_estimate: Union[List[float], List[int]],
         peak_width_estimate: Union[float, int],
