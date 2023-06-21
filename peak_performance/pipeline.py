@@ -38,9 +38,9 @@ class UserInput:
         timeseries: np.ndarray,
         acquisition: str,
         experiment: int,
-        precursor_mz: Union[float, int],
-        product_mz_start: Union[float, int],
-        product_mz_end: Union[float, int],
+        precursor_mz: Number,
+        product_mz_start: Number,
+        product_mz_end: Number,
     ):
         """
         Parameters
