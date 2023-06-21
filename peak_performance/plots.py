@@ -4,16 +4,17 @@ import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
 from matplotlib import pyplot
+from pipeline import UserInput
 
 
-def plot_raw_data(identifier, ui):
+def plot_raw_data(identifier: str, ui: UserInput):
     """
     Plot just the raw data in case no peak was found.
 
     Parameters
     ----------
     identifier
-        unique identifier of this particular signal (e.g. filename).
+        Unique identifier of this particular signal (e.g. filename).
     ui
         Instance of the UserInput class.
     """
@@ -37,10 +38,29 @@ def plot_raw_data(identifier, ui):
     return
 
 
-def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None, **kwargs):
+def plot_density(
+    *, ax, x: np.ndarray, samples, percentiles=(5, 95), percentile_kwargs=None, **kwargs
+):
     """
     Method to plot the original data points alongside the posterior predictive plot (percentiles marked with a black, dashed line).
     Serves as a more accurate comparison between data and model than comparing data and posterior distribution.
+
+    Parameters
+    ----------
+    ax
+        Axes of a matplotlib figure.
+    x
+        Values of the x dimension of the plot (here: time).
+    samples
+        Posterior predictive samples taken from an inference data obejct.
+    percentiles
+        Lower and upper percentiles to be plotted.
+    **kwargs
+        The keyword arguments are used for plotting with ax.plot() and ax.stairs(), e.g. the following:
+    linestyle
+        Style of the line marking the border of the chosen percentiles (default = "--", i.e. a dashed line).
+    color
+        Color of the line marking the border of the chosen percentiles (default = "black").
     """
     assert samples.ndim == 2
 
@@ -80,19 +100,18 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
     return
 
 
-def plot_posterior_predictive(identifier, ui, idata, discarded):
+def plot_posterior_predictive(identifier: str, ui: UserInput, idata, discarded: bool):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
     Parameters
     ----------
-    ----------
     identifier
-        unique identifier of this particular signal
+        Unique identifier of this particular signal (e.g. filename).
     ui
         Instance of the UserInput class.
     idata
-        infernce data object
+        Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """
@@ -128,18 +147,18 @@ def plot_posterior_predictive(identifier, ui, idata, discarded):
     return
 
 
-def plot_posterior(identifier, ui, idata, discarded):
+def plot_posterior(identifier: str, ui: UserInput, idata, discarded: bool):
     """
     Save plot of posterior, estimated baseline and original data points.
 
     Parameters
     ----------
     identifier
-        unique identifier of this particular signal
+        Unique identifier of this particular signal (e.g. filename).
     ui
         Instance of the UserInput class.
     idata
-        infernce data object
+        Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """

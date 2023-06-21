@@ -6,27 +6,28 @@ import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
+from pipeline import UserInput
 
 
-def initial_guesses(time: np.array, intensity: np.array):
+def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     """
     Provide initial guesses for priors.
 
     Parameters
     ----------
     time
-        numpy array with the time values of the relevant timeframe
+        Numpy array with the time values of the relevant timeframe.
     intensity
-        numpy array with the intensity values of the relevant timeframe
+        Numpy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
     baseline_fit.slope : float or int
-        guess for the slope of the linear baseline prior
+        Guess for the slope of the linear baseline prior.
     baseline_fit.intercept : float or int
-        guess for the intercept of the linear baseline prior
+        Guess for the intercept of the linear baseline prior.
     noise_width_guess : float or int
-        guess for the width of the noise
+        Guess for the width of the noise.
     """
     # first create a simple baseline guess only to be able to "correct" the intensity data (y_corrected = y - y_baseline)
     # then, use the corrected data to determine which data points are going to be defined as noise
@@ -60,46 +61,46 @@ def initial_guesses(time: np.array, intensity: np.array):
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
 
-def normal_posterior(baseline, height, time, mean, std):
+def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     """
     Define a normally distributed posterior.
 
     Parameters
     ----------
     baseline
-        baseline of the data
+        Baseline of the data.
     height
-        height of the normal distribution
+        Height of the normal distribution.
     time
-        numpy array with the time values of the relevant timeframe
+        Numpy array with the time values of the relevant timeframe.
     mean
-        arithmetic mean of the normal distribution
+        Arithmetic mean of the normal distribution.
     std
-        standard deviation of the normal distribution
+        Standard deviation of the normal distribution.
 
     Returns
     -------
-    Probability density function (PDF) of the normally distributed posterior
+    Probability density function (PDF) of the normally distributed posterior.
     """
     return baseline + height * pt.exp(-0.5 * ((time - mean) / std) ** 2)
 
 
-def define_model_normal(time, intensity):
+def define_model_normal(ui: UserInput):
     """
     Define a model for fitting a normal distribution to the peak data.
 
     Parameters
     ----------
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+    ui
+        Instance of the UserInput class.
 
     Returns
     -------
     pmodel
-        pymc model
+        Pymc model.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
@@ -132,31 +133,31 @@ def define_model_normal(time, intensity):
     return pmodel
 
 
-def double_normal_posterior(baseline, height, height2, time, mean, std, std2):
+def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, std, std2):
     """
     Define a univariate ordered normal distribution as the posterior.
 
     Parameters
     ----------
     baseline
-        baseline of the data
+        Baseline of the data.
     height
-        height of the first peak
+        Height of the first peak.
     height2
-        height of the second peak
+        Height of the second peak.
     time
-        numpy array with the time values of the relevant timeframe
+        Numpy array with the time values of the relevant timeframe.
     mean
-        arithmetic mean of the normal distribution
+        Arithmetic mean of the normal distribution.
     std
-        standard deviation of the first peak
+        Standard deviation of the first peak.
     std2
-        standard deviation of the second peak
+        Standard deviation of the second peak.
 
     Returns
     -------
     y
-        Probability density function (PDF) of a univariate ordered normal distribution as the posterior
+        Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
     """
     y = (
         baseline
@@ -166,22 +167,22 @@ def double_normal_posterior(baseline, height, height2, time, mean, std, std2):
     return y
 
 
-def define_model_doublepeak(time, intensity):
+def define_model_doublepeak(ui: UserInput):
     """
     Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
 
     Parameters
     ----------
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+    ui
+        Instance of the UserInput class.
 
     Returns
     -------
     pmodel
-        pymc model
+        Pymc model.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
@@ -283,24 +284,24 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     Parameters
     ----------
     baseline
-        baseline of the data
+        Baseline of the data.
     area
-        peak area
+        Peak area.
     time
-        numpy array with the time values of the relevant timeframe
+        Numpy array with the time values of the relevant timeframe.
     intensity
-        numpy array with the intensity values of the relevant timeframe
+        Numpy array with the intensity values of the relevant timeframe.
     mean
-        location parameter, i.e. arithmetic mean
+        Location parameter, i.e. arithmetic mean.
     std
-        scale parameter, i.e. standard deviation
+        Scale parameter, i.e. standard deviation.
     alpha
-        skewness parameter
+        Skewness parameter.
 
     Returns
     -------
     y
-        Probability density function (PDF) of a univariate ordered normal distribution as the posterior
+        Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
     """
     # posterior
     y = baseline + area * (
@@ -311,22 +312,22 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     return y
 
 
-def define_model_skew(time, intensity):
+def define_model_skew(ui: UserInput):
     """
     Define a model for fitting a skew normal distribution to the peak data.
 
     Parameters
     ----------
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+    ui
+        Instance of the UserInput class.
 
     Returns
     -------
     pmodel
-        pymc model
+        Pymc model.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values

@@ -1,6 +1,7 @@
 import os
 import zipfile
 from datetime import date, datetime
+from numbers import Number
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import arviz as az
@@ -58,7 +59,7 @@ class UserInput:
         pre_filtering
             If True, potential peaks will be filtered based on retention time and signal to noise ratio before sampling.
         minimum_sn
-            Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering
+            Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering.
         timeseries
             Numpy Array containing time (at first position) and intensity (at second position) data as numpy arrays.
         acquisition
@@ -225,7 +226,7 @@ class UserInput:
         return user_info
 
 
-def detect_npy(path):
+def detect_npy(path: Union[str, os.PathLike]):
     """
     Detect all .npy files with time and intensity data for peaks in a given directory.
 
@@ -246,7 +247,7 @@ def detect_npy(path):
     return npy_files
 
 
-def scan_folder(path):
+def scan_folder(path: Union[str, os.PathLike]):
     """
     Detect all files in a given directory and returns them as a list.
     The files should a) contain time and intensity data and b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
@@ -259,7 +260,7 @@ def scan_folder(path):
     return os.listdir(path)
 
 
-def parse_data(path: str, filename: str):
+def parse_data(path: Union[str, os.PathLike], filename: str):
     """
     Extract names of data files. Use this in a for-loop with the data file names from detect_npy() or scane_folder().
 
@@ -298,7 +299,7 @@ def parse_data(path: str, filename: str):
     return timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end
 
 
-def initiate(path):
+def initiate(path: Union[str, os.PathLike]):
     """
     Create a folder for the results. Also create a zip file inside that folder. Also create df_summary.
 
@@ -352,7 +353,9 @@ def initiate(path):
     return df_summary, path
 
 
-def prefiltering(filename: str, ui: UserInput, noise_width_guess: float, df_summary):
+def prefiltering(
+    filename: str, ui: UserInput, noise_width_guess: float, df_summary: pandas.DataFrame
+):
     """
     Optional method to skip signals where clearly no peak is present. Saves a lot of computation time.
 
@@ -412,6 +415,24 @@ def prefiltering(filename: str, ui: UserInput, noise_width_guess: float, df_summ
 
 
 def sampling(pmodel, **sample_kwargs):
+    """Performs sampling.
+
+    Parameters
+    ----------
+    pmodel
+        A pymc model.
+    **kwargs
+        The keyword arguments are used in pm.sample().
+    tune
+        Number of tuning samples (default = 2000).
+    draws
+        Number of samples after tuning (default = 2000).
+
+    Returns
+    -------
+    idata
+        Inference data object.
+    """
     sample_kwargs.setdefault("tune", 2000)
     sample_kwargs.setdefault("draws", 2000)
     with pmodel:
@@ -420,7 +441,7 @@ def sampling(pmodel, **sample_kwargs):
     return idata
 
 
-def postfiltering(filename, idata, ui, df_summary):
+def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFrame):
     """
     Method to filter out false positive peaks after sampling based on the obtained uncertainties of several peak parameters.
 
@@ -528,6 +549,20 @@ def postfiltering(filename, idata, ui, df_summary):
 
 
 def posterior_predictive_sampling(pmodel, idata):
+    """Performs posterior predictive sampling for signals recognized as peaks.
+
+    Parameters
+    ----------
+    pmodel
+        A pymc model.
+    idata
+        Previously sampled inference data object.
+
+    Returns
+    -------
+    idata
+        Inference data object updated with the posterior predictive samples.
+    """
     with pmodel:
         idata.extend(pm.sample_posterior_predictive(idata))
     return idata
@@ -552,7 +587,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     return
 
 
-def report_add_data_to_summary(filename, idata, df_summary, ui):
+def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
@@ -560,11 +595,11 @@ def report_add_data_to_summary(filename, idata, df_summary, ui):
     Parameters
     ----------
     idata
-        Inference data object resulting from sampling
+        Inference data object resulting from sampling.
     df_summary
-        DataFrame for storing results
+        DataFrame for storing results.
     ui
-        Instance of the UserInput class
+        Instance of the UserInput class.
 
     Returns
     -------
@@ -652,7 +687,7 @@ def report_add_data_to_summary(filename, idata, df_summary, ui):
     return df_summary
 
 
-def report_area_sheet(path, df_summary):
+def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFrame):
     """
     Save a different, more minimalist report sheet focussing on the area data.
 
@@ -676,7 +711,7 @@ def report_area_sheet(path, df_summary):
     return
 
 
-def report_add_nan_to_summary(filename, ui, df_summary):
+def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.DataFrame):
     """
     Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
 
