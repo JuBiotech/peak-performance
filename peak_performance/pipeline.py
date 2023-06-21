@@ -48,7 +48,7 @@ class UserInput:
         Parameters
         ----------
         path
-            Path to the folder containing raw data.
+            Path to the folder containing the results of the current run.
         files
             List of raw data file names in path.
         double_peak
@@ -99,7 +99,7 @@ class UserInput:
         """Setting the value of the timeseries attribute."""
         if data is None:
             raise InputError(f"The timeseries parameter is a None type.")
-        if not isinstance(data[0], np.array) or not isinstance(data[1], np.array):
+        if not isinstance(data[0], np.ndarray) or not isinstance(data[1], np.ndarray):
             raise InputError(
                 f"The time or intensity array within the 'timeseries' ndarray is not a numpy array."
             )
@@ -125,15 +125,18 @@ class UserInput:
         return self._experiment
 
     @experiment.setter
-    def experiment(self, name):
+    def experiment(self, number):
         """Setting the value of the experiment attribute."""
-        if not isinstance(name, int):
-            raise InputError(
-                f"The experiment parameter is {type(name)} but needs to be an integer."
-            )
-        if name is None:
+        if not isinstance(number, int):
+            try:
+                number = int(number)
+            except:
+                raise InputError(
+                    f"The experiment parameter is {type(number)} but needs to be an integer."
+                )
+        if number is None:
             raise InputError(f"The experiment parameter is a None type.")
-        self._experiment = name
+        self._experiment = number
 
     @property
     def precursor_mz(self):
@@ -144,9 +147,12 @@ class UserInput:
     def precursor_mz(self, mz):
         """Setting the value of the precursor_mz attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(
-                f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-            )
+            try:
+                mz = float(mz)
+            except:
+                raise InputError(
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
+                )
         if mz is None:
             raise InputError(f"The precursor_mz parameter is a None type.")
         self._precursor_mz = mz
@@ -160,9 +166,12 @@ class UserInput:
     def product_mz_start(self, mz):
         """Setting the value of the product_mz_start attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(
-                f"The product_mz_start parameter is {type(mz)} but needs to be an integer or a float."
-            )
+            try:
+                mz = float(mz)
+            except:
+                raise InputError(
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
+                )
         if mz is None:
             raise InputError(f"The product_mz_start parameter is a None type.")
         self._product_mz_start = mz
@@ -176,9 +185,12 @@ class UserInput:
     def product_mz_end(self, mz):
         """Setting the value of the product_mz_end attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
-            raise InputError(
-                f"The product_mz_end parameter is {type(mz)} but needs to be an integer or a float."
-            )
+            try:
+                mz = float(mz)
+            except:
+                raise InputError(
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
+                )
         if mz is None:
             raise InputError(f"The product_mz_end parameter is a None type.")
         self._product_mz_end = mz
@@ -186,34 +198,35 @@ class UserInput:
     @property
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
-        # first, some sanity checks
-        if len(self.files) != len(self.double_peaks):
-            raise InputError(
-                f"The length of 'files' ({len(self.files)}) and of 'double_peak' ({len(self.double_peak)}) are not identical."
-            )
-        if self.pre_filtering:
-            # check length of lists
-            if len(self.files) != len(self.pre_filtering) or len(self.double_peak) != len(
-                self.retention_time_estimate
-            ):
-                raise InputError(
-                    f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
-                )
-        else:
-            # if pre_filtering is False, then retention_time_estimate is not needed but the dictionary still needs to be created without errors -> set it to None
-            if len(self.retention_time_estimate) == 1:
-                self.retention_time_estimate = len(self.files) * None
-            elif not self.retention_time_estimate:
-                self.retention_time_estimate = len(self.files) * None
-        if self.retention_time_estimate.any() < 0:
-            raise InputError("Retention time estimates below 0 are not valid.")
+        # # first, some sanity checks
+        # if len(self.files) != len(self.double_peak):
+        #     raise InputError(
+        #         f"The length of 'files' ({len(self.files)}) and of 'double_peak' ({len(self.double_peak)}) are not identical."
+        #     )
+        # if self.pre_filtering:
+        #     # check length of lists
+        #     if len(self.files) != len(self.pre_filtering) or len(self.double_peak) != len(
+        #         self.retention_time_estimate
+        #     ):
+        #         raise InputError(
+        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+        #         )
+        # else:
+        #     # if pre_filtering is False, then retention_time_estimate is not needed but the dictionary still needs to be created without errors -> set it to None
+        #     if len(self.retention_time_estimate) == 1:
+        #         self.retention_time_estimate = len(self.files) * None
+        #     elif not self.retention_time_estimate:
+        #         self.retention_time_estimate = len(self.files) * None
+        # if any(self.retention_time_estimate) < 0:
+        #     raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
-        user_dict = dict(
-            zip(self.raw_data_files, zip(self.double_peak, self.retention_time_estimate))
+        user_info = dict(
+            zip(self.files, zip(self.double_peak, self.retention_time_estimate))
         )
-        user_dict["peak_width_estimate"] = self.peak_width_estimate
-        user_dict["pre_filtering"] = self.pre_filtering
-        return user_dict
+        user_info["peak_width_estimate"] = self.peak_width_estimate
+        user_info["pre_filtering"] = self.pre_filtering
+        user_info["minimum_sn"] = self.minimum_sn
+        return user_info
 
 
 def detect_npy(path):
@@ -250,12 +263,14 @@ def scan_folder(path):
     return os.listdir(path)
 
 
-def parse_data(filename: str):
+def parse_data(path: str, filename: str):
     """
     Extract names of data files. Use this in a for-loop with the data file names from detect_npy() or scane_folder().
 
     Parameters
     ----------
+    path
+        Path to the raw data files.
     filename
         Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
 
@@ -275,7 +290,7 @@ def parse_data(filename: str):
         End of the mass to charge ratio range of the product ion in the TOF.
     """
     # load time series
-    timeseries = np.load(f"{filename}")
+    timeseries = np.load(rf"{path}\{filename}")
     # get information from the raw data file name
     splits = filename.split("_")
     acquisition = splits[0]
@@ -307,27 +322,29 @@ def initiate(path):
     today = str(date.today())
     now = datetime.now().strftime("%H-%M-%S")
     timestamp = today + "_" + now
+    run_dir = timestamp + "_run"
     # create a directory
-    path = path + "/" + timestamp + "run"
+    path = path + "/" + run_dir
     os.mkdir(rf"{path}")
-    # write text file, zip it, then delete it (cannot create an empty zip)
-    text_file = open(rf"{path}/readme.txt", "w")
-    txt = text_file.write(f"This batch was started on the {timestamp}.")
-    text_file.close()
-    with zipfile.ZipFile(rf"{path}/idata.zip", mode="w") as archive:
-        archive.write(rf"{path}/readme.txt")
-    os.remove(rf"{path}/readme.txt")
+    # # write text file, zip it, then delete it (cannot create an empty zip)
+    # text_file = open(rf"{path}/readme.txt", "w")
+    # txt = text_file.write(f"This batch was started on the {timestamp}.")
+    # text_file.close()
+    # with zipfile.ZipFile(rf"{path}/idata.zip", mode="w") as archive:
+    #     archive.write(rf"./{run_dir}/readme.txt")
+    # os.remove(rf"{path}/readme.txt")
     # create DataFrame for data report
     df_summary = pandas.DataFrame(
         columns=[
-            "baseline_intercept",
-            "baseline_slope",
             "mean",
-            "noise",
-            "std",
-            "area",
-            "height",
-            "sn",
+            "sd",
+            "hdi_3%",
+            "hdi_97%",
+            "mcse_mean",
+            "mcse_sd",
+            "ess_bulk",
+            "ess_tail",
+            "r_hat",
             "acquisition",
             "experiment",
             "precursor_mz",
@@ -339,7 +356,7 @@ def initiate(path):
     return df_summary, path
 
 
-def prefiltering(filename: str, ui: UserInput, noise_width_guess: float):
+def prefiltering(filename: str, ui: UserInput, noise_width_guess: float, df_summary):
     """
     Optional method to skip signals where clearly no peak is present. Saves a lot of computation time.
 
@@ -358,14 +375,14 @@ def prefiltering(filename: str, ui: UserInput, noise_width_guess: float):
         True, if any peak candidate was found within the time frame; False, if not.
     """
     # pre-fit tests for peaks to save computation time (optional)
+    doublepeak = ui.user_info[filename][0]
     t_ret = ui.user_info[filename][1]
-    est_width = ui.user_info[est_width]
-    sn_min = ui.user_info[sn_min]
+    est_width = ui.peak_width_estimate
     # find all potential peaks with scipy
     peaks, _ = scipy.signal.find_peaks(ui.timeseries[1])
     peak_candidates = []
     # differentiate between single and double peaks
-    if not ui.user_info["double_peak"]:
+    if not doublepeak:
         # single peaks
         for peak in peaks:
             if (
@@ -393,9 +410,9 @@ def prefiltering(filename: str, ui: UserInput, noise_width_guess: float):
             ):
                 peak_candidates.append(peak)
     if not peak_candidates:
-        report_add_nan_to_summary()
-        return False
-    return True
+        df_summary = report_add_nan_to_summary(filename, ui, df_summary)
+        return False, df_summary
+    return True, df_summary
 
 
 def sampling(pmodel, **sample_kwargs):
@@ -407,12 +424,14 @@ def sampling(pmodel, **sample_kwargs):
     return idata
 
 
-def postfiltering(idata, ui):
+def postfiltering(filename, idata, ui, df_summary):
     """
     Method to filter out false positive peaks after sampling based on the obtained uncertainties of several peak parameters.
 
     Parameters
     ----------
+    filename
+        Name of the raw data file.
     idata
         Inference data object resulting from sampling.
     ui
@@ -429,7 +448,10 @@ def postfiltering(idata, ui):
         True: discard sample.
     """
     # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria were not met
-    if not ui.user_info["double_peak"] == True:
+    doublepeak = ui.user_info[filename][0]
+    resample = False
+    discard = False
+    if not doublepeak == True:
         # for single peak
         if (
             any(list(az.summary(idata).loc[:, "r_hat"])) > 1.05
@@ -449,16 +471,14 @@ def postfiltering(idata, ui):
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                report_add_nan_to_summary()
+                df_summary = report_add_nan_to_summary(filename, ui, df_summary)
                 resample = False
                 discard = True
-                return resample, discard
             else:
                 # r_hat failed but rest of post-fit check passed
                 # sample again with more tune samples to possibly reach convergence yet
                 resample = True
                 discard = False
-                return resample, discard
     else:
         # for double peak
         if (
@@ -500,16 +520,15 @@ def postfiltering(idata, ui):
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                report_add_nan_to_summary()
+                df_summary = report_add_nan_to_summary(filename, ui, df_summary)
                 resample = False
                 discard = True
-                return resample, discard
             else:
                 # r_hat failed but rest of post-fit check passed
                 # sample again with more tune samples to possibly reach convergence yet
                 resample = True
                 discard = False
-                return resample, discard
+    return resample, discard, df_summary
 
 
 def posterior_predictive_sampling(pmodel, idata):
@@ -531,12 +550,13 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     filename
         Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
     """
-    with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
-        archive.write(idata.to_netcdf(f"{filename}"))
+    # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
+    #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))
+    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}")
     return
 
 
-def report_add_data_to_summary(idata, df_summary, ui):
+def report_add_data_to_summary(filename, idata, df_summary, ui):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
@@ -556,7 +576,7 @@ def report_add_data_to_summary(idata, df_summary, ui):
         Updated DataFrame for storing results
     """
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
-    if ui.double_peak:
+    if ui.user_info[filename][0]:
         # first peak of double peak
         parameters = [
             "baseline_intercept",
@@ -571,10 +591,10 @@ def report_add_data_to_summary(idata, df_summary, ui):
         df = az.summary(idata).loc[parameters, :]
         df.rename(columns={"mean[0]": "mean"})
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment"] = len(parameters) * [f"{ui.experiment}"]
-        df["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
-        df["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
-        df["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df["experiment"] = len(parameters) * [ui.experiment]
+        df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
+        df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
@@ -621,15 +641,15 @@ def report_add_data_to_summary(idata, df_summary, ui):
         ]
         df = az.summary(idata).loc[parameters, :]
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment"] = len(parameters) * [f"{ui.experiment}"]
-        df["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
-        df["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
-        df["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df["experiment"] = len(parameters) * [ui.experiment]
+        df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
+        df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * [""]
         df_summary = pandas.concat([df_summary, df])
-    pandas.concat(df_summary, df)
+    # pandas.concat(df_summary, df)
     # save summary df as Excel file
-    with pandas.ExcelWriter(path=ui.path, engine="openpyxl", mode="w") as writer:
+    with pandas.ExcelWriter(path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w") as writer:
         df_summary.to_excel(writer)
     return df_summary
 
@@ -658,7 +678,7 @@ def report_area_sheet(path, df_summary):
     return
 
 
-def report_add_nan_to_summary(ui, df_summary):
+def report_add_nan_to_summary(filename, ui, df_summary):
     """
     Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
 
@@ -768,19 +788,19 @@ def report_add_nan_to_summary(ui, df_summary):
         }
     ).transpose()
     # add information about the signal
-    df["acquisition"] = len(df.keys()) * [f"{ui.acquisition}"]
-    df["experiment"] = len(df.keys()) * [f"{ui.experiment}"]
-    df["precursor_mz"] = len(df.keys()) * [f"{ui.precursor_mz}"]
-    df["product_mz_start"] = len(df.keys()) * [f"{ui.product_mz_start}"]
-    df["product_mz_end"] = len(df.keys()) * [f"{ui.product_mz_end}"]
+    df["acquisition"] = len(df.index) * [f"{ui.acquisition}"]
+    df["experiment"] = len(df.index) * [ui.experiment]
+    df["precursor_mz"] = len(df.index) * [ui.precursor_mz]
+    df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
+    df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
-    if ui.double_peak:
-        df["double_peak"] = len(df.keys()) * [True]
+    if ui.user_info[filename][0]:
+        df["double_peak"] = len(df.index) * [True]
     else:
-        df["double_peak"] = len(df.keys()) * [False]
+        df["double_peak"] = len(df.index) * [False]
     # concatenate to existing summary DataFrame
     df_summary = pandas.concat([df_summary, df])
     # save summary df as Excel file
-    with pandas.ExcelWriter(path=ui.path, engine="openpyxl", mode="w") as writer:
+    with pandas.ExcelWriter(path=rf"{ui.path}/peak_data_summary.xlsx", engine="openpyxl", mode="w") as writer:
         df_summary.to_excel(writer)
     return df_summary

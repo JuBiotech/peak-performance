@@ -368,10 +368,11 @@ def define_model_skew(time, intensity):
         mode_skew = pm.Deterministic("mode_skew", mode_skew_formula)
         # then calculate the height based on the mode
         height_formula = height_calculation(area, mean, std, alpha, mode_skew)
-        pm.Deterministic(
+        height = pm.Deterministic(
             "height",
             height_formula,
         )
+        sn = pm.Deterministic("sn", height / noise)
         y = skew_normal_posterior(baseline, area, time, mean, std, alpha)
         y = pm.Deterministic("y", y)
 
