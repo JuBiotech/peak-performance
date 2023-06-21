@@ -73,7 +73,7 @@ class UserInput:
             End of the mass to charge ratio range of the product ion in the TOF.
         """
         self.path = path
-        self.files = files
+        self.files = list(files)
         self.double_peak = double_peak
         self.retention_time_estimate = retention_time_estimate
         self.peak_width_estimate = peak_width_estimate
