@@ -28,6 +28,7 @@ dependencies = [
     "pymc>=5.0.2",
     "pytensor",
     "scipy",
+    "openpyxl",
 ]
 
 [project.optional-dependencies]
