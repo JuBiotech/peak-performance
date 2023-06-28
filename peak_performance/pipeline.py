@@ -251,7 +251,10 @@ def detect_npy(path: Union[str, os.PathLike]):
 def scan_folder(path: Union[str, os.PathLike]):
     """
     Detect all files in a given directory and returns them as a list.
-    The files should a) contain time and intensity data and b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
+
+    The files should
+    a) contain time and intensity data and
+    b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
 
     Parameters
     ----------
