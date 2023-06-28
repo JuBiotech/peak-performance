@@ -245,14 +245,17 @@ def detect_npy(path: Union[str, os.PathLike]):
     all_files = os.listdir(path)
     npy_files = [file for file in all_files if ".npy" in file]
     if not npy_files:
-        raise ParsingError(f"In the given directory '{path}', there are no .npy files.")
+        raise FileNotFoundError(f"In the given directory '{path}', there are no .npy files.")
     return npy_files
 
 
 def scan_folder(path: Union[str, os.PathLike]):
     """
     Detect all files in a given directory and returns them as a list.
-    The files should a) contain time and intensity data and b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
+
+    The files should
+    a) contain time and intensity data and
+    b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
 
     Parameters
     ----------
@@ -264,7 +267,9 @@ def scan_folder(path: Union[str, os.PathLike]):
 
 def parse_data(path: Union[str, os.PathLike], filename: str):
     """
-    Extract names of data files. Use this in a for-loop with the data file names from detect_npy() or scane_folder().
+    Extract names of data files.
+
+    Use this in a for-loop with the data file names from detect_npy() or scan_folder().
 
     Parameters
     ----------
@@ -289,7 +294,7 @@ def parse_data(path: Union[str, os.PathLike], filename: str):
         End of the mass to charge ratio range of the product ion in the TOF.
     """
     # load time series
-    timeseries = np.load(rf"{path}\{filename}")
+    timeseries = np.load(Path(path) / filename)
     # get information from the raw data file name
     splits = filename.split("_")
     acquisition = splits[0]
