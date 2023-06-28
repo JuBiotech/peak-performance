@@ -293,7 +293,7 @@ def parse_data(path: Union[str, os.PathLike], filename: str):
         End of the mass to charge ratio range of the product ion in the TOF.
     """
     # load time series
-    timeseries = np.load(rf"{path}\{filename}")
+    timeseries = np.load(Path(path) / filename)
     # get information from the raw data file name
     splits = filename.split("_")
     acquisition = splits[0]
