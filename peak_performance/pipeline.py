@@ -244,7 +244,7 @@ def detect_npy(path: Union[str, os.PathLike]):
     all_files = os.listdir(path)
     npy_files = [file for file in all_files if ".npy" in file]
     if not npy_files:
-        raise ParsingError(f"In the given directory '{path}', there are no .npy files.")
+        raise FileNotFoundError(f"In the given directory '{path}', there are no .npy files.")
     return npy_files
 
 
