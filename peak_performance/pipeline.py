@@ -266,7 +266,9 @@ def scan_folder(path: Union[str, os.PathLike]):
 
 def parse_data(path: Union[str, os.PathLike], filename: str):
     """
-    Extract names of data files. Use this in a for-loop with the data file names from detect_npy() or scane_folder().
+    Extract names of data files.
+
+    Use this in a for-loop with the data file names from detect_npy() or scan_folder().
 
     Parameters
     ----------
