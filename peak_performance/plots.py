@@ -4,7 +4,7 @@ import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
 from matplotlib import pyplot
-from peak_performance import pipeline as pi
+from . import pipeline as pi
 
 
 def plot_raw_data(identifier: str, ui: pi.UserInput):

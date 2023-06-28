@@ -6,7 +6,7 @@ import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
-from peak_performance import pipeline as pi
+from . import pipeline as pi
 
 
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):
