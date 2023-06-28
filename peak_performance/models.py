@@ -97,7 +97,7 @@ def define_model_normal(ui: pi.UserInput):
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
