@@ -14,6 +14,7 @@ import scipy.integrate
 import scipy.signal
 import scipy.stats as st
 from matplotlib import pyplot
+from pathlib import Path
 
 
 class ParsingError(Exception):
