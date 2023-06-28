@@ -377,8 +377,10 @@ def prefiltering(
 
     Returns
     -------
-    Bool
+    found_peak
         True, if any peak candidate was found within the time frame; False, if not.
+    df_summary
+        Dataframe with peak parameters within the time frame.
     """
     # pre-fit tests for peaks to save computation time (optional)
     doublepeak = ui.user_info[filename][0]
