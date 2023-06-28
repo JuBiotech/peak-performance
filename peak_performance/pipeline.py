@@ -2,6 +2,7 @@ import os
 import zipfile
 from datetime import date, datetime
 from numbers import Number
+from pathlib import Path
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import arviz as az
@@ -14,7 +15,6 @@ import scipy.integrate
 import scipy.signal
 import scipy.stats as st
 from matplotlib import pyplot
-from pathlib import Path
 
 
 class ParsingError(Exception):
