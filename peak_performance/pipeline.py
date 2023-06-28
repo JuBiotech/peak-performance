@@ -318,7 +318,7 @@ def initiate(path: Union[str, os.PathLike]):
     Returns
     -------
     df_summary
-        DataFrame for storing results.
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     path
         Updated path variable pointing to the newly created folder for this batch.
     """
@@ -380,7 +380,7 @@ def prefiltering(
     found_peak
         True, if any peak candidate was found within the time frame; False, if not.
     df_summary
-        Dataframe with peak parameters within the time frame.
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # pre-fit tests for peaks to save computation time (optional)
     doublepeak = ui.user_info[filename][0]
@@ -462,6 +462,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
         Inference data object resulting from sampling.
     ui
         Instance of the UserInput class.
+    df_summary
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
 
     Returns
     -------
@@ -606,14 +608,14 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
     idata
         Inference data object resulting from sampling.
     df_summary
-        DataFrame for storing results.
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     ui
         Instance of the UserInput class.
 
     Returns
     -------
     df_summary
-        Updated DataFrame for storing results
+        Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
     if ui.user_info[filename][0]:
@@ -705,7 +707,7 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     path
         Path to the directory containing the raw data.
     df_summary
-        DataFrame for storing results.
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # also save a version of df_summary only for areas with correct order and only necessary data
     df_area_summary = df_summary[df_summary.index == "area"]
@@ -729,12 +731,12 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     ui
         Instance of the UserInput class.
     df_summary
-        DataFrame for storing results.
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
 
     Returns
     -------
     df_summary
-        Updated DataFrame for storing results.
+        Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # create DataFrame with correct format and fill it with NaN
     df = pandas.DataFrame(
