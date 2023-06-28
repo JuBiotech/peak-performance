@@ -328,8 +328,8 @@ def initiate(path: Union[str, os.PathLike]):
     timestamp = today + "_" + now
     run_dir = timestamp + "_run"
     # create a directory
-    path = path + "/" + run_dir
-    os.mkdir(rf"{path}")
+    path = Path(path) / run_dir
+    path.mkdir(exist_ok=True)
     # # write text file, zip it, then delete it (cannot create an empty zip)
     # text_file = open(rf"{path}/readme.txt", "w")
     # txt = text_file.write(f"This batch was started on the {timestamp}.")
