@@ -53,7 +53,8 @@ class UserInput:
         double_peak
             List with Booleans in the same order as files. Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
         retention_time_estimate
-            In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files. In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
+            In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
+            In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
         peak_width_estimate
             Rough estimate of the average peak width in minutes expected for the LC-MS method with which the data was obtained.
         pre_filtering
