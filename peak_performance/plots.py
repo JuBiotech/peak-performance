@@ -136,13 +136,13 @@ def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarde
     pyplot.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_predictive_posterior_NoPeak.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
         pyplot.savefig(
-            rf"{ui.path}/{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
+            Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
         )
     else:
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_predictive_posterior.png")
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_predictive_posterior.svg", format="svg")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -191,11 +191,11 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     pyplot.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior_NoPeak.png")
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
     else:
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior.png")
-        pyplot.savefig(rf"{ui.path}/{identifier[:-4]}_posterior.svg", format="svg")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
