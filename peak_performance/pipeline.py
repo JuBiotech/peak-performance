@@ -389,28 +389,37 @@ def prefiltering(
     if not doublepeak:
         # single peaks
         for peak in peaks:
+            # define conditions for passing the pre-filtering
+            # check proximity of any peak candidate to the estimated retention time
+            retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
+            # check signal to noise ratio
+            signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
+            # check the neighbouring data points to prevent classification of a single elevated data point as a peak
+            check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
+            check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
             if (
-                # check proximity of any peak candidate to the estimated retention time
-                t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
-                # check signal to noise ratio
-                and ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
-                # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-                and ui.timeseries[1][peak - 1] / noise_width_guess > 2
-                and ui.timeseries[1][peak + 1] / noise_width_guess > 2
+                retention_time_condition
+                and signal_to_noise_condition
+                and check_preceding_point
+                and check_succeeding_point
             ):
                 peak_candidates.append(peak)
     else:
         # double peaks
         for peak in peaks:
+            # define conditions for passing the pre-filtering
+            # check proximity of any peak candidate to the estimated retention time
+            retention_time_condition = t_ret[0] - est_width <= ui.timeseries[0][peak] <= t_ret[0] + est_width or t_ret[1] - est_width <= ui.timeseries[0][peak] <= t_ret[1] + est_width
+            # check signal to noise ratio
+            signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
+            # check the neighbouring data points to prevent classification of a single elevated data point as a peak
+            check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
+            check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
             if (
-                # check proximity of any peak candidate to the estimated retention time of either the first or the second peak
-                t_ret[0] - est_width <= ui.timeseries[0][peak] <= t_ret[0] + est_width
-                or t_ret[1] - est_width <= ui.timeseries[0][peak] <= t_ret[1] + est_width
-                # check signal to noise ratio
-                and ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
-                # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-                and ui.timeseries[1][peak - 1] / noise_width_guess > 2
-                and ui.timeseries[1][peak + 1] / noise_width_guess > 2
+                retention_time_condition
+                and signal_to_noise_condition
+                and check_preceding_point
+                and check_succeeding_point
             ):
                 peak_candidates.append(peak)
     if not peak_candidates:

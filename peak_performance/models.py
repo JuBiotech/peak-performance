@@ -71,7 +71,7 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     baseline
         Baseline of the data.
     height
-        Height of the normal distribution.
+        Height of the normal distribution (starting from the baseline, thus not the total height).
     time
         NumPy array with the time values of the relevant timeframe.
     mean
