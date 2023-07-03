@@ -51,5 +51,7 @@ line-length = 100
 [tool.coverage.run]
 omit = [
     # exclude tests files from coverage calculation
-    "**/test*.py"
+    "**/test*.py",
+    "**/example",
+    "**/notebooks",
 ]
