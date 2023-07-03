@@ -64,7 +64,7 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
 
 def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     """
-    Define a normally distributed posterior.
+    Model a peak shaped like the PDF of a normal distribution.
 
     Parameters
     ----------
