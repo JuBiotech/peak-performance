@@ -63,7 +63,7 @@ class UserInput:
         minimum_sn
             Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering.
         timeseries
-            Numpy Array containing time (at first position) and intensity (at second position) data as numpy arrays.
+            NumPy Array containing time (at first position) and intensity (at second position) data as NumPy arrays.
         acquisition
             Name of a single acquisition.
         experiment
@@ -100,11 +100,7 @@ class UserInput:
         """Setting the value of the timeseries attribute."""
         if data is None:
             raise InputError(f"The timeseries parameter is a None type.")
-        if not isinstance(data[0], np.ndarray) or not isinstance(data[1], np.ndarray):
-            raise InputError(
-                f"The time or intensity array within the 'timeseries' ndarray is not a numpy array."
-            )
-        self._timeseries = data
+        self._timeseries = np.asarray(data)
 
     @property
     def acquisition(self):
@@ -276,12 +272,12 @@ def parse_data(path: Union[str, os.PathLike], filename: str):
     path
         Path to the raw data files.
     filename
-        Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
+        Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
 
     Returns
     -------
     timeseries
-        Numpy Array containing time and intensity data as numpy arrays at fist and second position, respectively.
+        NumPy Array containing time and intensity data as NumPy arrays at fist and second position, respectively.
     acquisition
         Name of a single acquisition.
     experiment
@@ -590,7 +586,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     ui
         Instance of the UserInput class.
     filename
-        Name of a raw date file containing a numpy array with a time series (time as first, intensity as second element of the array).
+        Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
     """
     # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
     #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))

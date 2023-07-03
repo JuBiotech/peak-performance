@@ -17,9 +17,9 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     Parameters
     ----------
     time
-        Numpy array with the time values of the relevant timeframe.
+        NumPy array with the time values of the relevant timeframe.
     intensity
-        Numpy array with the intensity values of the relevant timeframe.
+        NumPy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
@@ -73,7 +73,7 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     height
         Height of the normal distribution.
     time
-        Numpy array with the time values of the relevant timeframe.
+        NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
@@ -147,7 +147,7 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     height2
         Height of the second peak.
     time
-        Numpy array with the time values of the relevant timeframe.
+        NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
@@ -289,9 +289,9 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     area
         Peak area.
     time
-        Numpy array with the time values of the relevant timeframe.
+        NumPy array with the time values of the relevant timeframe.
     intensity
-        Numpy array with the intensity values of the relevant timeframe.
+        NumPy array with the intensity values of the relevant timeframe.
     mean
         Location parameter, i.e. arithmetic mean.
     std
