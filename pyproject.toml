@@ -31,6 +31,9 @@ dependencies = [
     "openpyxl",
 ]
 
+[tool.setuptools]
+packages = ["peak_performance"]
+
 [project.optional-dependencies]
 test = [
   "pytest",
