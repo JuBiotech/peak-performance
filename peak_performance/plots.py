@@ -2,6 +2,7 @@ from pathlib import Path
 
 import arviz as az
 import numpy as np
+import pandas as pd
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
@@ -167,6 +168,8 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
+    az_summary: pd.DataFrame = az.summary(idata)
+
     fig, ax = pyplot.subplots()
     # plot the posterior
     pm.gp.util.plot_gp_dist(
@@ -178,10 +181,7 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     ax.scatter(time, intensity, marker="x", color="black", label="data")
     # plot the baseline
     x = np.array(ax.get_xlim())
-    y = (
-        az.summary(idata).loc["baseline_intercept", "mean"]
-        + az.summary(idata).loc["baseline_slope", "mean"] * x
-    )
+    y = az_summary.loc["baseline_intercept", "mean"] + az_summary.loc["baseline_slope", "mean"] * x
     pyplot.plot(x, y)
     pyplot.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")

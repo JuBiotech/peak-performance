@@ -489,23 +489,20 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     doublepeak = ui.user_info[filename][0]
     resample = False
     discard = False
+    az_summary: pandas.DataFrame = az.summary(idata)
     if not doublepeak == True:
         # for single peak
         if (
-            any(list(az.summary(idata).loc[:, "r_hat"])) > 1.05
-            or az.summary(idata).loc["std", :]["mean"] <= 0.1
-            or az.summary(idata).loc["area", :]["sd"]
-            > az.summary(idata).loc["area", :]["mean"] * 0.2
-            or az.summary(idata).loc["height", :]["sd"]
-            > az.summary(idata).loc["height", :]["mean"] * 0.2
+            any(list(az_summary.loc[:, "r_hat"])) > 1.05
+            or az_summary.loc["std", :]["mean"] <= 0.1
+            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
+            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
         ):
             # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
-                az.summary(idata).loc["std", :]["mean"] <= 0.1
-                or az.summary(idata).loc["area", :]["sd"]
-                > az.summary(idata).loc["area", :]["mean"] * 0.2
-                or az.summary(idata).loc["height", :]["sd"]
-                > az.summary(idata).loc["height", :]["mean"] * 0.2
+                az_summary.loc["std", :]["mean"] <= 0.1
+                or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
+                or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
@@ -520,38 +517,30 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     else:
         # for double peak
         if (
-            any(list(az.summary(idata).loc[:, "r_hat"])) > 1.05
-            or az.summary(idata).loc["std", :]["mean"] <= 0.1
-            or az.summary(idata).loc["area", :]["sd"]
-            > az.summary(idata).loc["area", :]["mean"] * 0.2
-            or az.summary(idata).loc["height", :]["sd"]
-            > az.summary(idata).loc["height", :]["mean"] * 0.2
-            or az.summary(idata).loc["std2", :]["mean"] <= 0.1
-            or az.summary(idata).loc["area2", :]["sd"]
-            > az.summary(idata).loc["area2", :]["mean"] * 0.2
-            or az.summary(idata).loc["height2", :]["sd"]
-            > az.summary(idata).loc["height2", :]["mean"] * 0.2
+            any(list(az_summary.loc[:, "r_hat"])) > 1.05
+            or az_summary.loc["std", :]["mean"] <= 0.1
+            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
+            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
+            or az_summary.loc["std2", :]["mean"] <= 0.1
+            or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
+            or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
         ):
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
             # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
             if (
-                az.summary(idata).loc["std", :]["mean"] <= 0.1
-                or az.summary(idata).loc["area", :]["sd"]
-                > az.summary(idata).loc["area", :]["mean"] * 0.2
-                or az.summary(idata).loc["height", :]["sd"]
-                > az.summary(idata).loc["height", :]["mean"] * 0.2
+                az_summary.loc["std", :]["mean"] <= 0.1
+                or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
+                or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
                 double_not_found_first = True
             if (
-                az.summary(idata).loc["std2", :]["mean"] <= 0.1
-                or az.summary(idata).loc["area2", :]["sd"]
-                > az.summary(idata).loc["area2", :]["mean"] * 0.2
-                or az.summary(idata).loc["height2", :]["sd"]
-                > az.summary(idata).loc["height2", :]["mean"] * 0.2
+                az_summary.loc["std2", :]["mean"] <= 0.1
+                or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
+                or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
@@ -627,6 +616,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
     df_summary
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
+    az_summary: pandas.DataFrame = az.summary(idata)
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
     if ui.user_info[filename][0]:
         # first peak of double peak
@@ -640,7 +630,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             "height",
             "sn",
         ]
-        df = az.summary(idata).loc[parameters, :]
+        df = az_summary.loc[parameters, :]
         df.rename(columns={"mean[0]": "mean"})
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df["experiment"] = len(parameters) * [ui.experiment]
@@ -660,7 +650,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             "height2",
             "sn2",
         ]
-        df2 = az.summary(idata).loc[parameters, :]
+        df2 = az_summary.loc[parameters, :]
         df2.rename(
             columns={
                 "area2": "area",
@@ -691,7 +681,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             "height",
             "sn",
         ]
-        df = az.summary(idata).loc[parameters, :]
+        df = az_summary.loc[parameters, :]
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df["experiment"] = len(parameters) * [ui.experiment]
         df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
