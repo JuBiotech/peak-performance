@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import arviz as az
 import numpy as np
 import pymc as pm
@@ -5,20 +7,22 @@ import pytensor.tensor as pt
 import scipy.stats as st
 from matplotlib import pyplot
 
+from . import pipeline as pi
 
-def plot_raw_data(identifier, time, intensity):
+
+def plot_raw_data(identifier: str, ui: pi.UserInput):
     """
     Plot just the raw data in case no peak was found.
 
     Parameters
     ----------
     identifier
-        unique identifier of this particular signal
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+        Unique identifier of this particular signal (e.g. filename).
+    ui
+        Instance of the UserInput class.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     # plot the data to be able to check if peak detection was correct or not
     fig, ax = pyplot.subplots()
     ax.scatter(time, intensity, marker="x", color="black", label="data")
@@ -28,8 +32,8 @@ def plot_raw_data(identifier, time, intensity):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.png")
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_No_Peak.svg", format="svg")
+    pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.png")
+    pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -37,10 +41,29 @@ def plot_raw_data(identifier, time, intensity):
     return
 
 
-def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None, **kwargs):
+def plot_density(
+    *, ax, x: np.ndarray, samples, percentiles=(5, 95), percentile_kwargs=None, **kwargs
+):
     """
     Method to plot the original data points alongside the posterior predictive plot (percentiles marked with a black, dashed line).
     Serves as a more accurate comparison between data and model than comparing data and posterior distribution.
+
+    Parameters
+    ----------
+    ax
+        Axes of a matplotlib figure.
+    x
+        Values of the x dimension of the plot (here: time).
+    samples
+        Posterior predictive samples taken from an inference data obejct.
+    percentiles
+        Lower and upper percentiles to be plotted.
+    **kwargs
+        The keyword arguments are used for plotting with ax.plot() and ax.stairs(), e.g. the following:
+    linestyle
+        Style of the line marking the border of the chosen percentiles (default = "--", i.e. a dashed line).
+    color
+        Color of the line marking the border of the chosen percentiles (default = "black").
     """
     assert samples.ndim == 2
 
@@ -80,21 +103,23 @@ def plot_density(*, ax, x, samples, percentiles=(5, 95), percentile_kwargs=None,
     return
 
 
-def plot_posterior_predictive(identifier, time, intensity, idata):
+def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
     Parameters
     ----------
     identifier
-        unique identifier of this particular signal
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+        Unique identifier of this particular signal (e.g. filename).
+    ui
+        Instance of the UserInput class.
     idata
-        infernce data object
+        Infernce data object.
+    discarded
+        Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     fig, ax = pyplot.subplots()
     # plot the posterior predictive
     plot_density(
@@ -109,11 +134,15 @@ def plot_posterior_predictive(identifier, time, intensity, idata):
     ax.set_ylabel("intensity / a.u.", fontsize=11.5, fontweight="bold")
     pyplot.legend()
     pyplot.tight_layout()
-    # TODO: fix paths
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.png")
-    pyplot.savefig(
-        rf"./230427_Pipeline_test_Part1/{identifier}_predictive_posterior.svg", format="svg"
-    )
+    # if signal was discarded, add a "_NoPeak" to the file name
+    if discarded:
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
+        pyplot.savefig(
+            Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
+        )
+    else:
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()
@@ -121,21 +150,23 @@ def plot_posterior_predictive(identifier, time, intensity, idata):
     return
 
 
-def plot_posterior(identifier, time, intensity, idata):
+def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     """
     Save plot of posterior, estimated baseline and original data points.
 
     Parameters
     ----------
     identifier
-        unique identifier of this particular signal
-    time
-        numpy array with the time values of the relevant timeframe
-    intensity
-        numpy array with the intensity values of the relevant timeframe
+        Unique identifier of this particular signal (e.g. filename).
+    ui
+        Instance of the UserInput class.
     idata
-        infernce data object
+        Infernce data object.
+    discarded
+        Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
     fig, ax = pyplot.subplots()
     # plot the posterior
     pm.gp.util.plot_gp_dist(
@@ -158,8 +189,13 @@ def plot_posterior(identifier, time, intensity, idata):
     pyplot.xticks(size=11.5)
     pyplot.yticks(size=11.5)
     pyplot.tight_layout()
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.png")
-    pyplot.savefig(rf"./230427_Pipeline_test_Part1/{identifier}_posterior.svg", format="svg")
+    # if signal was discarded, add a "_NoPeak" to the file name
+    if discarded:
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
+    else:
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
+        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
     pyplot.cla()
     pyplot.clf()
     pyplot.close()

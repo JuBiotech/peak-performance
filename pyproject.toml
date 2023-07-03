@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peak_performance"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     {name = "Jochen Nießer", email = "j.niesser@fz-juelich.de"},
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
@@ -28,7 +28,11 @@ dependencies = [
     "pymc>=5.0.2",
     "pytensor",
     "scipy",
+    "openpyxl",
 ]
+
+[tool.setuptools]
+packages = ["peak_performance"]
 
 [project.optional-dependencies]
 test = [
@@ -50,5 +54,7 @@ line-length = 100
 [tool.coverage.run]
 omit = [
     # exclude tests files from coverage calculation
-    "**/test*.py"
+    "**/test*.py",
+    "**/example",
+    "**/notebooks",
 ]
