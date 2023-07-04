@@ -16,6 +16,9 @@ import scipy.signal
 import scipy.stats as st
 from matplotlib import pyplot
 
+from peak_performance import models
+from peak_performance import plots
+
 
 class ParsingError(Exception):
     """Base type of parsing exceptions."""
@@ -850,3 +853,90 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     ) as writer:
         df_summary.to_excel(writer)
     return df_summary
+
+
+def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
+    """
+    Method to run the complete Peak Performance pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'. 
+        In any case, time and intensity have to be saved as NumPy arrays at the first and second position of the stored data object, respectively.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    pre_filtering
+        Select whether to include (True) or exclude (False) the pre-filtering step. Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling to potentially save a lot of computation time.
+        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
+    double_peak
+        Dictionary with the raw data file names as keys and Booleans as values. 
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak. Visually check this beforehand.
+    retention_time_estimate
+        Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal. In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+    peak_width_estimate
+        In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
+    minimum_sn
+        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+    """ 
+    # obtain a list of raw data file names.
+    raw_data_files = detect_npy(path_raw_data)
+    # create data structure and DataFrame(s) for results 
+    df_summary, path_results = initiate(path_raw_data)
+    for file in raw_data_files:
+        # parse the data and extract information from the (standardized) file name
+        timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end = parse_data(path_raw_data, file)
+        # instantiate the UserInput class all given information
+        ui = UserInput(path_results, raw_data_files, double_peak, retention_time_estimate, peak_width_estimate, pre_filtering, minimum_sn, timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end)
+        # calculate initial guesses for pre-filtering and defining prior probability distributions
+        slope_guess, intercept_guess, noise_guess = models.initial_guesses(ui.timeseries[0], ui.timeseries[1])
+        # apply pre-sampling filter (if selected)
+        if pre_filtering:
+            prefilter, df_summary = prefiltering(file, ui, noise_guess, df_summary)
+            if not prefilter:
+                # if no peak candidates were found, continue with the next signal
+                plots.plot_raw_data(file, ui)
+                continue
+        # model selection
+        if ui.user_info[file][0]:
+            # double peak model
+            pmodel = models.define_model_doublepeak(ui)
+        else:
+            # single peaks are first modeled with a skew normal distribution
+            pmodel = models.define_model_skew(ui)
+        # sample the chosen model
+        idata = sampling(pmodel)
+        # apply post-sampling filter
+        resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
+        # if peak was discarded, continue with the next signal
+        if discard:
+            plots.plot_posterior(file, ui, idata, True)
+            print("discarded")
+            continue
+        # if convergence was not yet reached, sample again with more tuning samples
+        if resample:
+            print("start resampling")
+            idata = sampling(pmodel, tune = 4000)
+            resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
+            if discard:
+                plots.plot_posterior(f"{file}", ui, idata, True)
+                continue
+            if resample:
+                # if signal was flagged for re-sampling a second time, discard it
+                # TODO: should this really be discarded or should the contents of idata be added with an additional comment? (would need to add a comment column)
+                df_summary = report_add_nan_to_summary(file, ui, df_summary)
+                plots.plot_posterior(f"{file}", ui, idata, True)
+                continue
+        # add inference data to df_summary and save it as an Excel file
+        df_summary = report_add_data_to_summary(file, idata, df_summary, ui)
+        # perform posterior predictive sampling
+        idata = posterior_predictive_sampling(pmodel, idata)
+        # save the inference data object in a zip file
+        report_save_idata(idata, ui, file)
+        # plot data
+        plots.plot_posterior_predictive(file, ui, idata, False)
+        plots.plot_posterior(file, ui, idata, False)
+    # save condesed Excel file with area data
+    report_area_sheet(path_results, df_summary)
+    return
