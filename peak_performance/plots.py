@@ -6,7 +6,7 @@ import pandas as pd
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 
 from . import pipeline as pi
 
@@ -25,19 +25,19 @@ def plot_raw_data(identifier: str, ui: pi.UserInput):
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
     # plot the data to be able to check if peak detection was correct or not
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     ax.scatter(time, intensity, marker="x", color="black", label="data")
-    pyplot.legend()
+    plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    pyplot.xticks(size=11.5)
-    pyplot.yticks(size=11.5)
-    pyplot.tight_layout()
-    pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.png")
-    pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.svg", format="svg")
-    pyplot.cla()
-    pyplot.clf()
-    pyplot.close()
+    plt.xticks(size=11.5)
+    plt.yticks(size=11.5)
+    plt.tight_layout()
+    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.png")
+    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.svg", format="svg")
+    plt.cla()
+    plt.clf()
+    plt.close()
 
     return
 
@@ -82,7 +82,7 @@ def plot_density(
         samples=samples,
         fill_alpha=1,
         plot_samples=False,
-        palette=pyplot.cm.Blues,
+        palette=plt.cm.Blues,
         fill_kwargs=fill_kwargs,
         **kwargs,
     )
@@ -121,7 +121,7 @@ def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarde
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     # plot the posterior predictive
     plot_density(
         ax=ax,
@@ -133,20 +133,20 @@ def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarde
     ax.scatter(time, intensity, marker="x", color="black", label="data")
     ax.set_xlabel("time / min", fontsize=11.5, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=11.5, fontweight="bold")
-    pyplot.legend()
-    pyplot.tight_layout()
+    plt.legend()
+    plt.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
-        pyplot.savefig(
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
+        plt.savefig(
             Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
         )
     else:
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
-    pyplot.cla()
-    pyplot.clf()
-    pyplot.close()
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
+    plt.cla()
+    plt.clf()
+    plt.close()
 
     return
 
@@ -170,7 +170,7 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     intensity = ui.timeseries[1]
     az_summary: pd.DataFrame = az.summary(idata)
 
-    fig, ax = pyplot.subplots()
+    fig, ax = plt.subplots()
     # plot the posterior
     pm.gp.util.plot_gp_dist(
         ax=ax,
@@ -182,22 +182,22 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     # plot the baseline
     x = np.array(ax.get_xlim())
     y = az_summary.loc["baseline_intercept", "mean"] + az_summary.loc["baseline_slope", "mean"] * x
-    pyplot.plot(x, y)
-    pyplot.legend()
+    plt.plot(x, y)
+    plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    pyplot.xticks(size=11.5)
-    pyplot.yticks(size=11.5)
-    pyplot.tight_layout()
+    plt.xticks(size=11.5)
+    plt.yticks(size=11.5)
+    plt.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
     else:
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
-        pyplot.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
-    pyplot.cla()
-    pyplot.clf()
-    pyplot.close()
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
+    plt.cla()
+    plt.clf()
+    plt.close()
 
     return
