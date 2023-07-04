@@ -58,3 +58,9 @@ omit = [
     "**/example",
     "**/notebooks",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
+exclude = [
+    'test_.*?\.py$',
+]
