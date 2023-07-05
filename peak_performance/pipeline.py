@@ -47,7 +47,8 @@ class UserInput:
         files
             List of raw data file names in path.
         double_peak
-            List with Booleans in the same order as files. Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
+            List with Booleans in the same order as files.
+            Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
         retention_time_estimate
             In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
             In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
@@ -201,10 +202,12 @@ class UserInput:
         #         self.retention_time_estimate
         #     ):
         #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), "
+        #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
         #         )
         # else:
-        #     # if pre_filtering is False, then retention_time_estimate is not needed but the dictionary still needs to be created without errors -> set it to None
+        #     # if pre_filtering is False, then retention_time_estimate is not needed
+        #     # but the dictionary still needs to be created without errors -> set it to None
         #     if len(self.retention_time_estimate) == 1:
         #         self.retention_time_estimate = len(self.files) * None
         #     elif not self.retention_time_estimate:
@@ -493,7 +496,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
             or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
         ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and height
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
@@ -523,7 +527,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2

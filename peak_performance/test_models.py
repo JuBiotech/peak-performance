@@ -137,6 +137,7 @@ class TestDistributions:
         y_skew_actual_pt = models.skew_normal_posterior(0, area, x, 1, 1, 0)
         y_actual = y_actual_pt.eval().astype(float)
         y_skew_actual = y_skew_actual_pt.eval().astype(float)
-        # many values are extremely close to zero so rtol was increased. As guaranteed by the absurdly low atol, this will not mask any actual differences
+        # many values are extremely close to zero so rtol was increased.
+        # As guaranteed by the absurdly low atol, this will not mask any actual differences
         np.testing.assert_allclose(y_skew_actual, y_actual, atol=1e-20, rtol=0.9)
         pass

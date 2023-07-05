@@ -166,7 +166,8 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
 
 def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
     """
-    Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
+    Define a model for fitting two ordered normal distributions to the peak data
+    (for when data contains two peaks or a double peak without baseline separation).
 
     Parameters
     ----------
@@ -264,8 +265,11 @@ def mode_skew_calculation(mean_skew, mode_offset, alpha):
 def height_calculation(area, mean, std, alpha, mode_skew):
     """
     Calculate the height of a skew normal distribution.
-    The formula is the result of inserting time = mode_skew into the posterior. Since the mode of a skew normal distribution is calculated as a numerical approximation,
-    its accuracy is not perfect and thus the height's either. In tests, the height was still accurate up to and including the first two decimals.
+
+    The formula is the result of inserting time = mode_skew into the posterior.
+    Since the mode of a skew normal distribution is calculated as a numerical approximation,
+    its accuracy is not perfect and thus the height's either.
+    In tests, the height was still accurate up to and including the first two decimals.
     """
     return area * (
         2
@@ -349,8 +353,10 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
         std_skew_formula = std_skew_calculation(std, alpha)
         pm.Deterministic("std_skew", std_skew_formula)
         # height is defined as the posterior with x = mode
-        # (difference to normal distribution: for normal distribution mean and mode are identical and inserting x = mean = mode leads to a simplification of the PDF)
-        # first calculate the mode (via calculating the mean of a skew normal and using a numerical approach to calculating the offset between mean and mode)
+        # (difference to normal distribution: for normal distribution mean and mode are identical
+        # nd inserting x = mean = mode leads to a simplification of the PDF)
+        # first calculate the mode (via calculating the mean of a skew normal and
+        # using a numerical approach to calculating the offset between mean and mode)
         mean_skew_formula = mean_skew_calculation(mean, std, alpha)
         mean_skew = pm.Deterministic("mean_skew", mean_skew_formula)
         mue_z_formula = mue_z_calculation(alpha)
@@ -359,7 +365,8 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
         sigma_z = pm.Deterministic("sigma_z", sigma_z_formula)
         fit_skewness = fit_skewness_calculation(intensity)
         mode_offset_formula = mode_offset_calculation(mue_z, fit_skewness, sigma_z, alpha)
-        # this formula originally contained the sign() function which led to an error -> use alpha/abs(alpha) instead for the same effect
+        # this formula originally contained the sign() function which led to an error
+        # -> use alpha/abs(alpha) instead for the same effect
         mode_offset = pm.Deterministic("mode_offset", mode_offset_formula)
         mode_skew_formula = mode_skew_calculation(mean_skew, mode_offset, alpha)
         # if alpha < 0: mode = mean + offset; if alpha > 0: mode = mean - offset;
