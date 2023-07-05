@@ -31,8 +31,8 @@ def plot_raw_data(identifier: str, ui):
     plt.xticks(size=11.5)
     plt.yticks(size=11.5)
     plt.tight_layout()
-    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.png")
-    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.svg", format="svg")
+    plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.png")
+    plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.svg", format="svg")
     plt.cla()
     plt.clf()
     plt.close()
@@ -135,13 +135,13 @@ def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
     plt.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.png")
         plt.savefig(
-            Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
+            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.svg", format="svg"
         )
     else:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.svg", format="svg")
     plt.cla()
     plt.clf()
     plt.close()
@@ -189,11 +189,11 @@ def plot_posterior(identifier: str, ui, idata, discarded: bool):
     plt.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.svg", format="svg")
     else:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.png")
+        plt.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.svg", format="svg")
     plt.cla()
     plt.clf()
     plt.close()
