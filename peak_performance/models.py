@@ -1,8 +1,4 @@
-import math
-
-import arviz as az
 import numpy as np
-import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
@@ -122,14 +118,14 @@ def define_model_normal(ui: pi.UserInput) -> pm.Model:
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         height = pm.HalfNormal("height", 0.95 * np.max(intensity))
-        area = pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        sn = pm.Deterministic("sn", height / noise)
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
+        pm.Deterministic("sn", height / noise)
         # posterior
         y = normal_posterior(baseline, height, time, mean, std)
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
 
@@ -204,10 +200,10 @@ def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
         std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
         height = pm.HalfNormal("height", 0.95 * np.max(intensity))
         height2 = pm.HalfNormal("height2", 0.95 * np.max(intensity))
-        area = pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        area2 = pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
-        sn = pm.Deterministic("sn", height / noise)
-        sn2 = pm.Deterministic("sn2", height2 / noise)
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
+        pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
+        pm.Deterministic("sn", height / noise)
+        pm.Deterministic("sn2", height2 / noise)
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
@@ -221,7 +217,7 @@ def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
 
@@ -374,11 +370,11 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
             "height",
             height_formula,
         )
-        sn = pm.Deterministic("sn", height / noise)
+        pm.Deterministic("sn", height / noise)
         y = skew_normal_posterior(baseline, area, time, mean, std, alpha)
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel

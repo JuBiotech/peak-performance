@@ -1,20 +1,15 @@
 import os
-import zipfile
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import arviz as az
 import numpy as np
-import openpyxl
 import pandas
 import pymc as pm
-import pytensor.tensor as pt
 import scipy.integrate
 import scipy.signal
-import scipy.stats as st
-from matplotlib import pyplot
 
 
 class ParsingError(Exception):
@@ -99,7 +94,7 @@ class UserInput:
     def timeseries(self, data):
         """Setting the value of the timeseries attribute."""
         if data is None:
-            raise InputError(f"The timeseries parameter is a None type.")
+            raise InputError("The timeseries parameter is a None type.")
         self._timeseries = np.asarray(data)
 
     @property
@@ -113,7 +108,7 @@ class UserInput:
         if not isinstance(name, str):
             raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
         if name is None:
-            raise InputError(f"The acquisition parameter is a None type.")
+            raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
 
     @property
@@ -127,12 +122,12 @@ class UserInput:
         if not isinstance(number, int):
             try:
                 number = int(number)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The experiment parameter is {type(number)} but needs to be an integer."
-                )
+                    f"The experiment parameter is {type(number)} but needs to be an int."
+                ) from ex
         if number is None:
-            raise InputError(f"The experiment parameter is a None type.")
+            raise InputError("The experiment parameter is a None type.")
         self._experiment = number
 
     @property
@@ -146,12 +141,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The precursor_mz parameter is a None type.")
+            raise InputError("The precursor_mz parameter is a None type.")
         self._precursor_mz = mz
 
     @property
@@ -165,12 +160,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_start parameter is a None type.")
+            raise InputError("The product_mz_start parameter is a None type.")
         self._product_mz_start = mz
 
     @property
@@ -184,12 +179,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_end parameter is a None type.")
+            raise InputError("The product_mz_end parameter is a None type.")
         self._product_mz_end = mz
 
     @property
@@ -490,7 +485,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     resample = False
     discard = False
     az_summary: pandas.DataFrame = az.summary(idata)
-    if not doublepeak == True:
+    if doublepeak is not True:
         # for single peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
