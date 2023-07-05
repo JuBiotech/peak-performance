@@ -34,7 +34,7 @@ class UserInput:
     def __init__(
         self,
         path: Union[str, os.PathLike],
-        files: Sequence[Union[str, os.PathLike]],
+        files: Sequence[str],
         raw_data_file_format: str,
         double_peak: Sequence[bool],
         retention_time_estimate: Union[Sequence[float], Sequence[int]],
@@ -295,7 +295,7 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     return timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end
 
 
-def initiate(path: Union[str, os.PathLike]):
+def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
     """
     Create a folder for the results. Also create a zip file inside that folder. Also create df_summary.
 
@@ -303,6 +303,8 @@ def initiate(path: Union[str, os.PathLike]):
     ----------
     path
         Path to the directory containing the raw data.
+    run_dir
+        Name of the directory created to store the results of the current run (default: current date and time).
 
     Returns
     -------
@@ -312,11 +314,12 @@ def initiate(path: Union[str, os.PathLike]):
         Updated path variable pointing to the newly created folder for this batch.
     """
     # get current date and time
-    today = str(date.today())
-    now = datetime.now().strftime("%H-%M-%S")
-    timestamp = today + "_" + now
-    run_dir = timestamp + "_run"
-    # create a directory
+    if not run_dir:
+        today = str(date.today())
+        now = datetime.now().strftime("%H-%M-%S")
+        timestamp = today + "_" + now
+        run_dir = timestamp + "_run"
+        # create a directory
     path = Path(path) / run_dir
     path.mkdir(exist_ok=True)
     # # write text file, zip it, then delete it (cannot create an empty zip)
@@ -680,7 +683,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df["double_peak"] = len(parameters) * [""]
+        df["double_peak"] = len(parameters) * [False]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
     # save summary df as Excel file
