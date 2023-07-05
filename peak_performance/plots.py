@@ -8,10 +8,8 @@ import pytensor.tensor as pt
 import scipy.stats as st
 from matplotlib import pyplot as plt
 
-from . import pipeline as pi
 
-
-def plot_raw_data(identifier: str, ui: pi.UserInput):
+def plot_raw_data(identifier: str, ui):
     """
     Plot just the raw data in case no peak was found.
 
@@ -104,7 +102,7 @@ def plot_density(
     return
 
 
-def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarded: bool):
+def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
@@ -151,7 +149,7 @@ def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarde
     return
 
 
-def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
+def plot_posterior(identifier: str, ui, idata, discarded: bool):
     """
     Save plot of posterior, estimated baseline and original data points.
 
