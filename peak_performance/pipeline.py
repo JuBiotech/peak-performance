@@ -227,7 +227,7 @@ class UserInput:
         return user_info
 
 
-def detect_npy(path: Union[str, os.PathLike]):
+def detect_raw_data(path: Union[str, os.PathLike], data_type: str = ".npy"):
     """
     Detect all .npy files with time and intensity data for peaks in a given directory.
 
@@ -235,40 +235,24 @@ def detect_npy(path: Union[str, os.PathLike]):
     ----------
     path
         Path to the folder containing raw data.
+    data_type
+
 
     Returns
     -------
-    npy_files
-        List with names of all .npy files in path.
+    files
+        List with names of all files of the specified data type in path.
     """
     all_files = os.listdir(path)
-    npy_files = [file for file in all_files if ".npy" in file]
+    npy_files = [file for file in all_files if data_type in file]
     if not npy_files:
-        raise FileNotFoundError(f"In the given directory '{path}', there are no .npy files.")
+        raise FileNotFoundError(f"In the given directory '{path}', there are no {data_type} files.")
     return npy_files
-
-
-def scan_folder(path: Union[str, os.PathLike]):
-    """
-    Detect all files in a given directory and returns them as a list.
-
-    The files should
-    a) contain time and intensity data and
-    b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
-
-    Parameters
-    ----------
-    path
-        Path to the folder containing raw data.
-    """
-    return os.listdir(path)
 
 
 def parse_data(path: Union[str, os.PathLike], filename: str):
     """
     Extract names of data files.
-
-    Use this in a for-loop with the data file names from detect_npy() or scan_folder().
 
     Parameters
     ----------
@@ -881,7 +865,7 @@ def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, 
         In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
     """ 
     # obtain a list of raw data file names.
-    raw_data_files = detect_npy(path_raw_data)
+    raw_data_files = detect_raw_data(path_raw_data, raw_data_file_format)
     # create data structure and DataFrame(s) for results 
     df_summary, path_results = initiate(path_raw_data)
     for file in raw_data_files:
