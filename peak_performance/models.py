@@ -354,7 +354,7 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
         pm.Deterministic("std_skew", std_skew_formula)
         # height is defined as the posterior with x = mode
         # (difference to normal distribution: for normal distribution mean and mode are identical
-        # nd inserting x = mean = mode leads to a simplification of the PDF)
+        # and inserting x = mean = mode leads to a simplification of the PDF)
         # first calculate the mode (via calculating the mean of a skew normal and
         # using a numerical approach to calculating the offset between mean and mode)
         mean_skew_formula = mean_skew_calculation(mean, std, alpha)

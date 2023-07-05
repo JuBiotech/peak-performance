@@ -87,7 +87,6 @@ class TestDistributions:
         expected_mode_skew = x[np.argmax(y)]
         expected_height = np.max(y) - (0.04 * expected_mode_skew + 0.3)
         mean_skew = models.mean_skew_calculation(mean, std, alpha)
-        mean_skew - expected_mode_skew
         # calculate actual values
         mue_z = models.mue_z_calculation(alpha)
         sigma_z = models.sigma_z_calculation(mue_z)
@@ -97,8 +96,6 @@ class TestDistributions:
         mode_skew_pt = models.mode_skew_calculation(mean_skew, mode_offset_pt, alpha)
         height_pt = models.height_calculation(area, mean, std, alpha, mode_skew_pt)
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
-        mode_offset_pt.eval().astype(float)
-        mode_skew_pt.eval().astype(float)
         actual_height = height_pt.eval().astype(float)
         # testing; allow minor difference due to differences in float precision etc.
         np.testing.assert_allclose(expected_height, actual_height, atol=0.001)
@@ -128,7 +125,6 @@ class TestDistributions:
     def test_compare_normal_and_skew_as_normal(self):
         """A skew normal distribution with skewness alpha = 0 should be a normal distribution. Test if that is so for our distributions."""
         x = np.linspace(-10, 10, 10000)
-        st.skewnorm.pdf(x, 0, loc=1, scale=1)
         y = st.norm.pdf(x, loc=1, scale=0.5)
         height = np.max(y)
         area = scipy.integrate.quad(lambda x: st.norm.pdf(x, loc=1, scale=1), -10, 10)[0]
@@ -138,6 +134,6 @@ class TestDistributions:
         y_actual = y_actual_pt.eval().astype(float)
         y_skew_actual = y_skew_actual_pt.eval().astype(float)
         # many values are extremely close to zero so rtol was increased.
-        # As guaranteed by the absurdly low atol, this will not mask any actual differences
+        # As guaranteed by the absurdly low atol, this will not mask any actual differences.
         np.testing.assert_allclose(y_skew_actual, y_actual, atol=1e-20, rtol=0.9)
         pass
