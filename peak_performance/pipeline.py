@@ -855,7 +855,7 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     return df_summary
 
 
-def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
+def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[str, Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
     """
     Method to run the complete Peak Performance pipeline.
 
