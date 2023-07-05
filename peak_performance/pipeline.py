@@ -236,7 +236,7 @@ def detect_raw_data(path: Union[str, os.PathLike], data_type: str = ".npy"):
     path
         Path to the folder containing raw data.
     data_type
-
+        Data format of the raw data files (e.g. '.npy').
 
     Returns
     -------
@@ -839,7 +839,7 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     return df_summary
 
 
-def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[str, Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
+def pipeline_loop(path_raw_data: Union[str, os.PathLike], path_results: Union[str, os.PathLike], raw_data_files: List[str], df_summary: pandas.DataFrame, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[str, Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
     """
     Method to run the complete Peak Performance pipeline.
 
@@ -848,8 +848,12 @@ def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, 
     path_raw_data
         Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'. 
         In any case, time and intensity have to be saved as NumPy arrays at the first and second position of the stored data object, respectively.
-    raw_data_file_format
-        Data format (suffix) of the raw data, default is '.npy'.
+    path_results
+        Path to the directory for the results of a given Batch run of Peak Performance.
+    raw_data_files
+        List with names of all files of the specified data type in path_raw_data.
+    df_summary
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     pre_filtering
         Select whether to include (True) or exclude (False) the pre-filtering step. Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling to potentially save a lot of computation time.
         If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
@@ -864,10 +868,6 @@ def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, 
     minimum_sn
         In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
     """ 
-    # obtain a list of raw data file names.
-    raw_data_files = detect_raw_data(path_raw_data, raw_data_file_format)
-    # create data structure and DataFrame(s) for results 
-    df_summary, path_results = initiate(path_raw_data)
     for file in raw_data_files:
         # parse the data and extract information from the (standardized) file name
         timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end = parse_data(path_raw_data, file)
@@ -921,6 +921,38 @@ def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, 
         # plot data
         plots.plot_posterior_predictive(file, ui, idata, False)
         plots.plot_posterior(file, ui, idata, False)
-    # save condesed Excel file with area data
-    report_area_sheet(path_results, df_summary)
+        # save condesed Excel file with area data
+        report_area_sheet(path_results, df_summary)
+
+
+def pipeline(path_raw_data: Union[str, os.PathLike], raw_data_file_format: str, pre_filtering: bool, double_peak: dict, retention_time_estimate: Dict[str, Union[float, int]], peak_width_estimate: Union[float, int], minimum_sn: Union[float, int]):
+    """
+    Method to run the complete Peak Performance pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'. 
+        In any case, time and intensity have to be saved as NumPy arrays at the first and second position of the stored data object, respectively.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    pre_filtering
+        Select whether to include (True) or exclude (False) the pre-filtering step. Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling to potentially save a lot of computation time.
+        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
+    double_peak
+        Dictionary with the raw data file names as keys and Booleans as values. 
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak. Visually check this beforehand.
+    retention_time_estimate
+        Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal. In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+    peak_width_estimate
+        In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
+    minimum_sn
+        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+    """ 
+    # obtain a list of raw data file names.
+    raw_data_files = detect_raw_data(path_raw_data, raw_data_file_format)
+    # create data structure and DataFrame(s) for results 
+    df_summary, path_results = initiate(path_raw_data)
+    pipeline_loop(path_raw_data, path_results, raw_data_files, df_summary, pre_filtering, double_peak, retention_time_estimate, peak_width_estimate, minimum_sn)
     return
