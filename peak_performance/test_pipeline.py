@@ -18,7 +18,7 @@ def test_user_input_class():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -177,7 +177,7 @@ def test_prefiltering():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -205,7 +205,7 @@ def test_prefiltering():
     assert found_peak
     assert df_summary_1 == df_summary
     # negative test
-    timeseries = np.load(r"example\A4t4R1Part2_6_137_72.9_73.1.npy")
+    timeseries = np.load(Path("../example/A4t4R1Part2_6_137_72.9_73.1.npy"))
     ui = pl.UserInput(
         path,
         raw_data_files,
@@ -279,7 +279,7 @@ def test_postfiltering():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -340,7 +340,7 @@ def test_single_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -423,7 +423,7 @@ def test_double_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -508,7 +508,7 @@ def test_single_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -603,7 +603,7 @@ def test_double_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(r"example\A2t2R1Part1_23_132_85.9_86.1.npy")
+    timeseries = np.load(Path("../example/A2t2R1Part1_23_132_85.9_86.1.npy"))
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
