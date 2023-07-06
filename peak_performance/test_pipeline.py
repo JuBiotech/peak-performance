@@ -126,7 +126,7 @@ def test_initiate():
     path = Path("../example/")
     run_dir = "test"
     df_summary, path = pl.initiate(path, run_dir=run_dir)
-    assert df_summary == pandas.DataFrame(
+    df_summary2 = pandas.DataFrame(
         columns=[
             "mean",
             "sd",
@@ -145,6 +145,8 @@ def test_initiate():
             "double_peak",
         ]
     )
+    assert df_summary2.values.all() == df_summary.values.all()
+    assert df_summary2.columns.all() == df_summary.columns.all()
     assert path == Path("../example/test")
     assert path.exists()
     path.rmdir()
@@ -177,7 +179,7 @@ def test_prefiltering():
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
-    retention_time_estimate = [22.5]
+    retention_time_estimate = [26.3]
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
@@ -207,9 +209,52 @@ def test_prefiltering():
     filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
     found_peak, df_summary_1 = pl.prefiltering(filename, ui, 108, df_summary)
     assert found_peak
-    assert df_summary_1 == df_summary
-    # negative test
+    assert df_summary_1.values.all() == df_summary.values.all()
+    assert df_summary_1.columns.all() == df_summary.columns.all()
+    # negative test due to retention time
+    retention_time_estimate = [22.3]
+    ui = pl.UserInput(
+        path,
+        raw_data_files,
+        data_file_format,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        pre_filtering,
+        minimum_sn,
+        timeseries,
+        acquisition,
+        experiment,
+        precursor_mz,
+        product_mz_start,
+        product_mz_end,
+    )
+    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    found_peak, df_summary_1 = pl.prefiltering(filename, ui, 108, df_summary)
+    assert not found_peak
+    assert len(df_summary_1.loc[:, "mean"].values) == 8
+    assert list(df_summary_1.columns) == [
+        "mean",
+        "sd",
+        "hdi_3%",
+        "hdi_97%",
+        "mcse_mean",
+        "mcse_sd",
+        "ess_bulk",
+        "ess_tail",
+        "r_hat",
+        "acquisition",
+        "experiment",
+        "precursor_mz",
+        "product_mz_start",
+        "product_mz_end",
+        "double_peak",
+    ]
+    assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
+    # negative test due to signal-to-noise ratio
     timeseries = np.load(Path("../example/A4t4R1Part2_6_137_72.9_73.1.npy"))
+    raw_data_files = ["A4t4R1Part2_6_137_72.9_73.1.npy"]
+    retention_time_estimate = [26.3]
     ui = pl.UserInput(
         path,
         raw_data_files,
