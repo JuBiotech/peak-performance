@@ -88,12 +88,12 @@ class UserInput:
         self.peak_width_estimate = peak_width_estimate
         self.pre_filtering = pre_filtering
         self.minimum_sn = minimum_sn
-        self._timeseries = timeseries
-        self._acquisition = acquisition
-        self._experiment = experiment
-        self._precursor_mz = precursor_mz
-        self._product_mz_start = product_mz_start
-        self._product_mz_end = product_mz_end
+        self.timeseries = timeseries
+        self.acquisition = acquisition
+        self.experiment = experiment
+        self.precursor_mz = precursor_mz
+        self.product_mz_start = product_mz_start
+        self.product_mz_end = product_mz_end
         super().__init__()
 
     @property
