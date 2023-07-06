@@ -20,9 +20,9 @@ def test_user_input_class():
     minimum_sn = 5
     timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
     acquisition = "A1t1R1"
-    experiment = 4
+    experiment = "4"
     precursor_mz = 118
-    product_mz_start = 71.9
+    product_mz_start = "71.9"
     product_mz_end = 72.1
     # test instantiation of the UserInput class
     ui = pl.UserInput(
@@ -42,6 +42,10 @@ def test_user_input_class():
         product_mz_end,
     )
     assert ui.timeseries.all() == timeseries.all()
+    assert ui.experiment == 4.0
+    assert ui.precursor_mz == 118
+    assert ui.product_mz_start == 71.9
+    assert ui.product_mz_end == 72.1
     # test some of the error handling of the parameter setter of the UserInput class
     with pytest.raises(pl.InputError):
         ui = pl.UserInput(
@@ -111,10 +115,10 @@ def test_parse_data():
     assert isinstance(timeseries[0], np.ndarray)
     assert isinstance(timeseries[1], np.ndarray)
     assert acquisition == "A1t1R1Part2"
-    assert experiment == 1
-    assert precursor_mz == 110
-    assert product_mz_start == 109.9
-    assert product_mz_end == 110.1
+    assert experiment == "1"
+    assert precursor_mz == "110"
+    assert product_mz_start == "109.9"
+    assert product_mz_end == "110.1"
     pass
 
 
