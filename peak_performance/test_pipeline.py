@@ -601,7 +601,16 @@ def test_single_peak_report_add_data_to_summary():
         "product_mz_end",
         "double_peak",
     ]
-    assert list(df_summary.loc[:, "mean"]) == [5.565, 8.446, 25.989, 132.743, 0.516, 2180.529, 2762.695, 20.924]
+    assert list(df_summary.loc[:, "mean"]) == [
+        5.565,
+        8.446,
+        25.989,
+        132.743,
+        0.516,
+        2180.529,
+        2762.695,
+        20.924,
+    ]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
     assert list(df_summary.loc[:, "precursor_mz"]) == len(df_summary.index) * [118]
@@ -686,7 +695,24 @@ def test_double_peak_report_add_data_to_summary():
         "product_mz_end",
         "double_peak",
     ]
-    assert list(df_summary.loc[:, "mean"]) == [-17.786, -8.814, 11.357, 180.677, 1.967, 3828.652, 954.279, 5.288, -17.786, -8.814, 12.659, 180.677, 1.563, 10377.713, 1896.595, 10.52]
+    assert list(df_summary.loc[:, "mean"]) == [
+        -17.786,
+        -8.814,
+        11.357,
+        180.677,
+        1.967,
+        3828.652,
+        954.279,
+        5.288,
+        -17.786,
+        -8.814,
+        12.659,
+        180.677,
+        1.563,
+        10377.713,
+        1896.595,
+        10.52,
+    ]
     assert len(df_summary.index) == 16
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [23]
