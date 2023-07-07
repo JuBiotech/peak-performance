@@ -10,7 +10,7 @@ from peak_performance import pipeline as pl
 
 
 def test_user_input_class():
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
@@ -18,7 +18,7 @@ def test_user_input_class():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
     acquisition = "A1t1R1"
     experiment = "4"
     precursor_mz = 118
@@ -85,7 +85,7 @@ def test_user_input_class():
 
 
 def test_detect_raw_data():
-    path = Path("../example/")
+    path = Path(__file__).absolute().parent.parent / "example"
     data_format = ".npy"
     files = pl.detect_raw_data(path, data_format)
     assert files == [
@@ -101,7 +101,7 @@ def test_detect_raw_data():
 
 
 def test_parse_data():
-    path = Path("../example/")
+    path = Path(__file__).absolute().parent.parent / "example"
     data_format = ".npy"
     filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
     (
@@ -123,7 +123,7 @@ def test_parse_data():
 
 
 def test_initiate():
-    path = Path("../example/")
+    path = Path(__file__).absolute().parent.parent / "example"
     run_dir = "test"
     df_summary, path = pl.initiate(path, run_dir=run_dir)
     df_summary2 = pandas.DataFrame(
@@ -147,7 +147,7 @@ def test_initiate():
     )
     assert df_summary2.values.all() == df_summary.values.all()
     assert df_summary2.columns.all() == df_summary.columns.all()
-    assert path == Path("../example/test")
+    assert path == Path(__file__).absolute().parent.parent / "example" / "test"
     assert path.exists()
     path.rmdir()
     pass
@@ -175,7 +175,7 @@ def test_prefiltering():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
@@ -183,7 +183,7 @@ def test_prefiltering():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -252,7 +252,7 @@ def test_prefiltering():
     ]
     assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
     # negative test due to signal-to-noise ratio
-    timeseries = np.load(Path("../example/A4t4R1Part2_6_137_72.9_73.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_6_137_72.9_73.1.npy")
     raw_data_files = ["A4t4R1Part2_6_137_72.9_73.1.npy"]
     retention_time_estimate = [26.3]
     ui = pl.UserInput(
@@ -298,7 +298,7 @@ def test_prefiltering():
 
 def test_postfiltering():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path("../example/idata_double"))
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
     # create df_summary
     df_summary = pandas.DataFrame(
         columns=[
@@ -320,7 +320,7 @@ def test_postfiltering():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
@@ -328,7 +328,7 @@ def test_postfiltering():
     peak_width_estimate = 1
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A2t2R1Part1_23_132_85.9_86.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy")
     acquisition = "A2t2R1Part1"
     experiment = 23
     precursor_mz = 132
@@ -381,7 +381,7 @@ def test_single_peak_report_add_nan_to_summary():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
@@ -389,7 +389,7 @@ def test_single_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -464,7 +464,7 @@ def test_double_peak_report_add_nan_to_summary():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
@@ -472,7 +472,7 @@ def test_double_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -527,7 +527,7 @@ def test_double_peak_report_add_nan_to_summary():
 
 def test_single_peak_report_add_data_to_summary():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path("../example/idata"))
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata")
     # create empty DataFrame
     df_summary = pandas.DataFrame(
         columns=[
@@ -549,7 +549,7 @@ def test_single_peak_report_add_data_to_summary():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
@@ -557,7 +557,7 @@ def test_single_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -622,7 +622,7 @@ def test_single_peak_report_add_data_to_summary():
 
 def test_double_peak_report_add_data_to_summary():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path("../example/idata_double"))
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
     # create empty DataFrame
     df_summary = pandas.DataFrame(
         columns=[
@@ -644,7 +644,7 @@ def test_double_peak_report_add_data_to_summary():
         ]
     )
     # create instance of the UserInput class
-    path = Path("../example")
+    path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
@@ -652,7 +652,7 @@ def test_double_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A2t2R1Part1_23_132_85.9_86.1.npy"))
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy")
     acquisition = "A1t1R1"
     experiment = 23
     precursor_mz = 132
