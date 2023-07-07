@@ -298,7 +298,7 @@ def test_prefiltering():
 
 def test_postfiltering():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path("../example/idata"))
+    idata = az.from_netcdf(Path("../example/idata_double"))
     # create df_summary
     df_summary = pandas.DataFrame(
         columns=[
@@ -321,19 +321,19 @@ def test_postfiltering():
     )
     # create instance of the UserInput class
     path = Path("../example")
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
     retention_time_estimate = [22.5]
-    peak_width_estimate = 1.5
+    peak_width_estimate = 1
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path("../example/A1t1R1Part2_1_110_109.9_110.1.npy"))
-    acquisition = "A1t1R1"
-    experiment = 4
-    precursor_mz = 118
-    product_mz_start = 71.9
-    product_mz_end = 72.1
+    timeseries = np.load(Path("../example/A2t2R1Part1_23_132_85.9_86.1.npy"))
+    acquisition = "A2t2R1Part1"
+    experiment = 23
+    precursor_mz = 132
+    product_mz_start = 85.9
+    product_mz_end = 86.1
     ui = pl.UserInput(
         path,
         raw_data_files,
@@ -350,7 +350,7 @@ def test_postfiltering():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A2t2R1Part1_23_132_85.9_86.1.npy"
     resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
     # tests
     assert not resample
