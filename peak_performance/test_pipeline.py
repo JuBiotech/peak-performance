@@ -90,15 +90,19 @@ def test_detect_raw_data():
     path = Path(__file__).absolute().parent.parent / "example"
     data_format = ".npy"
     files = pl.detect_raw_data(path, data_format)
-    assert files == [
-        "A1t1R1Part2_1_110_109.9_110.1.npy",
-        "A1t1R1Part2_2_111_109.9_110.1.npy",
-        "A1t1R1Part2_3_111_110.9_111.1.npy",
-        "A1t1R1Part2_4_112_110.9_111.1.npy",
-        "A1t1R1Part2_5_112_111.9_112.1.npy",
-        "A2t2R1Part1_23_132_85.9_86.1.npy",
-        "A4t4R1Part2_6_137_72.9_73.1.npy",
-    ]
+    files = sorted(files)
+    expected_files = sorted(
+        [
+            "A1t1R1Part2_1_110_109.9_110.1.npy",
+            "A1t1R1Part2_2_111_109.9_110.1.npy",
+            "A1t1R1Part2_3_111_110.9_111.1.npy",
+            "A1t1R1Part2_4_112_110.9_111.1.npy",
+            "A1t1R1Part2_5_112_111.9_112.1.npy",
+            "A2t2R1Part1_23_132_85.9_86.1.npy",
+            "A4t4R1Part2_6_137_72.9_73.1.npy",
+        ]
+    )
+    assert files == expected_files
     pass
 
 
