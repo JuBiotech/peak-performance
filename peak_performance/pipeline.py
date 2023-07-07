@@ -656,10 +656,10 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             }
         )
         df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df2["experiment"] = len(parameters) * [f"{ui.experiment}"]
-        df2["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
-        df2["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
-        df2["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df2["experiment"] = len(parameters) * [ui.experiment]
+        df2["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
+        df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["double_peak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
