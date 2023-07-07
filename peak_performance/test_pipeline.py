@@ -18,7 +18,9 @@ def test_user_input_class():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = "4"
     precursor_mz = 118
@@ -183,7 +185,9 @@ def test_prefiltering():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -252,7 +256,9 @@ def test_prefiltering():
     ]
     assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
     # negative test due to signal-to-noise ratio
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_6_137_72.9_73.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_6_137_72.9_73.1.npy"
+    )
     raw_data_files = ["A4t4R1Part2_6_137_72.9_73.1.npy"]
     retention_time_estimate = [26.3]
     ui = pl.UserInput(
@@ -328,7 +334,9 @@ def test_postfiltering():
     peak_width_estimate = 1
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
+    )
     acquisition = "A2t2R1Part1"
     experiment = 23
     precursor_mz = 132
@@ -389,7 +397,9 @@ def test_single_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -472,7 +482,9 @@ def test_double_peak_report_add_nan_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -557,7 +569,9 @@ def test_single_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = 4
     precursor_mz = 118
@@ -652,7 +666,9 @@ def test_double_peak_report_add_data_to_summary():
     peak_width_estimate = 1.5
     pre_filtering = True
     minimum_sn = 5
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
+    )
     acquisition = "A1t1R1"
     experiment = 23
     precursor_mz = 132
