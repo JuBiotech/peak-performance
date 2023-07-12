@@ -3,7 +3,7 @@ import zipfile
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union, Mapping
 
 import arviz as az
 import numpy as np
@@ -858,6 +858,7 @@ def pipeline_loop(
     retention_time_estimate: Dict[str, Union[float, int]],
     peak_width_estimate: Union[float, int],
     minimum_sn: Union[float, int],
+    plotting: bool,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -888,6 +889,8 @@ def pipeline_loop(
         In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
     minimum_sn
         In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+    plotting
+        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
     # unpack dictionaries into lists (to make sure they are in the correct order)
     double_peak_list = [double_peak[x] for x in raw_data_files]
@@ -944,11 +947,9 @@ def pipeline_loop(
         # if peak was discarded, continue with the next signal
         if discard:
             plots.plot_posterior(file, ui, idata, True)
-            print("discarded")
             continue
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
-            print("start resampling")
             idata = sampling(pmodel, tune=4000)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
@@ -977,10 +978,11 @@ def pipeline(
     path_raw_data: Union[str, os.PathLike],
     raw_data_file_format: str,
     pre_filtering: bool,
-    double_peak: dict,
-    retention_time_estimate: Dict[str, Union[float, int]],
+    double_peak: Mapping[str, bool],
+    retention_time_estimate: Mapping[str, Union[float, int]],
     peak_width_estimate: Union[float, int],
     minimum_sn: Union[float, int],
+    plotting: bool,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -1005,6 +1007,8 @@ def pipeline(
         In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
     minimum_sn
         In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+    plotting
+        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
     # obtain a list of raw data file names.
     raw_data_files = detect_raw_data(path_raw_data, raw_data_file_format)
@@ -1021,5 +1025,6 @@ def pipeline(
         retention_time_estimate,
         peak_width_estimate,
         minimum_sn,
+        plotting
     )
     return
