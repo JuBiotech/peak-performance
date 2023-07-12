@@ -8,10 +8,8 @@ import pytensor.tensor as pt
 import scipy.stats as st
 from matplotlib import pyplot as plt
 
-from . import pipeline as pi
 
-
-def plot_raw_data(identifier: str, ui: pi.UserInput):
+def plot_raw_data(identifier: str, ui):
     """
     Plot just the raw data in case no peak was found.
 
@@ -30,14 +28,14 @@ def plot_raw_data(identifier: str, ui: pi.UserInput):
     plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    plt.xticks(size=11.5)
-    plt.yticks(size=11.5)
-    plt.tight_layout()
-    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.png")
-    plt.savefig(Path(ui.path) / f"{identifier[:-4]}_No_Peak.svg", format="svg")
-    plt.cla()
-    plt.clf()
-    plt.close()
+    ax.set_xticks(size=11.5)
+    ax.set_yticks(size=11.5)
+    fig.tight_layout()
+    fig.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.png")
+    fig.savefig(
+        Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.svg", format="svg"
+    )
+    plt.close(fig)
 
     return
 
@@ -104,7 +102,7 @@ def plot_density(
     return
 
 
-def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarded: bool):
+def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
@@ -134,24 +132,33 @@ def plot_posterior_predictive(identifier: str, ui: pi.UserInput, idata, discarde
     ax.set_xlabel("time / min", fontsize=11.5, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=11.5, fontweight="bold")
     plt.legend()
-    plt.tight_layout()
+    fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.png")
-        plt.savefig(
-            Path(ui.path) / f"{identifier[:-4]}_predictive_posterior_NoPeak.svg", format="svg"
+        fig.savefig(
+            Path(ui.path)
+            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.png"
+        )
+        fig.savefig(
+            Path(ui.path)
+            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.svg",
+            format="svg",
         )
     else:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_predictive_posterior.svg", format="svg")
-    plt.cla()
-    plt.clf()
-    plt.close()
+        fig.savefig(
+            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.png"
+        )
+        fig.savefig(
+            Path(ui.path)
+            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.svg",
+            format="svg",
+        )
+    plt.close(fig)
 
     return
 
 
-def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
+def plot_posterior(identifier: str, ui, idata, discarded: bool):
     """
     Save plot of posterior, estimated baseline and original data points.
 
@@ -186,18 +193,24 @@ def plot_posterior(identifier: str, ui: pi.UserInput, idata, discarded: bool):
     plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    plt.xticks(size=11.5)
-    plt.yticks(size=11.5)
-    plt.tight_layout()
+    ax.set_xticks(size=11.5)
+    ax.set_yticks(size=11.5)
+    fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior_NoPeak.svg", format="svg")
+        fig.savefig(
+            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.png"
+        )
+        fig.savefig(
+            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.svg",
+            format="svg",
+        )
     else:
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.png")
-        plt.savefig(Path(ui.path) / f"{identifier[:-4]}_posterior.svg", format="svg")
-    plt.cla()
-    plt.clf()
-    plt.close()
+        fig.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.png")
+        fig.savefig(
+            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.svg",
+            format="svg",
+        )
+    plt.close(fig)
 
     return

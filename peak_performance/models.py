@@ -7,8 +7,6 @@ import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
 
-from . import pipeline as pi
-
 
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     """
@@ -86,7 +84,7 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     return baseline + height * pt.exp(-0.5 * ((time - mean) / std) ** 2)
 
 
-def define_model_normal(ui: pi.UserInput) -> pm.Model:
+def define_model_normal(ui) -> pm.Model:
     """
     Define a model for fitting a normal distribution to the peak data.
 
@@ -168,7 +166,7 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     return y
 
 
-def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
+def define_model_doublepeak(ui) -> pm.Model:
     """
     Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
 
@@ -313,7 +311,7 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     return y
 
 
-def define_model_skew(ui: pi.UserInput) -> pm.Model:
+def define_model_skew(ui) -> pm.Model:
     """
     Define a model for fitting a skew normal distribution to the peak data.
 
