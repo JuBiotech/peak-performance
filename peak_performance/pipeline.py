@@ -931,7 +931,8 @@ def pipeline_loop(
             prefilter, df_summary = prefiltering(file, ui, noise_guess, df_summary)
             if not prefilter:
                 # if no peak candidates were found, continue with the next signal
-                plots.plot_raw_data(file, ui)
+                if plotting:
+                    plots.plot_raw_data(file, ui)
                 continue
         # model selection
         if ui.user_info[file][0]:
@@ -946,7 +947,8 @@ def pipeline_loop(
         resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
         # if peak was discarded, continue with the next signal
         if discard:
-            plots.plot_posterior(file, ui, idata, True)
+            if plotting:
+                plots.plot_posterior(file, ui, idata, True)
             continue
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
@@ -959,7 +961,8 @@ def pipeline_loop(
                 # if signal was flagged for re-sampling a second time, discard it
                 # TODO: should this really be discarded or should the contents of idata be added with an additional comment? (would need to add a comment column)
                 df_summary = report_add_nan_to_summary(file, ui, df_summary)
-                plots.plot_posterior(f"{file}", ui, idata, True)
+                if plotting:
+                    plots.plot_posterior(f"{file}", ui, idata, True)
                 continue
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui)
@@ -968,8 +971,9 @@ def pipeline_loop(
         # save the inference data object in a zip file
         report_save_idata(idata, ui, file)
         # plot data
-        plots.plot_posterior_predictive(file, ui, idata, False)
-        plots.plot_posterior(file, ui, idata, False)
+        if plotting:
+            plots.plot_posterior_predictive(file, ui, idata, False)
+            plots.plot_posterior(file, ui, idata, False)
         # save condesed Excel file with area data
         report_area_sheet(path_results, df_summary)
 
