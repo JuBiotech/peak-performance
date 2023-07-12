@@ -3,7 +3,7 @@ import zipfile
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, Union, Mapping
+from typing import Any, Dict, List, Mapping, Sequence, Tuple, Union
 
 import arviz as az
 import numpy as np
@@ -1025,6 +1025,6 @@ def pipeline(
         retention_time_estimate,
         peak_width_estimate,
         minimum_sn,
-        plotting
+        plotting,
     )
     return
