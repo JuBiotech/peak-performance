@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 from pathlib import Path
 
 import arviz as az
@@ -7,6 +8,25 @@ import pandas
 import pytest
 
 from peak_performance import pipeline as pl
+
+# define columns for empty summary DataFrame for results
+COLUMNS = [
+    "mean",
+    "sd",
+    "hdi_3%",
+    "hdi_97%",
+    "mcse_mean",
+    "mcse_sd",
+    "ess_bulk",
+    "ess_tail",
+    "r_hat",
+    "acquisition",
+    "experiment",
+    "precursor_mz",
+    "product_mz_start",
+    "product_mz_end",
+    "double_peak",
+]
 
 
 def test_user_input_class():
@@ -132,54 +152,18 @@ def test_initiate():
     path = Path(__file__).absolute().parent.parent / "example"
     run_dir = "test"
     df_summary, path = pl.initiate(path, run_dir=run_dir)
-    df_summary2 = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary2 = pandas.DataFrame(columns=COLUMNS)
     assert df_summary2.values.all() == df_summary.values.all()
     assert df_summary2.columns.all() == df_summary.columns.all()
     assert path == Path(__file__).absolute().parent.parent / "example" / "test"
     assert path.exists()
-    path.rmdir()
+    shutil.rmtree(path)
     pass
 
 
 def test_prefiltering():
     # create df_summary
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
@@ -241,23 +225,7 @@ def test_prefiltering():
     found_peak, df_summary_1 = pl.prefiltering(filename, ui, 108, df_summary)
     assert not found_peak
     assert len(df_summary_1.loc[:, "mean"].values) == 8
-    assert list(df_summary_1.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary_1.columns) == COLUMNS
     assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
     # negative test due to signal-to-noise ratio
     timeseries = np.load(
@@ -285,23 +253,7 @@ def test_prefiltering():
     found_peak, df_summary_2 = pl.prefiltering(filename, ui, 108, df_summary)
     assert not found_peak
     assert len(df_summary_2.loc[:, "mean"].values) == 8
-    assert list(df_summary_2.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary_2.columns) == COLUMNS
     assert list(df_summary_2.loc[:, "mean"]) == len(df_summary_2.index) * [[np.nan]]
     pass
 
@@ -310,25 +262,7 @@ def test_postfiltering():
     # load exemplary inference data object
     idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
     # create df_summary
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
@@ -373,25 +307,7 @@ def test_postfiltering():
 
 def test_single_peak_report_add_nan_to_summary():
     # create df_summary
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
@@ -429,23 +345,7 @@ def test_single_peak_report_add_nan_to_summary():
     df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
-    assert list(df_summary.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
@@ -458,25 +358,7 @@ def test_single_peak_report_add_nan_to_summary():
 
 def test_double_peak_report_add_nan_to_summary():
     # create df_summary
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
@@ -514,23 +396,7 @@ def test_double_peak_report_add_nan_to_summary():
     df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
-    assert list(df_summary.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
@@ -545,25 +411,7 @@ def test_single_peak_report_add_data_to_summary():
     # load exemplary inference data object
     idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata")
     # create empty DataFrame
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
@@ -602,23 +450,7 @@ def test_single_peak_report_add_data_to_summary():
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
-    assert list(df_summary.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == [
         5.565,
         8.446,
@@ -642,25 +474,7 @@ def test_double_peak_report_add_data_to_summary():
     # load exemplary inference data object
     idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
     # create empty DataFrame
-    df_summary = pandas.DataFrame(
-        columns=[
-            "mean",
-            "sd",
-            "hdi_3%",
-            "hdi_97%",
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-            "acquisition",
-            "experiment",
-            "precursor_mz",
-            "product_mz_start",
-            "product_mz_end",
-            "double_peak",
-        ]
-    )
+    df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
@@ -698,23 +512,7 @@ def test_double_peak_report_add_data_to_summary():
     # add data to df_summary
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
     # tests
-    assert list(df_summary.columns) == [
-        "mean",
-        "sd",
-        "hdi_3%",
-        "hdi_97%",
-        "mcse_mean",
-        "mcse_sd",
-        "ess_bulk",
-        "ess_tail",
-        "r_hat",
-        "acquisition",
-        "experiment",
-        "precursor_mz",
-        "product_mz_start",
-        "product_mz_end",
-        "double_peak",
-    ]
+    assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == [
         -17.786,
         -8.814,
