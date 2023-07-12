@@ -109,7 +109,7 @@ def test_user_input_class():
 def test_detect_raw_data():
     path = Path(__file__).absolute().parent.parent / "example"
     data_format = ".npy"
-    files = pl.detect_raw_data(path, data_format)
+    files = pl.detect_raw_data(path, data_type=data_format)
     files = sorted(files)
     expected_files = sorted(
         [
