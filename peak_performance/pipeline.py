@@ -1015,7 +1015,7 @@ def pipeline(
         Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
     # obtain a list of raw data file names.
-    raw_data_files = detect_raw_data(path_raw_data, raw_data_file_format)
+    raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
     # create data structure and DataFrame(s) for results
     df_summary, path_results = initiate(path_raw_data)
     pipeline_loop(
