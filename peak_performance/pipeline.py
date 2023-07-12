@@ -230,7 +230,7 @@ class UserInput:
         return user_info
 
 
-def detect_raw_data(path: Union[str, os.PathLike], data_type: str = ".npy"):
+def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
     """
     Detect all .npy files with time and intensity data for peaks in a given directory.
 
