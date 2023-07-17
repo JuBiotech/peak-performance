@@ -1,13 +1,7 @@
-import math
-
-import arviz as az
 import numpy as np
-import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
-
-from . import pipeline as pi
 
 
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):
@@ -86,7 +80,7 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     return baseline + height * pt.exp(-0.5 * ((time - mean) / std) ** 2)
 
 
-def define_model_normal(ui: pi.UserInput) -> pm.Model:
+def define_model_normal(ui) -> pm.Model:
     """
     Define a model for fitting a normal distribution to the peak data.
 
@@ -122,14 +116,14 @@ def define_model_normal(ui: pi.UserInput) -> pm.Model:
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         height = pm.HalfNormal("height", 0.95 * np.max(intensity))
-        area = pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        sn = pm.Deterministic("sn", height / noise)
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
+        pm.Deterministic("sn", height / noise)
         # posterior
         y = normal_posterior(baseline, height, time, mean, std)
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
 
@@ -168,9 +162,10 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     return y
 
 
-def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
+def define_model_doublepeak(ui) -> pm.Model:
     """
-    Define a model for fitting two ordered normal distributions to the peak data (for when data contains two peaks or a double peak without baseline separation).
+    Define a model for fitting two ordered normal distributions to the peak data
+    (for when data contains two peaks or a double peak without baseline separation).
 
     Parameters
     ----------
@@ -204,10 +199,10 @@ def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
         std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
         height = pm.HalfNormal("height", 0.95 * np.max(intensity))
         height2 = pm.HalfNormal("height2", 0.95 * np.max(intensity))
-        area = pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        area2 = pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
-        sn = pm.Deterministic("sn", height / noise)
-        sn2 = pm.Deterministic("sn2", height2 / noise)
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
+        pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
+        pm.Deterministic("sn", height / noise)
+        pm.Deterministic("sn2", height2 / noise)
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
@@ -221,7 +216,7 @@ def define_model_doublepeak(ui: pi.UserInput) -> pm.Model:
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
 
@@ -268,8 +263,11 @@ def mode_skew_calculation(mean_skew, mode_offset, alpha):
 def height_calculation(area, mean, std, alpha, mode_skew):
     """
     Calculate the height of a skew normal distribution.
-    The formula is the result of inserting time = mode_skew into the posterior. Since the mode of a skew normal distribution is calculated as a numerical approximation,
-    its accuracy is not perfect and thus the height's either. In tests, the height was still accurate up to and including the first two decimals.
+
+    The formula is the result of inserting time = mode_skew into the posterior.
+    Since the mode of a skew normal distribution is calculated as a numerical approximation,
+    its accuracy is not perfect and thus the height's either.
+    In tests, the height was still accurate up to and including the first two decimals.
     """
     return area * (
         2
@@ -313,7 +311,7 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     return y
 
 
-def define_model_skew(ui: pi.UserInput) -> pm.Model:
+def define_model_skew(ui) -> pm.Model:
     """
     Define a model for fitting a skew normal distribution to the peak data.
 
@@ -353,8 +351,10 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
         std_skew_formula = std_skew_calculation(std, alpha)
         pm.Deterministic("std_skew", std_skew_formula)
         # height is defined as the posterior with x = mode
-        # (difference to normal distribution: for normal distribution mean and mode are identical and inserting x = mean = mode leads to a simplification of the PDF)
-        # first calculate the mode (via calculating the mean of a skew normal and using a numerical approach to calculating the offset between mean and mode)
+        # (difference to normal distribution: for normal distribution mean and mode are identical
+        # and inserting x = mean = mode leads to a simplification of the PDF)
+        # first calculate the mode (via calculating the mean of a skew normal and
+        # using a numerical approach to calculating the offset between mean and mode)
         mean_skew_formula = mean_skew_calculation(mean, std, alpha)
         mean_skew = pm.Deterministic("mean_skew", mean_skew_formula)
         mue_z_formula = mue_z_calculation(alpha)
@@ -363,7 +363,8 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
         sigma_z = pm.Deterministic("sigma_z", sigma_z_formula)
         fit_skewness = fit_skewness_calculation(intensity)
         mode_offset_formula = mode_offset_calculation(mue_z, fit_skewness, sigma_z, alpha)
-        # this formula originally contained the sign() function which led to an error -> use alpha/abs(alpha) instead for the same effect
+        # this formula originally contained the sign() function which led to an error
+        # -> use alpha/abs(alpha) instead for the same effect
         mode_offset = pm.Deterministic("mode_offset", mode_offset_formula)
         mode_skew_formula = mode_skew_calculation(mean_skew, mode_offset, alpha)
         # if alpha < 0: mode = mean + offset; if alpha > 0: mode = mean - offset;
@@ -374,11 +375,11 @@ def define_model_skew(ui: pi.UserInput) -> pm.Model:
             "height",
             height_formula,
         )
-        sn = pm.Deterministic("sn", height / noise)
+        pm.Deterministic("sn", height / noise)
         y = skew_normal_posterior(baseline, area, time, mean, std, alpha)
         y = pm.Deterministic("y", y)
 
         # likelihood
-        L = pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel

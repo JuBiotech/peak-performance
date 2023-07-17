@@ -1,20 +1,17 @@
 import os
-import zipfile
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import List, Mapping, Sequence, Union
 
 import arviz as az
 import numpy as np
-import openpyxl
 import pandas
 import pymc as pm
-import pytensor.tensor as pt
 import scipy.integrate
 import scipy.signal
-import scipy.stats as st
-from matplotlib import pyplot
+
+from peak_performance import models, plots
 
 
 class ParsingError(Exception):
@@ -31,7 +28,8 @@ class UserInput:
     def __init__(
         self,
         path: Union[str, os.PathLike],
-        files: Sequence[Union[str, os.PathLike]],
+        files: Sequence[str],
+        raw_data_file_format: str,
         double_peak: Sequence[bool],
         retention_time_estimate: Union[Sequence[float], Sequence[int]],
         peak_width_estimate: Union[float, int],
@@ -51,8 +49,11 @@ class UserInput:
             Path to the folder containing the results of the current run.
         files
             List of raw data file names in path.
+        raw_data_file_format
+            Data format (suffix) of the raw data, default is '.npy'.
         double_peak
-            List with Booleans in the same order as files. Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
+            List with Booleans in the same order as files.
+            Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
         retention_time_estimate
             In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
             In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
@@ -77,17 +78,18 @@ class UserInput:
         """
         self.path = path
         self.files = list(files)
+        self.raw_data_file_format = raw_data_file_format
         self.double_peak = double_peak
         self.retention_time_estimate = retention_time_estimate
         self.peak_width_estimate = peak_width_estimate
         self.pre_filtering = pre_filtering
         self.minimum_sn = minimum_sn
-        self._timeseries = timeseries
-        self._acquisition = acquisition
-        self._experiment = experiment
-        self._precursor_mz = precursor_mz
-        self._product_mz_start = product_mz_start
-        self._product_mz_end = product_mz_end
+        self.timeseries = timeseries
+        self.acquisition = acquisition
+        self.experiment = experiment
+        self.precursor_mz = precursor_mz
+        self.product_mz_start = product_mz_start
+        self.product_mz_end = product_mz_end
         super().__init__()
 
     @property
@@ -99,7 +101,7 @@ class UserInput:
     def timeseries(self, data):
         """Setting the value of the timeseries attribute."""
         if data is None:
-            raise InputError(f"The timeseries parameter is a None type.")
+            raise InputError("The timeseries parameter is a None type.")
         self._timeseries = np.asarray(data)
 
     @property
@@ -113,7 +115,7 @@ class UserInput:
         if not isinstance(name, str):
             raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
         if name is None:
-            raise InputError(f"The acquisition parameter is a None type.")
+            raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
 
     @property
@@ -127,12 +129,12 @@ class UserInput:
         if not isinstance(number, int):
             try:
                 number = int(number)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The experiment parameter is {type(number)} but needs to be an integer."
-                )
+                    f"The experiment parameter is {type(number)} but needs to be an int."
+                ) from ex
         if number is None:
-            raise InputError(f"The experiment parameter is a None type.")
+            raise InputError("The experiment parameter is a None type.")
         self._experiment = number
 
     @property
@@ -146,12 +148,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The precursor_mz parameter is a None type.")
+            raise InputError("The precursor_mz parameter is a None type.")
         self._precursor_mz = mz
 
     @property
@@ -165,12 +167,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_start parameter is a None type.")
+            raise InputError("The product_mz_start parameter is a None type.")
         self._product_mz_start = mz
 
     @property
@@ -184,12 +186,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_end parameter is a None type.")
+            raise InputError("The product_mz_end parameter is a None type.")
         self._product_mz_end = mz
 
     @property
@@ -206,10 +208,12 @@ class UserInput:
         #         self.retention_time_estimate
         #     ):
         #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), "
+        #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
         #         )
         # else:
-        #     # if pre_filtering is False, then retention_time_estimate is not needed but the dictionary still needs to be created without errors -> set it to None
+        #     # if pre_filtering is False, then retention_time_estimate is not needed
+        #     # but the dictionary still needs to be created without errors -> set it to None
         #     if len(self.retention_time_estimate) == 1:
         #         self.retention_time_estimate = len(self.files) * None
         #     elif not self.retention_time_estimate:
@@ -224,7 +228,7 @@ class UserInput:
         return user_info
 
 
-def detect_npy(path: Union[str, os.PathLike]):
+def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
     """
     Detect all .npy files with time and intensity data for peaks in a given directory.
 
@@ -232,40 +236,24 @@ def detect_npy(path: Union[str, os.PathLike]):
     ----------
     path
         Path to the folder containing raw data.
+    data_type
+        Data format of the raw data files (e.g. '.npy').
 
     Returns
     -------
-    npy_files
-        List with names of all .npy files in path.
+    files
+        List with names of all files of the specified data type in path.
     """
     all_files = os.listdir(path)
-    npy_files = [file for file in all_files if ".npy" in file]
+    npy_files = [file for file in all_files if data_type in file]
     if not npy_files:
-        raise FileNotFoundError(f"In the given directory '{path}', there are no .npy files.")
+        raise FileNotFoundError(f"In the given directory '{path}', there are no {data_type} files.")
     return npy_files
 
 
-def scan_folder(path: Union[str, os.PathLike]):
-    """
-    Detect all files in a given directory and returns them as a list.
-
-    The files should
-    a) contain time and intensity data and
-    b) be named according to the naming scheme (will automatically be correct when downloaded from the MS data cluster).
-
-    Parameters
-    ----------
-    path
-        Path to the folder containing raw data.
-    """
-    return os.listdir(path)
-
-
-def parse_data(path: Union[str, os.PathLike], filename: str):
+def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_format: str):
     """
     Extract names of data files.
-
-    Use this in a for-loop with the data file names from detect_npy() or scan_folder().
 
     Parameters
     ----------
@@ -273,6 +261,8 @@ def parse_data(path: Union[str, os.PathLike], filename: str):
         Path to the raw data files.
     filename
         Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
 
     Returns
     -------
@@ -298,11 +288,11 @@ def parse_data(path: Union[str, os.PathLike], filename: str):
     precursor_mz = splits[2]
     product_mz_start = splits[3]
     # remove the .npy suffix from the last split
-    product_mz_end = splits[4][:-4]
+    product_mz_end = splits[4][: -len(raw_data_file_format)]
     return timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end
 
 
-def initiate(path: Union[str, os.PathLike]):
+def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
     """
     Create a folder for the results. Also create a zip file inside that folder. Also create df_summary.
 
@@ -310,6 +300,8 @@ def initiate(path: Union[str, os.PathLike]):
     ----------
     path
         Path to the directory containing the raw data.
+    run_dir
+        Name of the directory created to store the results of the current run (default: current date and time).
 
     Returns
     -------
@@ -319,11 +311,12 @@ def initiate(path: Union[str, os.PathLike]):
         Updated path variable pointing to the newly created folder for this batch.
     """
     # get current date and time
-    today = str(date.today())
-    now = datetime.now().strftime("%H-%M-%S")
-    timestamp = today + "_" + now
-    run_dir = timestamp + "_run"
-    # create a directory
+    if not run_dir:
+        today = str(date.today())
+        now = datetime.now().strftime("%H-%M-%S")
+        timestamp = today + "_" + now
+        run_dir = timestamp + "_run"
+        # create a directory
     path = Path(path) / run_dir
     path.mkdir(exist_ok=True)
     # # write text file, zip it, then delete it (cannot create an empty zip)
@@ -490,7 +483,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     resample = False
     discard = False
     az_summary: pandas.DataFrame = az.summary(idata)
-    if not doublepeak == True:
+    if doublepeak is not True:
         # for single peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
@@ -498,7 +491,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
             or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
         ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and height
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
@@ -528,7 +522,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
@@ -661,10 +656,10 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             }
         )
         df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df2["experiment"] = len(parameters) * [f"{ui.experiment}"]
-        df2["precursor_mz"] = len(parameters) * [f"{ui.precursor_mz}"]
-        df2["product_mz_start"] = len(parameters) * [f"{ui.product_mz_start}"]
-        df2["product_mz_end"] = len(parameters) * [f"{ui.product_mz_end}"]
+        df2["experiment"] = len(parameters) * [ui.experiment]
+        df2["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
+        df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["double_peak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
@@ -687,7 +682,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df["double_peak"] = len(parameters) * [""]
+        df["double_peak"] = len(parameters) * [False]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
     # save summary df as Excel file
@@ -850,3 +845,204 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     ) as writer:
         df_summary.to_excel(writer)
     return df_summary
+
+
+def pipeline_loop(
+    path_raw_data: Union[str, os.PathLike],
+    path_results: Union[str, os.PathLike],
+    raw_data_files: List[str],
+    raw_data_file_format: str,
+    df_summary: pandas.DataFrame,
+    pre_filtering: bool,
+    double_peak: Mapping[str, bool],
+    retention_time_estimate: Mapping[str, Union[float, int]],
+    peak_width_estimate: Union[float, int],
+    minimum_sn: Union[float, int],
+    plotting: bool,
+):
+    """
+    Method to run the complete Peak Performance pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+    path_results
+        Path to the directory for the results of a given Batch run of Peak Performance.
+    raw_data_files
+        List with names of all files of the specified data type in path_raw_data.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    df_summary
+        DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
+    pre_filtering
+        Select whether to include (True) or exclude (False) the pre-filtering step.
+        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling
+        to potentially save a lot of computation time.
+        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
+    double_peak
+        Dictionary with the raw data file names (inlcuding data format) as keys and Booleans as values.
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
+        Visually check this beforehand.
+    retention_time_estimate
+        Dictionary with the raw data file names (inlcuding data format) as keys and floats
+        or ints of the expected retention time of the given analyte as values.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
+        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+    peak_width_estimate
+        In case you set pre_filtering to True, give a rough estimate of the average peak width
+        in minutes you would expect for your LC-MS/MS method.
+    minimum_sn
+        In case you set pre_filtering to True, give a minimum signal to noise ratio
+        for a signal to be defined as a peak during pre-filtering.
+    plotting
+        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
+    """
+    # unpack dictionaries into lists (to make sure they are in the correct order)
+    double_peak_list = [double_peak[x] for x in raw_data_files]
+    retention_time_estimate_list = [retention_time_estimate[x] for x in raw_data_files]
+    for file in raw_data_files:
+        # parse the data and extract information from the (standardized) file name
+        (
+            timeseries,
+            acquisition,
+            experiment,
+            precursor_mz,
+            product_mz_start,
+            product_mz_end,
+        ) = parse_data(path_raw_data, file, raw_data_file_format)
+        # instantiate the UserInput class all given information
+        ui = UserInput(
+            path_results,
+            raw_data_files,
+            raw_data_file_format,
+            double_peak_list,
+            retention_time_estimate_list,
+            peak_width_estimate,
+            pre_filtering,
+            minimum_sn,
+            timeseries,
+            acquisition,
+            experiment,
+            precursor_mz,
+            product_mz_start,
+            product_mz_end,
+        )
+        # calculate initial guesses for pre-filtering and defining prior probability distributions
+        slope_guess, intercept_guess, noise_guess = models.initial_guesses(
+            ui.timeseries[0], ui.timeseries[1]
+        )
+        # apply pre-sampling filter (if selected)
+        if pre_filtering:
+            prefilter, df_summary = prefiltering(file, ui, noise_guess, df_summary)
+            if not prefilter:
+                # if no peak candidates were found, continue with the next signal
+                if plotting:
+                    plots.plot_raw_data(file, ui)
+                continue
+        # model selection
+        if ui.user_info[file][0]:
+            # double peak model
+            pmodel = models.define_model_doublepeak(ui)
+        else:
+            # single peaks are first modeled with a skew normal distribution
+            pmodel = models.define_model_skew(ui)
+        # sample the chosen model
+        idata = sampling(pmodel)
+        # apply post-sampling filter
+        resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
+        # if peak was discarded, continue with the next signal
+        if discard:
+            if plotting:
+                plots.plot_posterior(file, ui, idata, True)
+            continue
+        # if convergence was not yet reached, sample again with more tuning samples
+        if resample:
+            idata = sampling(pmodel, tune=4000)
+            resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
+            if discard:
+                plots.plot_posterior(f"{file}", ui, idata, True)
+                continue
+            if resample:
+                # if signal was flagged for re-sampling a second time, discard it
+                # TODO: should this really be discarded or should the contents of idata be added with an additional comment?
+                #       (would need to add a comment column)
+                df_summary = report_add_nan_to_summary(file, ui, df_summary)
+                if plotting:
+                    plots.plot_posterior(f"{file}", ui, idata, True)
+                continue
+        # add inference data to df_summary and save it as an Excel file
+        df_summary = report_add_data_to_summary(file, idata, df_summary, ui)
+        # perform posterior predictive sampling
+        idata = posterior_predictive_sampling(pmodel, idata)
+        # save the inference data object in a zip file
+        report_save_idata(idata, ui, file)
+        # plot data
+        if plotting:
+            plots.plot_posterior_predictive(file, ui, idata, False)
+            plots.plot_posterior(file, ui, idata, False)
+        # save condesed Excel file with area data
+        report_area_sheet(path_results, df_summary)
+
+
+def pipeline(
+    path_raw_data: Union[str, os.PathLike],
+    raw_data_file_format: str,
+    pre_filtering: bool,
+    double_peak: Mapping[str, bool],
+    retention_time_estimate: Mapping[str, Union[float, int]],
+    peak_width_estimate: Union[float, int],
+    minimum_sn: Union[float, int],
+    plotting: bool,
+):
+    """
+    Method to run the complete Peak Performance pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    pre_filtering
+        Select whether to include (True) or exclude (False) the pre-filtering step.
+        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio
+        before fitting/sampling to potentially save a lot of computation time.
+        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
+    double_peak
+        Dictionary with the raw data file names as keys and Booleans as values.
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
+        Visually check this beforehand.
+    retention_time_estimate
+        Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
+        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+    peak_width_estimate
+        In case you set pre_filtering to True, give a rough estimate of the average peak width
+        in minutes you would expect for your LC-MS/MS method.
+    minimum_sn
+        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal
+        to be defined as a peak during pre-filtering.
+    plotting
+        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
+    """
+    # obtain a list of raw data file names.
+    raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
+    # create data structure and DataFrame(s) for results
+    df_summary, path_results = initiate(path_raw_data)
+    pipeline_loop(
+        path_raw_data,
+        path_results,
+        raw_data_files,
+        raw_data_file_format,
+        df_summary,
+        pre_filtering,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        minimum_sn,
+        plotting,
+    )
+    return
