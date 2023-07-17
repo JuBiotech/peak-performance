@@ -4,8 +4,6 @@ import arviz as az
 import numpy as np
 import pandas as pd
 import pymc as pm
-import pytensor.tensor as pt
-import scipy.stats as st
 from matplotlib import pyplot as plt
 
 

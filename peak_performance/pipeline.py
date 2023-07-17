@@ -1,20 +1,15 @@
 import os
-import zipfile
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Sequence, Tuple, Union
+from typing import List, Mapping, Sequence, Union
 
 import arviz as az
 import numpy as np
-import openpyxl
 import pandas
 import pymc as pm
-import pytensor.tensor as pt
 import scipy.integrate
 import scipy.signal
-import scipy.stats as st
-from matplotlib import pyplot
 
 from peak_performance import models, plots
 
@@ -57,7 +52,8 @@ class UserInput:
         raw_data_file_format
             Data format (suffix) of the raw data, default is '.npy'.
         double_peak
-            List with Booleans in the same order as files. Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
+            List with Booleans in the same order as files.
+            Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
         retention_time_estimate
             In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
             In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
@@ -105,7 +101,7 @@ class UserInput:
     def timeseries(self, data):
         """Setting the value of the timeseries attribute."""
         if data is None:
-            raise InputError(f"The timeseries parameter is a None type.")
+            raise InputError("The timeseries parameter is a None type.")
         self._timeseries = np.asarray(data)
 
     @property
@@ -119,7 +115,7 @@ class UserInput:
         if not isinstance(name, str):
             raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
         if name is None:
-            raise InputError(f"The acquisition parameter is a None type.")
+            raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
 
     @property
@@ -133,12 +129,12 @@ class UserInput:
         if not isinstance(number, int):
             try:
                 number = int(number)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The experiment parameter is {type(number)} but needs to be an integer."
-                )
+                    f"The experiment parameter is {type(number)} but needs to be an int."
+                ) from ex
         if number is None:
-            raise InputError(f"The experiment parameter is a None type.")
+            raise InputError("The experiment parameter is a None type.")
         self._experiment = number
 
     @property
@@ -152,12 +148,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The precursor_mz parameter is a None type.")
+            raise InputError("The precursor_mz parameter is a None type.")
         self._precursor_mz = mz
 
     @property
@@ -171,12 +167,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_start parameter is a None type.")
+            raise InputError("The product_mz_start parameter is a None type.")
         self._product_mz_start = mz
 
     @property
@@ -190,12 +186,12 @@ class UserInput:
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
-            except:
+            except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an integer or a float."
-                )
+                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                ) from ex
         if mz is None:
-            raise InputError(f"The product_mz_end parameter is a None type.")
+            raise InputError("The product_mz_end parameter is a None type.")
         self._product_mz_end = mz
 
     @property
@@ -212,10 +208,12 @@ class UserInput:
         #         self.retention_time_estimate
         #     ):
         #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), "
+        #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
         #         )
         # else:
-        #     # if pre_filtering is False, then retention_time_estimate is not needed but the dictionary still needs to be created without errors -> set it to None
+        #     # if pre_filtering is False, then retention_time_estimate is not needed
+        #     # but the dictionary still needs to be created without errors -> set it to None
         #     if len(self.retention_time_estimate) == 1:
         #         self.retention_time_estimate = len(self.files) * None
         #     elif not self.retention_time_estimate:
@@ -485,7 +483,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     resample = False
     discard = False
     az_summary: pandas.DataFrame = az.summary(idata)
-    if not doublepeak == True:
+    if doublepeak is not True:
         # for single peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
@@ -493,7 +491,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
             or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
         ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and height
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
@@ -523,7 +522,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
+            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
             if (
                 az_summary.loc["std", :]["mean"] <= 0.1
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
@@ -867,7 +867,7 @@ def pipeline_loop(
     ----------
     path_raw_data
         Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
-        In any case, time and intensity have to be saved as NumPy arrays at the first and second position of the stored data object, respectively.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     path_results
         Path to the directory for the results of a given Batch run of Peak Performance.
     raw_data_files
@@ -877,18 +877,25 @@ def pipeline_loop(
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step. Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling to potentially save a lot of computation time.
+        Select whether to include (True) or exclude (False) the pre-filtering step.
+        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling
+        to potentially save a lot of computation time.
         If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
     double_peak
         Dictionary with the raw data file names (inlcuding data format) as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak. Visually check this beforehand.
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
+        Visually check this beforehand.
     retention_time_estimate
-        Dictionary with the raw data file names (inlcuding data format) as keys and floats or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal. In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+        Dictionary with the raw data file names (inlcuding data format) as keys and floats
+        or ints of the expected retention time of the given analyte as values.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
+        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
     peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
+        In case you set pre_filtering to True, give a rough estimate of the average peak width
+        in minutes you would expect for your LC-MS/MS method.
     minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+        In case you set pre_filtering to True, give a minimum signal to noise ratio
+        for a signal to be defined as a peak during pre-filtering.
     plotting
         Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
@@ -959,7 +966,8 @@ def pipeline_loop(
                 continue
             if resample:
                 # if signal was flagged for re-sampling a second time, discard it
-                # TODO: should this really be discarded or should the contents of idata be added with an additional comment? (would need to add a comment column)
+                # TODO: should this really be discarded or should the contents of idata be added with an additional comment?
+                #       (would need to add a comment column)
                 df_summary = report_add_nan_to_summary(file, ui, df_summary)
                 if plotting:
                     plots.plot_posterior(f"{file}", ui, idata, True)
@@ -995,22 +1003,28 @@ def pipeline(
     ----------
     path_raw_data
         Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
-        In any case, time and intensity have to be saved as NumPy arrays at the first and second position of the stored data object, respectively.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step. Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling to potentially save a lot of computation time.
+        Select whether to include (True) or exclude (False) the pre-filtering step.
+        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio
+        before fitting/sampling to potentially save a lot of computation time.
         If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
     double_peak
         Dictionary with the raw data file names as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak. Visually check this beforehand.
+        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
+        Visually check this beforehand.
     retention_time_estimate
         Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal. In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
+        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
+        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
     peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width in minutes you would expect for your LC-MS/MS method.
+        In case you set pre_filtering to True, give a rough estimate of the average peak width
+        in minutes you would expect for your LC-MS/MS method.
     minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal to be defined as a peak during pre-filtering.
+        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal
+        to be defined as a peak during pre-filtering.
     plotting
         Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """

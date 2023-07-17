@@ -51,6 +51,10 @@ xfail_strict=true
 [tool.black]
 line-length = 100
 
+[tool.ruff]
+line-length = 140
+ignore-init-module-imports = true
+
 [tool.coverage.run]
 omit = [
     # exclude tests files from coverage calculation
