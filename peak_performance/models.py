@@ -345,7 +345,7 @@ def define_model_skew(ui) -> pm.Model:
             noise = pm.LogNormal("noise", np.log(10), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
-        alpha = pm.HalfNormal("alpha", 2.5)
+        alpha = pm.Normal("alpha", 0, 3.5)
         area = pm.HalfNormal("area", np.max(intensity) * 0.9)
         # calculate standard deviation and arithmetic mean of a skew normal distribution
         std_skew_formula = std_skew_calculation(std, alpha)
