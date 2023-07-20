@@ -96,7 +96,7 @@ def define_model_normal(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
@@ -179,7 +179,7 @@ def define_model_doublepeak(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
@@ -327,7 +327,7 @@ def define_model_skew(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
