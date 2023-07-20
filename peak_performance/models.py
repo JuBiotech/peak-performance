@@ -98,6 +98,14 @@ def define_model_normal(ui) -> pm.Model:
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+        
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
@@ -181,6 +189,14 @@ def define_model_doublepeak(ui) -> pm.Model:
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
@@ -329,6 +345,14 @@ def define_model_skew(ui) -> pm.Model:
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
