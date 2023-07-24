@@ -29,6 +29,7 @@ dependencies = [
     "pytensor",
     "scipy",
     "openpyxl",
+    "nutpie",
 ]
 
 [tool.setuptools]
