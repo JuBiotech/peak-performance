@@ -13,6 +13,12 @@ import scipy.signal
 
 from peak_performance import models, plots
 
+try:
+    import nutpie
+    HAS_NUTPIE = True
+except ImportError:
+    HAS_NUTPIE = False
+
 
 class ParsingError(Exception):
     """Base type of parsing exceptions."""
@@ -447,9 +453,11 @@ def sampling(pmodel, **sample_kwargs):
     """
     sample_kwargs.setdefault("tune", 2000)
     sample_kwargs.setdefault("draws", 2000)
+    # check if nutpie is available; if so, use it to enhance performance
+    nuts_sampler = "nutpie" if HAS_NUTPIE else "pymc"
     with pmodel:
         idata = pm.sample_prior_predictive()
-        idata.extend(pm.sample(nuts_sampler="nutpie", **sample_kwargs))
+        idata.extend(pm.sample(nuts_sampler=nuts_sampler, **sample_kwargs))
     return idata
 
 
