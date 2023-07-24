@@ -15,6 +15,7 @@ from peak_performance import models, plots
 
 try:
     import nutpie
+
     HAS_NUTPIE = True
 except ImportError:
     HAS_NUTPIE = False

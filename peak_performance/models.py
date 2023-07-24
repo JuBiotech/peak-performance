@@ -240,7 +240,7 @@ def define_model_doublepeak(ui) -> pm.Model:
 def std_skew_calculation(scale, alpha):
     """
     Calculate the standard deviation of a skew normal distribution with f(x | loc, scale, alpha).
-    
+
     Parameters
     ----------
     scale
@@ -260,7 +260,7 @@ def std_skew_calculation(scale, alpha):
 def mean_skew_calculation(loc, scale, alpha):
     """
     Calculate the arithmetic mean of a skew normal distribution with f(x | loc, scale, alpha).
-    
+
     Parameters
     ----------
     loc
@@ -290,7 +290,7 @@ def delta_calculation(alpha):
 
 def mue_z_calculation(delta):
     """Calculate the mue_z variable which is needed to compute a numerical approximation of the mode of a skew normal distribution."""
-    return np.sqrt(2/np.pi) * delta
+    return np.sqrt(2 / np.pi) * delta
 
 
 def sigma_z_calculation(mue_z):
@@ -300,7 +300,12 @@ def sigma_z_calculation(mue_z):
 
 def skewness_calculation(delta):
     """Calculate the skewness of a skew normal distribution."""
-    return (4 - np.pi) / 2 * ((delta * np.sqrt(2 / np.pi))**3) / ((1 - 2 * delta**2 / np.pi)**1.5)
+    return (
+        (4 - np.pi)
+        / 2
+        * ((delta * np.sqrt(2 / np.pi)) ** 3)
+        / ((1 - 2 * delta**2 / np.pi) ** 1.5)
+    )
 
 
 def mode_offset_calculation(mue_z, skewness, sigma_z, alpha):
@@ -323,7 +328,7 @@ def height_calculation(area, loc, scale, alpha, mode_skew):
     """
     Calculate the height of a skew normal distribution.
     The formula is the result of inserting time = mode_skew into the posterior.
-    
+
     Parameters
     ----------
     area
@@ -433,7 +438,7 @@ def define_model_skew(ui) -> pm.Model:
         std_skew_formula = std_skew_calculation(std, alpha)
         pm.Deterministic("std_skew", std_skew_formula)
         mean_skew_formula = mean_skew_calculation(mean, std, alpha)
-        mean_skew = pm.Deterministic("mean_skew", mean_skew_formula)
+        pm.Deterministic("mean_skew", mean_skew_formula)
 
         # height is defined as the posterior with x = mode
         delta_formula = delta_calculation(alpha)
