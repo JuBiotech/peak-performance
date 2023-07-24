@@ -26,8 +26,8 @@ def plot_raw_data(identifier: str, ui):
     plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    ax.set_xticks(size=11.5)
-    ax.set_yticks(size=11.5)
+    plt.xticks(size=11.5)
+    plt.yticks(size=11.5)
     fig.tight_layout()
     fig.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.png")
     fig.savefig(
@@ -129,6 +129,8 @@ def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
     ax.scatter(time, intensity, marker="x", color="black", label="data")
     ax.set_xlabel("time / min", fontsize=11.5, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=11.5, fontweight="bold")
+    plt.xticks(size=11.5)
+    plt.yticks(size=11.5)
     plt.legend()
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
@@ -191,8 +193,8 @@ def plot_posterior(identifier: str, ui, idata, discarded: bool):
     plt.legend()
     ax.set_xlabel("time / min", fontsize=12, fontweight="bold")
     ax.set_ylabel("intensity / a.u.", fontsize=12, fontweight="bold")
-    ax.set_xticks(size=11.5)
-    ax.set_yticks(size=11.5)
+    plt.xticks(size=11.5)
+    plt.yticks(size=11.5)
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:

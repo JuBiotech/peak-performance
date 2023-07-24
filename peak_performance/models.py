@@ -96,8 +96,16 @@ def define_model_normal(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
@@ -179,8 +187,16 @@ def define_model_doublepeak(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
@@ -327,8 +343,16 @@ def define_model_skew(ui) -> pm.Model:
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    intercept_guess, slope_guess, noise_width_guess = initial_guesses(time, intensity)
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
@@ -345,7 +369,7 @@ def define_model_skew(ui) -> pm.Model:
             noise = pm.LogNormal("noise", np.log(10), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
-        alpha = pm.HalfNormal("alpha", 2.5)
+        alpha = pm.Normal("alpha", 0, 3.5)
         area = pm.HalfNormal("area", np.max(intensity) * 0.9)
         # calculate standard deviation and arithmetic mean of a skew normal distribution
         std_skew_formula = std_skew_calculation(std, alpha)
