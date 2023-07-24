@@ -449,7 +449,7 @@ def sampling(pmodel, **sample_kwargs):
     sample_kwargs.setdefault("draws", 2000)
     with pmodel:
         idata = pm.sample_prior_predictive()
-        idata.extend(pm.sample(**sample_kwargs))
+        idata.extend(pm.sample(nuts_sampler="nutpie", **sample_kwargs))
     return idata
 
 
