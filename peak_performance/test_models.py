@@ -92,7 +92,8 @@ class TestDistributions:
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual_mode = mode_skew_pt.eval().astype(float)
         actual_height = height_pt.eval().astype(float)
-        # testing; allow slight difference due to shift of distribution by baseline (this numerical calculation does not consider the baseline)
+        # testing; allow slight difference due to shift of distribution by baseline
+        # (this numerical calculation does not consider the baseline)
         np.testing.assert_allclose(expected_height, actual_height, atol=1e-3)
         np.testing.assert_allclose(expected_mode_skew, actual_mode, atol=5e-2)
         pass
