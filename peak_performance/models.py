@@ -105,7 +105,7 @@ def define_model_normal(ui) -> pm.Model:
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
         pm.ConstantData("noise_width_guess", noise_width_guess)
-        
+
         # priors plus error handling in case of mathematically impermissible values
         if intercept_guess == 0:
             baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
