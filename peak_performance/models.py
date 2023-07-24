@@ -237,19 +237,60 @@ def define_model_doublepeak(ui) -> pm.Model:
     return pmodel
 
 
-def std_skew_calculation(std, alpha):
-    """Calculate the standard deviation of a skew normal distribution."""
-    return np.sqrt(std**2 * (1 - (2 * alpha**2) / ((alpha**2 + 1) * np.pi)))
+def std_skew_calculation(scale, alpha):
+    """
+    Calculate the standard deviation of a skew normal distribution with f(x | loc, scale, alpha).
+    
+    Parameters
+    ----------
+    scale
+        Scale parameter of the skew normal distribution.
+    alpha
+        Skewness parameter of the skew normal distribution.
+
+    Returns
+    ----------
+    std
+        Standard deviation of a skew normal distribution.
+    -------
+    """
+    return np.sqrt(scale**2 * (1 - (2 * alpha**2) / ((alpha**2 + 1) * np.pi)))
 
 
-def mean_skew_calculation(mean, std, alpha):
-    """Calculate the arithmetic mean of a skew normal distribution."""
-    return mean + std * np.sqrt(2 / np.pi) * alpha / (np.sqrt(1 + alpha**2))
+def mean_skew_calculation(loc, scale, alpha):
+    """
+    Calculate the arithmetic mean of a skew normal distribution with f(x | loc, scale, alpha).
+    
+    Parameters
+    ----------
+    loc
+        Location parameter of the skew normal distribution.
+    scale
+        Scale parameter of the skew normal distribution.
+    alpha
+        Skewness parameter of the skew normal distribution.
+
+    Returns
+    ----------
+    mean
+        Arithmetic mean of a skew normal distribution.
+    """
+    return loc + scale * np.sqrt(2 / np.pi) * alpha / (np.sqrt(1 + alpha**2))
 
 
-def mue_z_calculation(alpha):
+def delta_calculation(alpha):
+    """
+    Parameters
+    ----------
+    alpha
+        Skewness parameter of the skew normal distribution.
+    """
+    return alpha / (np.sqrt(1 + alpha**2))
+
+
+def mue_z_calculation(delta):
     """Calculate the mue_z variable which is needed to compute a numerical approximation of the mode of a skew normal distribution."""
-    return np.sqrt(2 / np.pi) * alpha / (np.sqrt(1 + alpha**2))
+    return np.sqrt(2/np.pi) * delta
 
 
 def sigma_z_calculation(mue_z):
@@ -257,38 +298,54 @@ def sigma_z_calculation(mue_z):
     return np.sqrt(1 - mue_z**2)
 
 
-def fit_skewness_calculation(intensity):
-    """Calculate the skewness of a skew normal distribution via scipy."""
-    return st.skew(intensity)
+def skewness_calculation(delta):
+    """Calculate the skewness of a skew normal distribution."""
+    return (4 - np.pi) / 2 * ((delta * np.sqrt(2 / np.pi))**3) / ((1 - 2 * delta**2 / np.pi)**1.5)
 
 
-def mode_offset_calculation(mue_z, fit_skewness, sigma_z, alpha):
+def mode_offset_calculation(mue_z, skewness, sigma_z, alpha):
     """Calculate the offset between arithmetic mean and mode of a skew normal distribution."""
+    # this formula originally contained the sign() function which led to an error due to usage of pytensor variables
+    # -> use alpha/abs(alpha) instead for the same effect
     return (
         mue_z
-        - (fit_skewness * sigma_z) / 2
+        - (skewness * sigma_z) / 2
         - (alpha / abs(alpha)) / 2 * pt.exp(-(2 * np.pi) / abs(alpha))
     )
 
 
-def mode_skew_calculation(mean_skew, mode_offset, alpha):
+def mode_skew_calculation(loc, scale, mode_offset):
     """Calculate a numerical approximation of the mode of a skew normal distribution."""
-    return mean_skew - (alpha / abs(alpha)) * mode_offset
+    return loc + scale * mode_offset
 
 
-def height_calculation(area, mean, std, alpha, mode_skew):
+def height_calculation(area, loc, scale, alpha, mode_skew):
     """
     Calculate the height of a skew normal distribution.
-
     The formula is the result of inserting time = mode_skew into the posterior.
-    Since the mode of a skew normal distribution is calculated as a numerical approximation,
-    its accuracy is not perfect and thus the height's either.
-    In tests, the height was still accurate up to and including the first two decimals.
+    
+    Parameters
+    ----------
+    area
+        Area of the peak described by the skew normal distribution (area between baseline and skew normal distribution).
+    loc
+        Location parameter of the skew normal distribution.
+    scale
+        Scale parameter of the skew normal distribution.
+    alpha
+        Skewness parameter of the skew normal distribution.
+    mode_skew
+        Mode of the skew normal distribution.
+
+    Returns
+    ----------
+    mean
+        Arithmetic mean of a skew normal distribution.
     """
     return area * (
         2
-        * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((mode_skew - mean) / std) ** 2))
-        * (0.5 * (1 + pt.erf(((alpha * (mode_skew - mean) / std)) / np.sqrt(2))))
+        * (1 / (scale * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((mode_skew - loc) / scale) ** 2))
+        * (0.5 * (1 + pt.erf(((alpha * (mode_skew - loc) / scale)) / np.sqrt(2))))
     )
 
 
@@ -371,27 +428,24 @@ def define_model_skew(ui) -> pm.Model:
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         alpha = pm.Normal("alpha", 0, 3.5)
         area = pm.HalfNormal("area", np.max(intensity) * 0.9)
+
         # calculate standard deviation and arithmetic mean of a skew normal distribution
         std_skew_formula = std_skew_calculation(std, alpha)
         pm.Deterministic("std_skew", std_skew_formula)
-        # height is defined as the posterior with x = mode
-        # (difference to normal distribution: for normal distribution mean and mode are identical
-        # and inserting x = mean = mode leads to a simplification of the PDF)
-        # first calculate the mode (via calculating the mean of a skew normal and
-        # using a numerical approach to calculating the offset between mean and mode)
         mean_skew_formula = mean_skew_calculation(mean, std, alpha)
         mean_skew = pm.Deterministic("mean_skew", mean_skew_formula)
-        mue_z_formula = mue_z_calculation(alpha)
+
+        # height is defined as the posterior with x = mode
+        delta_formula = delta_calculation(alpha)
+        delta = pm.Deterministic("delta", delta_formula)
+        mue_z_formula = mue_z_calculation(delta)
         mue_z = pm.Deterministic("mue_z", mue_z_formula)
         sigma_z_formula = sigma_z_calculation(mue_z)
         sigma_z = pm.Deterministic("sigma_z", sigma_z_formula)
-        fit_skewness = fit_skewness_calculation(intensity)
-        mode_offset_formula = mode_offset_calculation(mue_z, fit_skewness, sigma_z, alpha)
-        # this formula originally contained the sign() function which led to an error
-        # -> use alpha/abs(alpha) instead for the same effect
+        skewness = skewness_calculation(delta)
+        mode_offset_formula = mode_offset_calculation(mue_z, skewness, sigma_z, alpha)
         mode_offset = pm.Deterministic("mode_offset", mode_offset_formula)
-        mode_skew_formula = mode_skew_calculation(mean_skew, mode_offset, alpha)
-        # if alpha < 0: mode = mean + offset; if alpha > 0: mode = mean - offset;
+        mode_skew_formula = mode_skew_calculation(mean, std, mode_offset)
         mode_skew = pm.Deterministic("mode_skew", mode_skew_formula)
         # then calculate the height based on the mode
         height_formula = height_calculation(area, mean, std, alpha, mode_skew)
