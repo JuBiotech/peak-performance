@@ -1,3 +1,4 @@
+import importlib
 import os
 from datetime import date, datetime
 from numbers import Number
@@ -447,9 +448,14 @@ def sampling(pmodel, **sample_kwargs):
     """
     sample_kwargs.setdefault("tune", 2000)
     sample_kwargs.setdefault("draws", 2000)
+    # check if nutpie is available; if so, use it to enhance performance
+    if importlib.util.find_spec("nutpie"):
+        nuts_sampler = "nutpie"
+    else:
+        nuts_sampler = "pymc"
     with pmodel:
         idata = pm.sample_prior_predictive()
-        idata.extend(pm.sample(nuts_sampler="nutpie", **sample_kwargs))
+        idata.extend(pm.sample(nuts_sampler=nuts_sampler, **sample_kwargs))
     return idata
 
 
