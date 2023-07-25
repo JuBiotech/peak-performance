@@ -79,8 +79,10 @@ class TestDistributions:
         y = st.skewnorm.pdf(x, alpha, loc=mean, scale=std) + baseline
         area = 1
         # find the x value to the maximum y value, i.e. the mode
-        expected_mode_skew = x[np.argmax(y)]
-        expected_height = np.max(y) - (0.04 * expected_mode_skew + 0.3)
+        imax = np.argmax(y - baseline)
+        expected_mode_skew = x[imax]
+        expected_height = y[imax] - baseline[imax]
+
         # calculate actual values
         delta = models.delta_calculation(alpha)
         mue_z = models.mue_z_calculation(delta)
@@ -94,8 +96,8 @@ class TestDistributions:
         actual_height = height_pt.eval().astype(float)
         # testing; allow slight difference due to shift of distribution by baseline
         # (this numerical calculation does not consider the baseline)
-        np.testing.assert_allclose(expected_height, actual_height, atol=1e-3)
-        np.testing.assert_allclose(expected_mode_skew, actual_mode, atol=5e-2)
+        np.testing.assert_allclose(expected_height, actual_height, atol=1e-4)
+        np.testing.assert_allclose(expected_mode_skew, actual_mode, atol=5e-3)
         pass
 
     def test_skew_normal_posterior(self):
