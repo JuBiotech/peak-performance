@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peak_performance"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     {name = "Jochen Nießer", email = "j.niesser@fz-juelich.de"},
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
