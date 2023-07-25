@@ -280,6 +280,8 @@ def mean_skew_calculation(loc, scale, alpha):
 
 def delta_calculation(alpha):
     """
+    Calculate the delta term included in several subsequent formulae.
+
     Parameters
     ----------
     alpha
