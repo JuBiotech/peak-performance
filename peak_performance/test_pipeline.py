@@ -20,8 +20,7 @@ COLUMNS = [
     "ess_tail",
     "r_hat",
     "acquisition",
-    "experiment",
-    "precursor_mz",
+    "experiment or precursor_mz",
     "product_mz_start",
     "product_mz_end",
     "double_peak",
@@ -41,7 +40,6 @@ def test_user_input_class():
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = "4"
     precursor_mz = 118
     product_mz_start = "71.9"
     product_mz_end = 72.1
@@ -57,14 +55,12 @@ def test_user_input_class():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
     )
     assert ui.timeseries.all() == timeseries.all()
-    assert ui.experiment == 4.0
-    assert ui.precursor_mz == 118
+    assert ui.precursor == 118
     assert ui.product_mz_start == 71.9
     assert ui.product_mz_end == 72.1
     # test some of the error handling of the parameter setter of the UserInput class
@@ -80,7 +76,6 @@ def test_user_input_class():
             minimum_sn,
             timeseries,
             5,
-            experiment,
             precursor_mz,
             product_mz_start,
             product_mz_end,
@@ -97,7 +92,6 @@ def test_user_input_class():
             minimum_sn,
             timeseries,
             acquisition,
-            experiment,
             "mz",
             product_mz_start,
             product_mz_end,
@@ -132,8 +126,7 @@ def test_parse_data():
     (
         timeseries,
         acquisition,
-        experiment,
-        precursor_mz,
+        precursor,
         product_mz_start,
         product_mz_end,
     ) = pl.parse_data(path, filename, data_format)
@@ -141,7 +134,7 @@ def test_parse_data():
     assert isinstance(timeseries[1], np.ndarray)
     assert acquisition == "A1t1R1Part2"
     assert experiment == "1"
-    assert precursor_mz == "110"
+    assert precursor == "110"
     assert product_mz_start == "109.9"
     assert product_mz_end == "110.1"
     pass
@@ -176,7 +169,6 @@ def test_prefiltering():
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = 4
     precursor_mz = 118
     product_mz_start = 71.9
     product_mz_end = 72.1
@@ -192,7 +184,6 @@ def test_prefiltering():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -215,7 +206,6 @@ def test_prefiltering():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -243,7 +233,6 @@ def test_prefiltering():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -275,7 +264,6 @@ def test_postfiltering():
         Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
     )
     acquisition = "A2t2R1Part1"
-    experiment = 23
     precursor_mz = 132
     product_mz_start = 85.9
     product_mz_end = 86.1
@@ -290,7 +278,6 @@ def test_postfiltering():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -320,7 +307,6 @@ def test_single_peak_report_add_nan_to_summary():
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = 4
     precursor_mz = 118
     product_mz_start = 71.9
     product_mz_end = 72.1
@@ -335,7 +321,6 @@ def test_single_peak_report_add_nan_to_summary():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -347,8 +332,7 @@ def test_single_peak_report_add_nan_to_summary():
     assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
-    assert list(df_summary.loc[:, "precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
@@ -371,7 +355,6 @@ def test_double_peak_report_add_nan_to_summary():
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = 4
     precursor_mz = 118
     product_mz_start = 71.9
     product_mz_end = 72.1
@@ -386,7 +369,6 @@ def test_double_peak_report_add_nan_to_summary():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -398,8 +380,7 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
-    assert list(df_summary.loc[:, "precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
@@ -424,7 +405,6 @@ def test_single_peak_report_add_data_to_summary():
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = 4
     precursor_mz = 118
     product_mz_start = 71.9
     product_mz_end = 72.1
@@ -439,7 +419,6 @@ def test_single_peak_report_add_data_to_summary():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -461,8 +440,7 @@ def test_single_peak_report_add_data_to_summary():
         20.924,
     ]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [4]
-    assert list(df_summary.loc[:, "precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
@@ -487,7 +465,6 @@ def test_double_peak_report_add_data_to_summary():
         Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
     )
     acquisition = "A1t1R1"
-    experiment = 23
     precursor_mz = 132
     product_mz_start = 85.9
     product_mz_end = 86.1
@@ -502,7 +479,6 @@ def test_double_peak_report_add_data_to_summary():
         minimum_sn,
         timeseries,
         acquisition,
-        experiment,
         precursor_mz,
         product_mz_start,
         product_mz_end,
@@ -532,8 +508,7 @@ def test_double_peak_report_add_data_to_summary():
     ]
     assert len(df_summary.index) == 16
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment"]) == len(df_summary.index) * [23]
-    assert list(df_summary.loc[:, "precursor_mz"]) == len(df_summary.index) * [132]
+    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [132]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [85.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]

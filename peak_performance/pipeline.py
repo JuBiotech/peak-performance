@@ -38,8 +38,7 @@ class UserInput:
         minimum_sn: Union[float, int],
         timeseries: np.ndarray,
         acquisition: str,
-        experiment: int,
-        precursor_mz: Number,
+        precursor: Number,
         product_mz_start: Number,
         product_mz_end: Number,
     ):
@@ -68,10 +67,10 @@ class UserInput:
             NumPy Array containing time (at first position) and intensity (at second position) data as NumPy arrays.
         acquisition
             Name of a single acquisition.
-        experiment
-            Experiment number of the signal within the acquisition (each experiment = one mass trace).
-        precursor_mz
-            Mass to charge ratio of the precursor ion selected in Q1.
+        precursor
+            Can be one of the following:
+            Either the experiment number of the signal within the acquisition (each experiment = one mass trace)
+            or the mass to charge ratio of the precursor ion selected in Q1.
         product_mz_start
             Start of the mass to charge ratio range of the product ion in the TOF.
         product_mz_end
@@ -87,8 +86,7 @@ class UserInput:
         self.minimum_sn = minimum_sn
         self.timeseries = timeseries
         self.acquisition = acquisition
-        self.experiment = experiment
-        self.precursor_mz = precursor_mz
+        self.precursor = precursor
         self.product_mz_start = product_mz_start
         self.product_mz_end = product_mz_end
         super().__init__()
@@ -120,42 +118,23 @@ class UserInput:
         self._acquisition = name
 
     @property
-    def experiment(self):
-        """Getting the value of the experiment attribute."""
-        return self._experiment
+    def precursor(self):
+        """Getting the value of the precursor attribute."""
+        return self._precursor
 
-    @experiment.setter
-    def experiment(self, number):
-        """Setting the value of the experiment attribute."""
-        if not isinstance(number, int):
-            try:
-                number = int(number)
-            except ValueError as ex:
-                raise InputError(
-                    f"The experiment parameter is {type(number)} but needs to be an int."
-                ) from ex
-        if number is None:
-            raise InputError("The experiment parameter is a None type.")
-        self._experiment = number
-
-    @property
-    def precursor_mz(self):
-        """Getting the value of the precursor_mz attribute."""
-        return self._precursor_mz
-
-    @precursor_mz.setter
-    def precursor_mz(self, mz):
-        """Setting the value of the precursor_mz attribute."""
+    @precursor.setter
+    def precursor(self, mz):
+        """Setting the value of the precursor attribute."""
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                    f"The precursor parameter is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
-            raise InputError("The precursor_mz parameter is a None type.")
-        self._precursor_mz = mz
+            raise InputError("The precursor parameter is a None type.")
+        self._precursor = mz
 
     @property
     def product_mz_start(self):
@@ -170,7 +149,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                    f"The product_mz parameter is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The product_mz_start parameter is a None type.")
@@ -189,7 +168,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The precursor_mz parameter is {type(mz)} but needs to be an int or a float."
+                    f"The product_mz parameter is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The product_mz_end parameter is a None type.")
@@ -271,10 +250,10 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
         NumPy Array containing time and intensity data as NumPy arrays at fist and second position, respectively.
     acquisition
         Name of a single acquisition.
-    experiment
-        Experiment number of the signal within the acquisition (each experiment = one mass trace).
-    precursor_mz
-        Mass to charge ratio of the precursor ion selected in Q1.
+    precursor
+        Can be one of the following:
+        Either the experiment number of the signal within the acquisition (each experiment = one mass trace)
+        or the mass to charge ratio of the precursor ion selected in Q1.
     product_mz_start
         Start of the mass to charge ratio range of the product ion in the TOF.
     product_mz_end
@@ -285,12 +264,11 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     # get information from the raw data file name
     splits = filename.split("_")
     acquisition = splits[0]
-    experiment = splits[1]
-    precursor_mz = splits[2]
-    product_mz_start = splits[3]
+    precursor = splits[1]
+    product_mz_start = splits[2]
     # remove the .npy suffix from the last split
-    product_mz_end = splits[4][: -len(raw_data_file_format)]
-    return timeseries, acquisition, experiment, precursor_mz, product_mz_start, product_mz_end
+    product_mz_end = splits[3][: -len(raw_data_file_format)]
+    return timeseries, acquisition, precursor, product_mz_start, product_mz_end
 
 
 def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
@@ -340,8 +318,7 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "ess_tail",
             "r_hat",
             "acquisition",
-            "experiment",
-            "precursor_mz",
+            "experiment or precursor_mz",
             "product_mz_start",
             "product_mz_end",
             "double_peak",
@@ -634,8 +611,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df = az_summary.loc[parameters, :]
         df = df.rename(index={"mean[0]": "mean"})
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment"] = len(parameters) * [ui.experiment]
-        df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * ["1st"]
@@ -662,8 +638,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             }
         )
         df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df2["experiment"] = len(parameters) * [ui.experiment]
-        df2["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df2["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
         df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["double_peak"] = len(parameters) * ["2nd"]
@@ -684,8 +659,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         ]
         df = az_summary.loc[parameters, :]
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment"] = len(parameters) * [ui.experiment]
-        df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
+        df["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * [False]
@@ -714,7 +688,7 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     df_area_summary = df_summary[df_summary.index == "area"]
     # TODO: test whether this still works with the new layout of the report sheet
     sorted_area_summary = df_area_summary.sort_values(
-        ["acquisition", "precursor_mz", "product_mz_start"]
+        ["acquisition", "experiment or precursor_mz", "product_mz_start"]
     )
     sorted_area_summary = sorted_area_summary.drop(
         labels=["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail"], axis=1
@@ -834,8 +808,7 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     ).transpose()
     # add information about the signal
     df["acquisition"] = len(df.index) * [f"{ui.acquisition}"]
-    df["experiment"] = len(df.index) * [ui.experiment]
-    df["precursor_mz"] = len(df.index) * [ui.precursor_mz]
+    df["experiment or precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
@@ -913,8 +886,7 @@ def pipeline_loop(
         (
             timeseries,
             acquisition,
-            experiment,
-            precursor_mz,
+            precursor,
             product_mz_start,
             product_mz_end,
         ) = parse_data(path_raw_data, file, raw_data_file_format)
@@ -930,8 +902,7 @@ def pipeline_loop(
             minimum_sn,
             timeseries,
             acquisition,
-            experiment,
-            precursor_mz,
+            precursor,
             product_mz_start,
             product_mz_end,
         )
