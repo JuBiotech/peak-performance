@@ -632,7 +632,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             "sn",
         ]
         df = az_summary.loc[parameters, :]
-        df.rename(columns={"mean[0]": "mean"})
+        df = df.rename(index={"mean[0]": "mean"})
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df["experiment"] = len(parameters) * [ui.experiment]
         df["precursor_mz"] = len(parameters) * [ui.precursor_mz]
@@ -652,8 +652,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             "sn2",
         ]
         df2 = az_summary.loc[parameters, :]
-        df2.rename(
-            columns={
+        df2 = df2.rename(
+            index={
                 "area2": "area",
                 "height2": "height",
                 "sn2": "sn",
