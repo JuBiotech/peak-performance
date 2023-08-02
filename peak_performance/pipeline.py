@@ -968,10 +968,10 @@ def pipeline(
     raw_data_file_format: str,
     pre_filtering: bool,
     double_peak: Mapping[str, bool],
-    retention_time_estimate: Mapping[str, Union[float, int]],
-    peak_width_estimate: Union[float, int],
-    minimum_sn: Union[float, int],
-    plotting: bool,
+    retention_time_estimate: Mapping[str, Union[float, int]] = {},
+    peak_width_estimate: Union[float, int] = 1,
+    minimum_sn: Union[float, int] = 5,
+    plotting: bool = True,
 ):
     """
     Method to run the complete Peak Performance pipeline.
