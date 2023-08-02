@@ -29,7 +29,7 @@ COLUMNS = [
 
 def test_user_input_class():
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
     retention_time_estimate = [22.5]
@@ -37,7 +37,7 @@ def test_user_input_class():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 118
@@ -106,13 +106,13 @@ def test_detect_raw_data():
     files = sorted(files)
     expected_files = sorted(
         [
-            "A1t1R1Part2_1_110_109.9_110.1.npy",
-            "A1t1R1Part2_2_111_109.9_110.1.npy",
-            "A1t1R1Part2_3_111_110.9_111.1.npy",
-            "A1t1R1Part2_4_112_110.9_111.1.npy",
-            "A1t1R1Part2_5_112_111.9_112.1.npy",
-            "A2t2R1Part1_23_132_85.9_86.1.npy",
-            "A4t4R1Part2_6_137_72.9_73.1.npy",
+            "A1t1R1Part2_110_109.9_110.1.npy",
+            "A1t1R1Part2_111_109.9_110.1.npy",
+            "A1t1R1Part2_111_110.9_111.1.npy",
+            "A1t1R1Part2_112_110.9_111.1.npy",
+            "A1t1R1Part2_112_111.9_112.1.npy",
+            "A2t2R1Part1_132_85.9_86.1.npy",
+            "A4t4R1Part2_137_72.9_73.1.npy",
         ]
     )
     assert files == expected_files
@@ -122,7 +122,7 @@ def test_detect_raw_data():
 def test_parse_data():
     path = Path(__file__).absolute().parent.parent / "example"
     data_format = ".npy"
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     (
         timeseries,
         acquisition,
@@ -158,7 +158,7 @@ def test_prefiltering():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
     retention_time_estimate = [26.3]
@@ -166,7 +166,7 @@ def test_prefiltering():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 118
@@ -188,7 +188,7 @@ def test_prefiltering():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     found_peak, df_summary_1 = pl.prefiltering(filename, ui, 108, df_summary)
     assert found_peak
     assert df_summary_1.values.all() == df_summary.values.all()
@@ -210,7 +210,7 @@ def test_prefiltering():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     found_peak, df_summary_1 = pl.prefiltering(filename, ui, 108, df_summary)
     assert not found_peak
     assert len(df_summary_1.loc[:, "mean"].values) == 8
@@ -218,9 +218,9 @@ def test_prefiltering():
     assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
     # negative test due to signal-to-noise ratio
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_6_137_72.9_73.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_137_72.9_73.1.npy"
     )
-    raw_data_files = ["A4t4R1Part2_6_137_72.9_73.1.npy"]
+    raw_data_files = ["A4t4R1Part2_137_72.9_73.1.npy"]
     retention_time_estimate = [26.3]
     ui = pl.UserInput(
         path,
@@ -237,7 +237,7 @@ def test_prefiltering():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A4t4R1Part2_6_137_72.9_73.1.npy"
+    filename = "A4t4R1Part2_137_72.9_73.1.npy"
     found_peak, df_summary_2 = pl.prefiltering(filename, ui, 108, df_summary)
     assert not found_peak
     assert len(df_summary_2.loc[:, "mean"].values) == 8
@@ -253,7 +253,7 @@ def test_postfiltering():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
+    raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
     retention_time_estimate = [22.5]
@@ -261,7 +261,7 @@ def test_postfiltering():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
     )
     acquisition = "A2t2R1Part1"
     precursor_mz = 132
@@ -282,7 +282,7 @@ def test_postfiltering():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A2t2R1Part1_23_132_85.9_86.1.npy"
+    filename = "A2t2R1Part1_132_85.9_86.1.npy"
     resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
     # tests
     assert not resample
@@ -296,7 +296,7 @@ def test_single_peak_report_add_nan_to_summary():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
     retention_time_estimate = [22.5]
@@ -304,7 +304,7 @@ def test_single_peak_report_add_nan_to_summary():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 118
@@ -325,7 +325,7 @@ def test_single_peak_report_add_nan_to_summary():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
@@ -344,7 +344,7 @@ def test_double_peak_report_add_nan_to_summary():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
     retention_time_estimate = [22.5]
@@ -352,7 +352,7 @@ def test_double_peak_report_add_nan_to_summary():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 118
@@ -373,7 +373,7 @@ def test_double_peak_report_add_nan_to_summary():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
@@ -394,7 +394,7 @@ def test_single_peak_report_add_data_to_summary():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A1t1R1Part2_1_110_109.9_110.1.npy"]
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
     double_peak = [False]
     retention_time_estimate = [22.5]
@@ -402,7 +402,7 @@ def test_single_peak_report_add_data_to_summary():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_1_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 118
@@ -423,7 +423,7 @@ def test_single_peak_report_add_data_to_summary():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A1t1R1Part2_1_110_109.9_110.1.npy"
+    filename = "A1t1R1Part2_110_109.9_110.1.npy"
     # add data to df_summary
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
     # tests
@@ -454,7 +454,7 @@ def test_double_peak_report_add_data_to_summary():
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
     path = Path(__file__).absolute().parent.parent / "example"
-    raw_data_files = ["A2t2R1Part1_23_132_85.9_86.1.npy"]
+    raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
     data_file_format = ".npy"
     double_peak = [True]
     retention_time_estimate = [22.5]
@@ -462,7 +462,7 @@ def test_double_peak_report_add_data_to_summary():
     pre_filtering = True
     minimum_sn = 5
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_23_132_85.9_86.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
     )
     acquisition = "A1t1R1"
     precursor_mz = 132
@@ -483,7 +483,7 @@ def test_double_peak_report_add_data_to_summary():
         product_mz_start,
         product_mz_end,
     )
-    filename = "A2t2R1Part1_23_132_85.9_86.1.npy"
+    filename = "A2t2R1Part1_132_85.9_86.1.npy"
     # add data to df_summary
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
     # tests
