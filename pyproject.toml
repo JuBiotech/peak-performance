@@ -41,9 +41,9 @@ test = [
 ]
 
 [project.urls]
-homepage = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
-documentation = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
-repository = "https://jugit.fz-juelich.de/j.niesser/peak-performance"
+homepage = "https://jugit.fz-juelich.de/micropro/peak-performance"
+documentation = "https://jugit.fz-juelich.de/micropro/peak-performance"
+repository = "https://jugit.fz-juelich.de/micropro/peak-performance"
 
 [tool.pytest.ini_options]
 xfail_strict=true
