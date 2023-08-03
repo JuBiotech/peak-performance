@@ -351,13 +351,6 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
         # create a directory
     path = Path(path) / run_dir
     path.mkdir(exist_ok=True)
-    # # write text file, zip it, then delete it (cannot create an empty zip)
-    # text_file = open(rf"{path}/readme.txt", "w")
-    # txt = text_file.write(f"This batch was started on the {timestamp}.")
-    # text_file.close()
-    # with zipfile.ZipFile(rf"{path}/idata.zip", mode="w") as archive:
-    #     archive.write(rf"./{run_dir}/readme.txt")
-    # os.remove(rf"{path}/readme.txt")
     # create DataFrame for data report
     df_summary = pandas.DataFrame(
         columns=[
