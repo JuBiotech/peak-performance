@@ -93,7 +93,10 @@ class UserInput:
 
     @property
     def timeseries(self):
-        """Getting the value of the timeseries attribute."""
+        """
+        Getting the value of the timeseries attribute.
+        (NumPy Array containing time (at first position) and intensity (at second position) data as NumPy arrays.)
+        """
         return self._timeseries
 
     @timeseries.setter
@@ -105,7 +108,7 @@ class UserInput:
 
     @property
     def acquisition(self):
-        """Getting the value of the acquisition attribute."""
+        """Getting the value of the acquisition attribute (name of a single acquisition)."""
         return self._acquisition
 
     @acquisition.setter
@@ -119,7 +122,11 @@ class UserInput:
 
     @property
     def precursor(self):
-        """Getting the value of the precursor attribute."""
+        """
+        Getting the value of the precursor attribute which can be one of the following:
+            Either the experiment number of the signal within the acquisition (each experiment = one mass trace)
+            or the mass to charge ratio of the precursor ion selected in Q1.
+        """
         return self._precursor
 
     @precursor.setter
@@ -143,7 +150,10 @@ class UserInput:
 
     @product_mz_start.setter
     def product_mz_start(self, mz):
-        """Setting the value of the product_mz_start attribute."""
+        """
+        Setting the value of the product_mz_start attribute.
+        (Start of the mass to charge ratio range of the product ion in the TOF.)
+        """
         if not isinstance(mz, int) and not isinstance(mz, float):
             try:
                 mz = float(mz)
@@ -157,7 +167,10 @@ class UserInput:
 
     @property
     def product_mz_end(self):
-        """Getting the value of the product_mz_end attribute."""
+        """
+        Getting the value of the product_mz_end attribute.
+        (End of the mass to charge ratio range of the product ion in the TOF.)
+        """
         return self._product_mz_end
 
     @product_mz_end.setter
