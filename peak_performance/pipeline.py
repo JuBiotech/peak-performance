@@ -276,51 +276,13 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     timeseries = np.load(Path(path) / filename)
     # get information from the raw data file name
     splits = filename.split("_")
+    if len(splits) != 4:
+        raise InputError(f"The standardized naming scheme was violated by file {filname}.\nThe name should be divided by underscores into the sections acquisition name, precursor, product_mz_start, and product_mz_end.")
     acquisition = splits[0]
     precursor = splits[1]
     product_mz_start = splits[2]
     # remove the .npy suffix from the last split
     product_mz_end = splits[3][: -len(raw_data_file_format)]
-    # convert sections to befitting data types
-    if not isinstance(acquisition, str):
-        try:
-            acquisition = str(acquisition)
-        except ValueError as ex:
-            raise InputError(
-                f"The first section (divided by _) from file {filename} could not be converted to a string."
-            ) from ex
-    if acquisition is None:
-        raise InputError(f"The first section (divided by _) from file {filename} was a None type.")
-
-    if not isinstance(precursor, int) and not isinstance(precursor, float):
-        try:
-            precursor = float(precursor)
-        except ValueError as ex:
-            raise InputError(
-                f"The second section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
-    if precursor is None:
-        raise InputError(f"The second section (divided by _) from file {filename} was a None type.")
-
-    if not isinstance(product_mz_start, int) and not isinstance(product_mz_start, float):
-        try:
-            product_mz_start = float(product_mz_start)
-        except ValueError as ex:
-            raise InputError(
-                f"The third section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
-    if product_mz_start is None:
-        raise InputError(f"The third section (divided by _) from file {filename} was a None type.")
-    
-    if not isinstance(product_mz_end, int) and not isinstance(product_mz_end, float):
-        try:
-            product_mz_end = float(product_mz_end)
-        except ValueError as ex:
-            raise InputError(
-                f"The fourth section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
-    if product_mz_end is None:
-        raise InputError(f"The fourth section (divided by _) from file {filename} was a None type.")
     return timeseries, acquisition, precursor, product_mz_start, product_mz_end
 
 
