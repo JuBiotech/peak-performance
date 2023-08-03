@@ -3,7 +3,7 @@ import os
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
-from typing import List, Mapping, Sequence, Union
+from typing import List, Mapping, Sequence, Union, Optional
 
 import arviz as az
 import numpy as np
