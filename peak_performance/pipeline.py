@@ -968,7 +968,7 @@ def pipeline(
     raw_data_file_format: str,
     pre_filtering: bool,
     double_peak: Mapping[str, bool],
-    retention_time_estimate: Mapping[str, Union[float, int]] = {},
+    retention_time_estimate: Optional[Mapping[str, Union[float, int]]] = None,
     peak_width_estimate: Union[float, int] = 1,
     minimum_sn: Union[float, int] = 5,
     plotting: bool = True,
@@ -1010,6 +1010,8 @@ def pipeline(
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
+    if retention_time_estimate is None:
+        retention_time_estimate = {}
     # obtain a list of raw data file names.
     raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
     # create data structure and DataFrame(s) for results
