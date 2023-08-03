@@ -1004,7 +1004,7 @@ def pipeline(
         to be defined as a peak during pre-filtering.
     plotting
         Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
-    
+
     Returns
     ----------
     path_results
