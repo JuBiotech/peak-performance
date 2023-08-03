@@ -1004,6 +1004,11 @@ def pipeline(
         to be defined as a peak during pre-filtering.
     plotting
         Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
+    
+    Returns
+    ----------
+    path_results
+        Path variable pointing to the newly created folder for this batch.
     """
     # obtain a list of raw data file names.
     raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
@@ -1022,4 +1027,4 @@ def pipeline(
         minimum_sn,
         plotting,
     )
-    return
+    return path_results
