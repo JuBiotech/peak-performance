@@ -277,7 +277,10 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     # get information from the raw data file name
     splits = filename.split("_")
     if len(splits) != 4:
-        raise InputError(f"The standardized naming scheme was violated by file {filname}.\nThe name should be divided by underscores into the sections acquisition name, precursor, product_mz_start, and product_mz_end.")
+        raise InputError(
+            f"The standardized naming scheme was violated by file {filename}.
+            \nThe name should be divided by underscores into the sections acquisition name, precursor, product_mz_start, and product_mz_end."
+        )
     acquisition = splits[0]
     precursor = splits[1]
     product_mz_start = splits[2]
