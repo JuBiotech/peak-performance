@@ -318,7 +318,7 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "ess_tail",
             "r_hat",
             "acquisition",
-            "experiment or precursor_mz",
+            "experiment_or_precursor_mz",
             "product_mz_start",
             "product_mz_end",
             "double_peak",
@@ -611,7 +611,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df = az_summary.loc[parameters, :]
         df = df.rename(index={"mean[0]": "mean"})
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
+        df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * ["1st"]
@@ -638,7 +638,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
             }
         )
         df2["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df2["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
+        df2["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["double_peak"] = len(parameters) * ["2nd"]
@@ -659,7 +659,7 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         ]
         df = az_summary.loc[parameters, :]
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
-        df["experiment or precursor_mz"] = len(parameters) * [ui.precursor]
+        df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["double_peak"] = len(parameters) * [False]
@@ -688,7 +688,7 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     df_area_summary = df_summary[df_summary.index == "area"]
     # TODO: test whether this still works with the new layout of the report sheet
     sorted_area_summary = df_area_summary.sort_values(
-        ["acquisition", "experiment or precursor_mz", "product_mz_start"]
+        ["acquisition", "experiment_or_precursor_mz", "product_mz_start"]
     )
     sorted_area_summary = sorted_area_summary.drop(
         labels=["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail"], axis=1
@@ -808,7 +808,7 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     ).transpose()
     # add information about the signal
     df["acquisition"] = len(df.index) * [f"{ui.acquisition}"]
-    df["experiment or precursor_mz"] = len(df.index) * [ui.precursor]
+    df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not

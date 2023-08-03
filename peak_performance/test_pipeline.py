@@ -20,7 +20,7 @@ COLUMNS = [
     "ess_tail",
     "r_hat",
     "acquisition",
-    "experiment or precursor_mz",
+    "experiment_or_precursor_mz",
     "product_mz_start",
     "product_mz_end",
     "double_peak",
@@ -331,7 +331,7 @@ def test_single_peak_report_add_nan_to_summary():
     assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
@@ -379,7 +379,7 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
@@ -439,7 +439,7 @@ def test_single_peak_report_add_data_to_summary():
         20.924,
     ]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [118]
+    assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
@@ -507,7 +507,7 @@ def test_double_peak_report_add_data_to_summary():
     ]
     assert len(df_summary.index) == 16
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
-    assert list(df_summary.loc[:, "experiment or precursor_mz"]) == len(df_summary.index) * [132]
+    assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [132]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [85.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
