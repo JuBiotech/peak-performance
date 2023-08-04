@@ -260,7 +260,8 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     Returns
     -------
     timeseries
-        NumPy Array containing time and intensity data as NumPy arrays at fist and second position, respectively.
+        Updated numPy Array containing time and intensity data as NumPy arrays at fist and second position, respectively.
+        NaN values have been replaced with zeroes.
     acquisition
         Name of a single acquisition.
     precursor
@@ -274,6 +275,8 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     """
     # load time series
     timeseries = np.load(Path(path) / filename)
+    # if NaN are in time or intensity, replace it with 0.0
+    timeseries = np.nan_to_num(timeseries)
     # get information from the raw data file name
     splits = filename.split("_")
     if len(splits) != 4:
