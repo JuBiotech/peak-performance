@@ -282,12 +282,71 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
             \nThe name should be divided by underscores into the sections acquisition name, precursor, product_mz_start, and product_mz_end.
             """
         )
-    acquisition = splits[0]
-    precursor = splits[1]
-    product_mz_start = splits[2]
-    # remove the .npy suffix from the last split
-    product_mz_end = splits[3][: -len(raw_data_file_format)]
-    return timeseries, acquisition, precursor, product_mz_start, product_mz_end
+    try:
+        acquisition = splits[0]
+        precursor = splits[1]
+        product_mz_start = splits[2]
+        # remove the .npy suffix from the last split
+        product_mz_end = splits[3][: -len(raw_data_file_format)]
+    except ValueError as ex:
+        raise InputError(
+            f"The name of file {filename} does not follow the standardized naming convetion."
+        ) from ex
+
+    # convert sections to befitting data types
+    if acquisition is None:
+        raise InputError(f"The first section (divided by _) from file {filename} was a None type.")
+    if not isinstance(acquisition, str):
+        try:
+            acquisition = str(acquisition)
+        except ValueError as ex:
+            raise InputError(
+                f"The first section (divided by _) from file {filename} could not be converted to a string."
+            ) from ex
+
+    if precursor is None:
+        raise InputError(f"The second section (divided by _) from file {filename} was a None type.")
+    if isinstance(precursor, int) or isinstance(precursor, float):
+        precursor_converted = precursor
+    elif isinstance(precursor, str):
+        try:
+            precursor_converted = precursor
+        except ValueError as ex:
+            raise InputError(
+                f"The second section (divided by _) from file {filename} could not be converted to a float."
+            ) from ex
+
+    if product_mz_start is None:
+        raise InputError(f"The third section (divided by _) from file {filename} was a None type.")
+    if isinstance(product_mz_start, int) or isinstance(product_mz_start, float):
+        product_mz_start_converted = product_mz_start
+    elif isinstance(product_mz_start, str):
+        try:
+            product_mz_start_converted = float(product_mz_start)
+        except ValueError as ex:
+            raise InputError(
+                f"The third section (divided by _) from file {filename} could not be converted to a float."
+            ) from ex
+
+    if product_mz_end is None:
+        raise InputError(f"The fourth section (divided by _) from file {filename} was a None type.")
+    if isinstance(product_mz_end, int) or isinstance(product_mz_end, float):
+        product_mz_end_converted = product_mz_end
+    elif isinstance(product_mz_end, str):
+        try:
+            product_mz_end_converted = float(product_mz_end)
+        except ValueError as ex:
+            raise InputError(
+                f"The fourth section (divided by _) from file {filename} could not be converted to a float."
+            ) from ex
+
+    return (
+        timeseries,
+        acquisition,
+        precursor_converted,
+        product_mz_start_converted,
+        product_mz_end_converted,
+    )
 
 
 def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
