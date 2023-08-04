@@ -133,9 +133,9 @@ def test_parse_data():
     assert isinstance(timeseries[0], np.ndarray)
     assert isinstance(timeseries[1], np.ndarray)
     assert acquisition == "A1t1R1Part2"
-    assert precursor == "110"
-    assert product_mz_start == "109.9"
-    assert product_mz_end == "110.1"
+    assert precursor == 110.0
+    assert product_mz_start == 109.9
+    assert product_mz_end == 110.1
     pass
 
 

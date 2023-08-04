@@ -313,7 +313,7 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
         precursor_converted = precursor
     elif isinstance(precursor, str):
         try:
-            precursor_converted = precursor
+            precursor_converted = float(precursor)
         except ValueError as ex:
             raise InputError(
                 f"The second section (divided by _) from file {filename} could not be converted to a float."
@@ -395,7 +395,9 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "experiment_or_precursor_mz",
             "product_mz_start",
             "product_mz_end",
-            "double_peak",
+            "is_peak",
+            "cause_for_rejection",
+            "double_peak",          
         ]
     )
     return df_summary, path
@@ -649,7 +651,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     return
 
 
-def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput):
+def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput, is_peak: bool, rejection_cause: str):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
@@ -662,6 +664,10 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     ui
         Instance of the UserInput class.
+    is_peak
+        Boolean stating whether a signal was recognized as a peak (True) or not (False).
+    rejection_cause
+        Cause for rejecting a given signal.
 
     Returns
     -------
@@ -688,6 +694,12 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
+        if is_peak:
+            df["is_peak"] = len(parameters) * [True]
+            df["cause_for_rejection"] = len(parameters) * [""]
+        else:
+            df["is_peak"] = len(parameters) * [False]
+            df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
         df["double_peak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
@@ -715,6 +727,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df2["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
+        df2["is_peak"] = len(parameters) * [True]
+        df2["cause_for_rejection"] = len(parameters) * [""]
         df2["double_peak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
@@ -736,6 +750,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
+        df["is_peak"] = len(parameters) * [True]
+        df["cause_for_rejection"] = len(parameters) * [""]
         df["double_peak"] = len(parameters) * [False]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
@@ -771,7 +787,7 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     return
 
 
-def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.DataFrame):
+def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.DataFrame, rejection_cause: str):
     """
     Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
 
@@ -781,6 +797,8 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
         Instance of the UserInput class.
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
+    rejection_cause
+        Cause for rejecting a given signal.
 
     Returns
     -------
@@ -885,6 +903,8 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
+    df2["is_peak"] = len(parameters) * [False]
+    df2["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
     if ui.user_info[filename][0]:
         df["double_peak"] = len(df.index) * [True]
