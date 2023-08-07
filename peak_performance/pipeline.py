@@ -397,7 +397,7 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "product_mz_end",
             "is_peak",
             "cause_for_rejection",
-            "double_peak",          
+            "double_peak",
         ]
     )
     return df_summary, path
@@ -653,7 +653,14 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     return
 
 
-def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput, is_peak: bool, rejection_cause: Optional[str] = None):
+def report_add_data_to_summary(
+    filename: str,
+    idata,
+    df_summary: pandas.DataFrame,
+    ui: UserInput,
+    is_peak: bool,
+    rejection_cause: Optional[str] = None,
+):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
@@ -787,7 +794,9 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     return
 
 
-def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.DataFrame, rejection_cause: str):
+def report_add_nan_to_summary(
+    filename: str, ui: UserInput, df_summary: pandas.DataFrame, rejection_cause: str
+):
     """
     Method to add NaN values to the summary DataFrame in case a signal did not contain a peak.
 
@@ -834,8 +843,8 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
-    df["is_peak"] = len(parameters) * [False]
-    df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+    df["is_peak"] = len(df.index) * [False]
+    df["cause_for_rejection"] = len(df.index) * [f"{rejection_cause}"]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
     if ui.user_info[filename][0]:
         df["double_peak"] = len(df.index) * [True]
@@ -969,7 +978,9 @@ def pipeline_loop(
             if resample:
                 # if signal was flagged for re-sampling a second time, discard it
                 rejection_msg = "postfiltering: signal was flagged for re-sampling with increased sample number twice"
-                df_summary = report_add_data_to_summary(file, idata, df_summary, ui, False, rejection_msg)
+                df_summary = report_add_data_to_summary(
+                    file, idata, df_summary, ui, False, rejection_msg
+                )
                 if plotting:
                     plots.plot_posterior(f"{file}", ui, idata, True)
                 continue

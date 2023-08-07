@@ -25,7 +25,7 @@ COLUMNS = [
     "product_mz_end",
     "is_peak",
     "cause_for_rejection",
-    "double_peak",     
+    "double_peak",
 ]
 
 
@@ -388,7 +388,9 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [False]
-    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * ["because I said so"]
+    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [
+        "because I said so"
+    ]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
     pass
 
