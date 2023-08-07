@@ -475,7 +475,7 @@ def prefiltering(
             ):
                 peak_candidates.append(peak)
     if not peak_candidates:
-        df_summary = report_add_nan_to_summary(filename, ui, df_summary)
+        df_summary = report_add_nan_to_summary(filename, ui, df_summary, "pre-filtering")
         return False, df_summary
     return True, df_summary
 
@@ -559,7 +559,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                df_summary = report_add_nan_to_summary(filename, ui, df_summary)
+                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
+                df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
             else:
@@ -601,7 +602,8 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                df_summary = report_add_nan_to_summary(filename, ui, df_summary)
+                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
+                df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
             else:
@@ -651,7 +653,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     return
 
 
-def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput, is_peak: bool, rejection_cause: str):
+def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFrame, ui: UserInput, is_peak: bool, rejection_cause: Optional[str] = None):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
     Error handling prevents stop of the pipeline in case the saving doesn't work (e.g. because the file was opened by someone).
@@ -674,6 +676,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
     df_summary
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
+    if rejection_cause is None:
+        rejection_cause = ""
     az_summary: pandas.DataFrame = az.summary(idata)
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
     if ui.user_info[filename][0]:
@@ -694,12 +698,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        if is_peak:
-            df["is_peak"] = len(parameters) * [True]
-            df["cause_for_rejection"] = len(parameters) * [""]
-        else:
-            df["is_peak"] = len(parameters) * [False]
-            df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+        df["is_peak"] = len(parameters) * [is_peak]
+        df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
         df["double_peak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
@@ -727,8 +727,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df2["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df2["is_peak"] = len(parameters) * [True]
-        df2["cause_for_rejection"] = len(parameters) * [""]
+        df2["is_peak"] = len(parameters) * [is_peak]
+        df2["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
         df2["double_peak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
@@ -750,8 +750,8 @@ def report_add_data_to_summary(filename: str, idata, df_summary: pandas.DataFram
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df["is_peak"] = len(parameters) * [True]
-        df["cause_for_rejection"] = len(parameters) * [""]
+        df["is_peak"] = len(parameters) * [is_peak]
+        df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
         df["double_peak"] = len(parameters) * [False]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
@@ -806,96 +806,27 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # create DataFrame with correct format and fill it with NaN
+    nan_dictionary = {
+        "mean": [np.nan],
+        "sd": [np.nan],
+        "hdi_3%": [np.nan],
+        "hdi_97%": [np.nan],
+        "mcse_mean": [np.nan],
+        "mcse_sd": [np.nan],
+        "ess_bulk": [np.nan],
+        "ess_tail": [np.nan],
+        "r_hat": [np.nan],
+    }
     df = pandas.DataFrame(
         {
-            "baseline_intercept": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "baseline_slope": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "mean": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "noise": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "std": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "area": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "height": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
-            "sn": {
-                "mean": [np.nan],
-                "sd": [np.nan],
-                "hdi_3%": [np.nan],
-                "hdi_97%": [np.nan],
-                "mcse_mean": [np.nan],
-                "mcse_sd": [np.nan],
-                "ess_bulk": [np.nan],
-                "ess_tail": [np.nan],
-                "r_hat": [np.nan],
-            },
+            "baseline_intercept": nan_dictionary,
+            "baseline_slope": nan_dictionary,
+            "mean": nan_dictionary,
+            "noise": nan_dictionary,
+            "std": nan_dictionary,
+            "area": nan_dictionary,
+            "height": nan_dictionary,
+            "sn": nan_dictionary,
         }
     ).transpose()
     # add information about the signal
@@ -903,8 +834,8 @@ def report_add_nan_to_summary(filename: str, ui: UserInput, df_summary: pandas.D
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
-    df2["is_peak"] = len(parameters) * [False]
-    df2["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+    df["is_peak"] = len(parameters) * [False]
+    df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
     if ui.user_info[filename][0]:
         df["double_peak"] = len(df.index) * [True]
@@ -1037,14 +968,13 @@ def pipeline_loop(
                 continue
             if resample:
                 # if signal was flagged for re-sampling a second time, discard it
-                # TODO: should this really be discarded or should the contents of idata be added with an additional comment?
-                #       (would need to add a comment column)
-                df_summary = report_add_nan_to_summary(file, ui, df_summary)
+                rejection_msg = "postfiltering: signal was flagged for re-sampling with increased sample number twice"
+                df_summary = report_add_data_to_summary(file, idata, df_summary, ui, False, rejection_msg)
                 if plotting:
                     plots.plot_posterior(f"{file}", ui, idata, True)
                 continue
         # add inference data to df_summary and save it as an Excel file
-        df_summary = report_add_data_to_summary(file, idata, df_summary, ui)
+        df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # perform posterior predictive sampling
         idata = posterior_predictive_sampling(pmodel, idata)
         # save the inference data object in a zip file

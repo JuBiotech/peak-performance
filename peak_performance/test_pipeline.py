@@ -23,7 +23,9 @@ COLUMNS = [
     "experiment_or_precursor_mz",
     "product_mz_start",
     "product_mz_end",
-    "double_peak",
+    "is_peak",
+    "cause_for_rejection",
+    "double_peak",     
 ]
 
 
@@ -334,6 +336,8 @@ def test_single_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
+    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [True]
+    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [""]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
     pass
 
@@ -373,7 +377,8 @@ def test_double_peak_report_add_nan_to_summary():
         product_mz_end,
     )
     filename = "A1t1R1Part2_110_109.9_110.1.npy"
-    df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary)
+    rejection_msg = "because I said so"
+    df_summary = pl.report_add_nan_to_summary(filename, ui, df_summary, False, rejection_msg)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
@@ -382,6 +387,8 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
+    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [False]
+    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * ["because I said so"]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
     pass
 
@@ -424,7 +431,7 @@ def test_single_peak_report_add_data_to_summary():
     )
     filename = "A1t1R1Part2_110_109.9_110.1.npy"
     # add data to df_summary
-    df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
+    df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui, True)
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
@@ -442,6 +449,8 @@ def test_single_peak_report_add_data_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
+    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [True]
+    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [""]
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
     pass
 
@@ -484,7 +493,7 @@ def test_double_peak_report_add_data_to_summary():
     )
     filename = "A2t2R1Part1_132_85.9_86.1.npy"
     # add data to df_summary
-    df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui)
+    df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui, True)
     # tests
     assert list(df_summary.columns) == COLUMNS
     assert list(df_summary.loc[:, "mean"]) == [
@@ -510,6 +519,8 @@ def test_double_peak_report_add_data_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [132]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [85.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
+    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [True]
+    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [""]
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
     pass
 
