@@ -388,10 +388,8 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
-    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [False]
-    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [
-        "because I said so"
-    ]
+    assert not any(df_summary["is_peak"])
+    assert all(df_summary["cause_for_rejection"] == rejection_msg)
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
     pass
 
@@ -452,8 +450,8 @@ def test_single_peak_report_add_data_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
-    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [True]
-    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [""]
+    assert all(df_summary["is_peak"])
+    assert all(df_summary["cause_for_rejection"] == "")
     assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
     pass
 
@@ -522,8 +520,8 @@ def test_double_peak_report_add_data_to_summary():
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [132]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [85.9]
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
-    assert list(df_summary.loc[:, "is_peak"]) == len(df_summary.index) * [True]
-    assert list(df_summary.loc[:, "cause_for_rejection"]) == len(df_summary.index) * [""]
+    assert all(df_summary["is_peak"])
+    assert all(df_summary["cause_for_rejection"] == "")
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
     pass
 

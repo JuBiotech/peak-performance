@@ -260,7 +260,7 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
     Returns
     -------
     timeseries
-        Updated numPy Array containing time and intensity data as NumPy arrays at fist and second position, respectively.
+        Updated NumPy array containing time and intensity data as NumPy arrays in first and second row, respectively.
         NaN values have been replaced with zeroes.
     acquisition
         Name of a single acquisition.
@@ -659,7 +659,7 @@ def report_add_data_to_summary(
     df_summary: pandas.DataFrame,
     ui: UserInput,
     is_peak: bool,
-    rejection_cause: Optional[str] = None,
+    rejection_cause: str = "",
 ):
     """
     Extracts the relevant information from idata, concatenates it to the summary DataFrame, and saves the DataFrame as an Excel file.
@@ -705,8 +705,8 @@ def report_add_data_to_summary(
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df["is_peak"] = len(parameters) * [is_peak]
-        df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+        df["is_peak"] = is_peak
+        df["cause_for_rejection"] = rejection_cause
         df["double_peak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
@@ -734,8 +734,8 @@ def report_add_data_to_summary(
         df2["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df2["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df2["is_peak"] = len(parameters) * [is_peak]
-        df2["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+        df2["is_peak"] = is_peak
+        df2["cause_for_rejection"] = rejection_cause
         df2["double_peak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
@@ -757,8 +757,8 @@ def report_add_data_to_summary(
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
-        df["is_peak"] = len(parameters) * [is_peak]
-        df["cause_for_rejection"] = len(parameters) * [f"{rejection_cause}"]
+        df["is_peak"] = is_peak
+        df["cause_for_rejection"] = rejection_cause
         df["double_peak"] = len(parameters) * [False]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
@@ -843,8 +843,8 @@ def report_add_nan_to_summary(
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
-    df["is_peak"] = len(df.index) * [False]
-    df["cause_for_rejection"] = len(df.index) * [f"{rejection_cause}"]
+    df["is_peak"] = False
+    df["cause_for_rejection"] = rejection_cause
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
     if ui.user_info[filename][0]:
         df["double_peak"] = len(df.index) * [True]
