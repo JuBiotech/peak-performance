@@ -637,8 +637,6 @@ def report_add_data_to_summary(
     df_summary
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
-    if rejection_cause is None:
-        rejection_cause = ""
     az_summary: pandas.DataFrame = az.summary(idata)
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
     if ui.user_info[filename][0]:
