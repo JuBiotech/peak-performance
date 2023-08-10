@@ -2,7 +2,6 @@ import importlib
 import os
 import re
 from datetime import date, datetime
-from numbers import Number
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -39,9 +38,9 @@ class UserInput:
         minimum_sn: Union[float, int],
         timeseries: np.ndarray,
         acquisition: str,
-        precursor: Number,
-        product_mz_start: Number,
-        product_mz_end: Number,
+        precursor: Union[float, int],
+        product_mz_start: Union[float, int],
+        product_mz_end: Union[float, int],
     ):
         """
         Parameters
@@ -291,7 +290,8 @@ def parse_data(
     try:
         pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
         m = re.match(pattern, filename)
-        acquisition, precursor, mz_start, mz_end = m.groups()
+        if m is not None:
+            acquisition, precursor, mz_start, mz_end = m.groups()
         precursor_converted = float(precursor)
         product_mz_start_converted = float(mz_start)
         product_mz_end_converted = float(mz_end)
