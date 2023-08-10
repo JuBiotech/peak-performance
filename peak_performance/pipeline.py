@@ -244,7 +244,7 @@ def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
     return npy_files
 
 
-def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_format: str):
+def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_format: str) -> Tuple[np.ndarray, str, float, float]:
     """
     Extract names of data files.
 
@@ -286,62 +286,16 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
             """
         )
     try:
-        acquisition = splits[0]
-        precursor = splits[1]
-        product_mz_start = splits[2]
-        # remove the .npy suffix from the last split
-        product_mz_end = splits[3][: -len(raw_data_file_format)]
+        pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
+        m = re.match(pattern, fname)
+        acquisition, precursor, mz_start, mz_end = m.groups()
+        precursor_converted = float(precursor)
+        product_mz_start_converted = float(mz_start)
+        product_mz_end_converted = float(mz_end)        
     except ValueError as ex:
         raise InputError(
-            f"The name of file {filename} does not follow the standardized naming convetion."
+            f"The name of file {filename} does not follow the standardized naming convention."
         ) from ex
-
-    # convert sections to befitting data types
-    if acquisition is None:
-        raise InputError(f"The first section (divided by _) from file {filename} was a None type.")
-    if not isinstance(acquisition, str):
-        try:
-            acquisition = str(acquisition)
-        except ValueError as ex:
-            raise InputError(
-                f"The first section (divided by _) from file {filename} could not be converted to a string."
-            ) from ex
-
-    if precursor is None:
-        raise InputError(f"The second section (divided by _) from file {filename} was a None type.")
-    if isinstance(precursor, int) or isinstance(precursor, float):
-        precursor_converted = precursor
-    elif isinstance(precursor, str):
-        try:
-            precursor_converted = float(precursor)
-        except ValueError as ex:
-            raise InputError(
-                f"The second section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
-
-    if product_mz_start is None:
-        raise InputError(f"The third section (divided by _) from file {filename} was a None type.")
-    if isinstance(product_mz_start, int) or isinstance(product_mz_start, float):
-        product_mz_start_converted = product_mz_start
-    elif isinstance(product_mz_start, str):
-        try:
-            product_mz_start_converted = float(product_mz_start)
-        except ValueError as ex:
-            raise InputError(
-                f"The third section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
-
-    if product_mz_end is None:
-        raise InputError(f"The fourth section (divided by _) from file {filename} was a None type.")
-    if isinstance(product_mz_end, int) or isinstance(product_mz_end, float):
-        product_mz_end_converted = product_mz_end
-    elif isinstance(product_mz_end, str):
-        try:
-            product_mz_end_converted = float(product_mz_end)
-        except ValueError as ex:
-            raise InputError(
-                f"The fourth section (divided by _) from file {filename} could not be converted to a float."
-            ) from ex
 
     return (
         timeseries,
