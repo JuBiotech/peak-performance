@@ -1,5 +1,6 @@
 import importlib
 import os
+import re
 from datetime import date, datetime
 from numbers import Number
 from pathlib import Path
@@ -244,7 +245,9 @@ def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
     return npy_files
 
 
-def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_format: str) -> Tuple[np.ndarray, str, float, float]:
+def parse_data(
+    path: Union[str, os.PathLike], filename: str, raw_data_file_format: str
+) -> Tuple[np.ndarray, str, float, float, float]:
     """
     Extract names of data files.
 
@@ -287,11 +290,11 @@ def parse_data(path: Union[str, os.PathLike], filename: str, raw_data_file_forma
         )
     try:
         pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
-        m = re.match(pattern, fname)
+        m = re.match(pattern, filename)
         acquisition, precursor, mz_start, mz_end = m.groups()
         precursor_converted = float(precursor)
         product_mz_start_converted = float(mz_start)
-        product_mz_end_converted = float(mz_end)        
+        product_mz_end_converted = float(mz_end)
     except ValueError as ex:
         raise InputError(
             f"The name of file {filename} does not follow the standardized naming convention."
