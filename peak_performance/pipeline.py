@@ -943,6 +943,8 @@ def pipeline_loop(
                 if plotting:
                     plots.plot_posterior(f"{file}", ui, idata, True)
                 continue
+        # perform posterior predictive sampling
+        idata = posterior_predictive_sampling(pmodel, idata)        
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file
