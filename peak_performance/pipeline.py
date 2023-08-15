@@ -516,7 +516,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
+                rejection_msg = f"""
+                post-filtering: mean of std ({az_summary.loc["std", :]["mean"]}) 
+                and/or standard deviation(s) area ({az_summary.loc["area", :]["sd"]}) 
+                and/or height ({az_summary.loc["height", :]["sd"]}) 
+                were too large
+                """
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
@@ -559,7 +564,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
+                rejection_msg = f"""
+                post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]}) 
+                and/or standard deviation(s) area ({az_summary.loc["area2", :]["sd"]}) 
+                and/or height ({az_summary.loc["height2", :]["sd"]}) 
+                were too large
+                """
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
