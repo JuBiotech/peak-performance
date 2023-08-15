@@ -503,23 +503,22 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
         # for single peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= 0.1
+            or az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
             or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
             or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
         ):
             # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
             # of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
-                az_summary.loc["std", :]["mean"] <= 0.1
+                az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
                 or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                rejection_msg = f"""
-                post-filtering: mean of std ({az_summary.loc["std", :]["mean"]}) 
-                and/or standard deviation(s) area ({az_summary.loc["area", :]["sd"]}) 
-                and/or height ({az_summary.loc["height", :]["sd"]}) 
+                rejection_msg = f"""post-filtering: mean of std ({az_summary.loc["std", :]["mean"]} / {ui.peak_width_estimate / 100})
+                and/or standard deviation(s) area ({az_summary.loc["area", :]["sd"]} / {az_summary.loc["area", :]["mean"] * 0.2}) 
+                and/or height ({az_summary.loc["height", :]["sd"]} / {az_summary.loc["height", :]["mean"] * 0.2}) 
                 were too large
                 """
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
@@ -534,10 +533,10 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
         # for double peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= 0.1
+            or az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
             or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
             or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            or az_summary.loc["std2", :]["mean"] <= 0.1
+            or az_summary.loc["std2", :]["mean"] <= ui.peak_width_estimate / 100
             or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
             or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
         ):
@@ -547,7 +546,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
             # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
             if (
-                az_summary.loc["std", :]["mean"] <= 0.1
+                az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
                 or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
             ):
@@ -555,7 +554,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 # add NaN values to summary DataFrame
                 double_not_found_first = True
             if (
-                az_summary.loc["std2", :]["mean"] <= 0.1
+                az_summary.loc["std2", :]["mean"] <= ui.peak_width_estimate / 100
                 or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
                 or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
             ):
@@ -564,10 +563,9 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                rejection_msg = f"""
-                post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]}) 
-                and/or standard deviation(s) area ({az_summary.loc["area2", :]["sd"]}) 
-                and/or height ({az_summary.loc["height2", :]["sd"]}) 
+                rejection_msg = f"""post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]} / {ui.peak_width_estimate / 100})
+                and/or standard deviation(s) area ({az_summary.loc["area2", :]["sd"]} / {az_summary.loc["area2", :]["mean"] * 0.2}) 
+                and/or height ({az_summary.loc["height2", :]["sd"]} / {az_summary.loc["height2", :]["mean"] * 0.2}) 
                 were too large
                 """
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
