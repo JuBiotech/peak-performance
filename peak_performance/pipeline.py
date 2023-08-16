@@ -779,15 +779,15 @@ def report_add_nan_to_summary(
     """
     # create DataFrame with correct format and fill it with NaN
     nan_dictionary = {
-        "mean": [np.nan],
-        "sd": [np.nan],
-        "hdi_3%": [np.nan],
-        "hdi_97%": [np.nan],
-        "mcse_mean": [np.nan],
-        "mcse_sd": [np.nan],
-        "ess_bulk": [np.nan],
-        "ess_tail": [np.nan],
-        "r_hat": [np.nan],
+        "mean": np.nan,
+        "sd": np.nan,
+        "hdi_3%": np.nan,
+        "hdi_97%": np.nan,
+        "mcse_mean": np.nan,
+        "mcse_sd": np.nan,
+        "ess_bulk": np.nan,
+        "ess_tail": np.nan,
+        "r_hat": np.nan,
     }
     df = pandas.DataFrame(
         {
