@@ -468,3 +468,110 @@ def define_model_skew(ui) -> pm.Model:
         pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
+
+
+def double_skew_normal_posterior(baseline, area, area2, time: np.ndarray, mean, std, std2, alpha, alpha2):
+    """
+    Define a univariate ordered skew normal distribution as the posterior.
+
+    Parameters
+    ----------
+    baseline
+        Baseline of the data.
+    area
+        Area of the first peak.
+    area2
+        Area of the second peak.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    mean
+        Location parameter.
+    std
+        Scale parameter of the first peak.
+    std2
+        Scale parameter of the second peak.
+    alpha
+        Skewness parameter of the first peak.
+    alpha2
+        Skewness parameter of the second peak.
+
+    Returns
+    -------
+    y
+        Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
+    """
+    y = baseline + area * (
+        2
+        * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2))
+        * (0.5 * (1 + pt.erf(((alpha * (time - mean[0]) / std)) / np.sqrt(2))))
+    ) + area2 * (
+        2
+        * (1 / (std2 * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2))
+        * (0.5 * (1 + pt.erf(((alpha2 * (time - mean[1]) / std2)) / np.sqrt(2))))
+    )
+    return y
+
+
+def define_model_double_skew(ui) -> pm.Model:
+    """
+    Define a model for fitting two ordered normal distributions to the peak data
+    (for when data contains two peaks or a double peak without baseline separation).
+
+    Parameters
+    ----------
+    ui
+        Instance of the UserInput class.
+
+    Returns
+    -------
+    pmodel
+        Pymc model.
+    """
+    time = ui.timeseries[0]
+    intensity = ui.timeseries[1]
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
+    with pm.Model() as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
+        # priors plus error handling in case of mathematically impermissible values
+        if intercept_guess == 0:
+            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
+        else:
+            baseline_intercept = pm.Normal(
+                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
+            )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
+        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
+        if noise_width_guess > 0:
+            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
+        elif noise_width_guess == 0:
+            noise = pm.LogNormal("noise", np.log(10), 1)
+        std = pm.HalfNormal("std", np.ptp(time) / 3)
+        alpha = pm.HalfNormal("alpha", 3.5)
+        area = pm.HalfNormal("area", np.max(intensity) * 0.9)
+        std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
+        alpha2 = pm.HalfNormal("alpha2", 3.5)
+        area2 = pm.HalfNormal("area2", np.max(intensity) * 0.9)
+        # use univariate ordered skew normal distribution
+        mean = pm.Normal(
+            "mean",
+            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
+            sigma=1,
+            transform=pm.distributions.transforms.univariate_ordered,
+        )
+
+        # posterior
+        y = double_skew_normal_posterior(baseline, area, area2, time, mean, std, std2, alpha, alpha2)
+        y = pm.Deterministic("y", y)
+
+        # likelihood
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+
+    return pmodel
