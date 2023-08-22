@@ -216,7 +216,7 @@ def test_prefiltering():
     assert not found_peak
     assert len(df_summary_1.loc[:, "mean"].values) == 8
     assert list(df_summary_1.columns) == COLUMNS
-    assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
+    assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [np.nan]
     # negative test due to signal-to-noise ratio
     timeseries = np.load(
         Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_137_72.9_73.1.npy"
@@ -243,7 +243,7 @@ def test_prefiltering():
     assert not found_peak
     assert len(df_summary_2.loc[:, "mean"].values) == 8
     assert list(df_summary_2.columns) == COLUMNS
-    assert list(df_summary_2.loc[:, "mean"]) == len(df_summary_2.index) * [[np.nan]]
+    assert list(df_summary_2.loc[:, "mean"]) == len(df_summary_2.index) * [np.nan]
     pass
 
 
@@ -288,7 +288,7 @@ def test_postfiltering():
     # tests
     assert not resample
     assert discard
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [np.nan]
     pass
 
 
@@ -332,7 +332,7 @@ def test_single_peak_report_add_nan_to_summary():
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [np.nan]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
@@ -383,7 +383,7 @@ def test_double_peak_report_add_nan_to_summary():
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [np.nan]
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
