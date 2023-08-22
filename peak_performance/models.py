@@ -470,7 +470,9 @@ def define_model_skew(ui) -> pm.Model:
     return pmodel
 
 
-def double_skew_normal_posterior(baseline, area, area2, time: np.ndarray, mean, std, std2, alpha, alpha2):
+def double_skew_normal_posterior(
+    baseline, area, area2, time: np.ndarray, mean, std, std2, alpha, alpha2
+):
     """
     Define a univariate ordered skew normal distribution as the posterior.
 
@@ -500,14 +502,20 @@ def double_skew_normal_posterior(baseline, area, area2, time: np.ndarray, mean, 
     y
         Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
     """
-    y = baseline + area * (
-        2
-        * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2))
-        * (0.5 * (1 + pt.erf(((alpha * (time - mean[0]) / std)) / np.sqrt(2))))
-    ) + area2 * (
-        2
-        * (1 / (std2 * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2))
-        * (0.5 * (1 + pt.erf(((alpha2 * (time - mean[1]) / std2)) / np.sqrt(2))))
+    y = (
+        baseline
+        + area
+        * (
+            2
+            * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha * (time - mean[0]) / std)) / np.sqrt(2))))
+        )
+        + area2
+        * (
+            2
+            * (1 / (std2 * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha2 * (time - mean[1]) / std2)) / np.sqrt(2))))
+        )
     )
     return y
 
@@ -568,7 +576,9 @@ def define_model_double_skew(ui) -> pm.Model:
         )
 
         # posterior
-        y = double_skew_normal_posterior(baseline, area, area2, time, mean, std, std2, alpha, alpha2)
+        y = double_skew_normal_posterior(
+            baseline, area, area2, time, mean, std, std2, alpha, alpha2
+        )
         y = pm.Deterministic("y", y)
 
         # likelihood
