@@ -136,7 +136,7 @@ def define_model_normal(ui) -> pm.Model:
     return pmodel
 
 
-def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, std, std2):
+def double_normal_posterior(baseline, height, time: np.ndarray, mean, std):
     """
     Define a univariate ordered normal distribution as the posterior.
 
@@ -145,17 +145,13 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     baseline
         Baseline of the data.
     height
-        Height of the first peak.
-    height2
-        Height of the second peak.
+        Height of the first and second peak.
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
-        Standard deviation of the first peak.
-    std2
-        Standard deviation of the second peak.
+        Standard deviation of the first and second peak.
 
     Returns
     -------
@@ -164,8 +160,8 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     """
     y = (
         baseline
-        + height * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2)
-        + height2 * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2)
+        + height[0] * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2)
+        + height[1] * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2)
     )
     return y
 
@@ -211,14 +207,18 @@ def define_model_doublepeak(ui) -> pm.Model:
             noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
         elif noise_width_guess == 0:
             noise = pm.LogNormal("noise", np.log(10), 1)
-        std = pm.HalfNormal("std", np.ptp(time) / 3)
-        std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
-        height = pm.HalfNormal("height", 0.95 * np.max(intensity))
-        height2 = pm.HalfNormal("height2", 0.95 * np.max(intensity))
-        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
-        pm.Deterministic("sn", height / noise)
-        pm.Deterministic("sn2", height2 / noise)
+        std = pm.HalfNormal(
+            "std",
+            sigma=[np.ptp(time) / 3, np.ptp(time) / 3.5],
+        )
+        height = pm.HalfNormal(
+            "height",
+            sigma=[0.95 * np.max(intensity), 0.96 * np.max(intensity)],
+        )
+        pm.Deterministic("area", height[0] / (1 / (std[0] * np.sqrt(2 * np.pi))))
+        pm.Deterministic("area2", height[1] / (1 / (std[1] * np.sqrt(2 * np.pi))))
+        pm.Deterministic("sn", height[0] / noise)
+        pm.Deterministic("sn2", height[1] / noise)
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
@@ -228,7 +228,7 @@ def define_model_doublepeak(ui) -> pm.Model:
         )
 
         # posterior
-        y = double_normal_posterior(baseline, height, height2, time, mean, std, std2)
+        y = double_normal_posterior(baseline, height, time, mean, std)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -470,9 +470,7 @@ def define_model_skew(ui) -> pm.Model:
     return pmodel
 
 
-def double_skew_normal_posterior(
-    baseline, area, area2, time: np.ndarray, mean, std, std2, alpha, alpha2
-):
+def double_skew_normal_posterior(baseline, area, time, mean, std, alpha):
     """
     Define a univariate ordered skew normal distribution as the posterior.
 
@@ -481,41 +479,29 @@ def double_skew_normal_posterior(
     baseline
         Baseline of the data.
     area
-        Area of the first peak.
-    area2
-        Area of the second peak.
+        Area of the first and second peak.
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Location parameter.
     std
-        Scale parameter of the first peak.
-    std2
-        Scale parameter of the second peak.
+        Scale parameter of the first and second peak.
     alpha
-        Skewness parameter of the first peak.
-    alpha2
-        Skewness parameter of the second peak.
+        Skewness parameter of the first and second peak.
 
     Returns
     -------
     y
         Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
     """
-    y = (
-        baseline
-        + area
-        * (
-            2
-            * (1 / (std * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2))
-            * (0.5 * (1 + pt.erf(((alpha * (time - mean[0]) / std)) / np.sqrt(2))))
-        )
-        + area2
-        * (
-            2
-            * (1 / (std2 * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2))
-            * (0.5 * (1 + pt.erf(((alpha2 * (time - mean[1]) / std2)) / np.sqrt(2))))
-        )
+    y = baseline + area[0] * (
+        2
+        * (1 / (std[0] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2))
+        * (0.5 * (1 + pt.erf(((alpha[0] * (time - mean[0]) / std[0])) / np.sqrt(2))))
+    ) + area[1] * (
+        2
+        * (1 / (std[1] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2))
+        * (0.5 * (1 + pt.erf(((alpha[1] * (time - mean[1]) / std[1])) / np.sqrt(2))))
     )
     return y
 
@@ -561,12 +547,6 @@ def define_model_double_skew(ui) -> pm.Model:
             noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
         elif noise_width_guess == 0:
             noise = pm.LogNormal("noise", np.log(10), 1)
-        std = pm.HalfNormal("std", np.ptp(time) / 3)
-        alpha = pm.HalfNormal("alpha", 3.5)
-        area = pm.HalfNormal("area", np.max(intensity) * 0.9)
-        std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
-        alpha2 = pm.HalfNormal("alpha2", 3.5)
-        area2 = pm.HalfNormal("area2", np.max(intensity) * 0.9)
         # use univariate ordered skew normal distribution
         mean = pm.Normal(
             "mean",
@@ -574,10 +554,42 @@ def define_model_double_skew(ui) -> pm.Model:
             sigma=1,
             transform=pm.distributions.transforms.univariate_ordered,
         )
+        std = pm.HalfNormal(
+            "std", 
+            sigma = [np.ptp(time) / 3, np.ptp(time) / 3],
+        )
+        area = pm.HalfNormal(
+            "area", 
+            sigma = [np.max(intensity) * 0.9, np.max(intensity) * 0.9],
+        )
+        alpha = pm.Normal(
+            "alpha",
+            mu=[0, 0],
+            sigma=3.5,
+        )
+        
+        # height is defined as the posterior with x = mode
+        delta_formula = delta_calculation(alpha)
+        delta = pm.Deterministic("delta", delta_formula)
+        mue_z_formula = mue_z_calculation(delta)
+        mue_z = pm.Deterministic("mue_z", mue_z_formula)
+        sigma_z_formula = sigma_z_calculation(mue_z)
+        sigma_z = pm.Deterministic("sigma_z", sigma_z_formula)
+        skewness = skewness_calculation(delta)
+        mode_offset_formula = mode_offset_calculation(mue_z, skewness, sigma_z, alpha)
+        mode_offset = pm.Deterministic("mode_offset", mode_offset_formula)
+        mode_skew_formula = mode_skew_calculation(mean, std, mode_offset)
+        mode_skew = pm.Deterministic("mode_skew", mode_skew_formula)
+        # then calculate the height based on the mode
+        height_formula = height_calculation(area, mean, std, alpha, mode_skew)
+        pm.Deterministic(
+            "height",
+            height_formula,
+        )
 
         # posterior
         y = double_skew_normal_posterior(
-            baseline, area, area2, time, mean, std, std2, alpha, alpha2
+            baseline, area, time, mean, std, alpha
         )
         y = pm.Deterministic("y", y)
 
