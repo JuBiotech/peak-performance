@@ -11,6 +11,9 @@ test:
   script:
     - pip install -e .[test]
     - pytest -v --cov=peak_performance --cov-report term-missing peak_performance
+    # Make a wheel and check if it's OK to publish
+    - python setup.py bdist_wheel
+    - twine check dist/*
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
 
 release:
