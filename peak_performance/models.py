@@ -494,14 +494,20 @@ def double_skew_normal_posterior(baseline, area, time, mean, std, alpha):
     y
         Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
     """
-    y = baseline + area[0] * (
-        2
-        * (1 / (std[0] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2))
-        * (0.5 * (1 + pt.erf(((alpha[0] * (time - mean[0]) / std[0])) / np.sqrt(2))))
-    ) + area[1] * (
-        2
-        * (1 / (std[1] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2))
-        * (0.5 * (1 + pt.erf(((alpha[1] * (time - mean[1]) / std[1])) / np.sqrt(2))))
+    y = (
+        baseline
+        + area[0]
+        * (
+            2
+            * (1 / (std[0] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha[0] * (time - mean[0]) / std[0])) / np.sqrt(2))))
+        )
+        + area[1]
+        * (
+            2
+            * (1 / (std[1] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha[1] * (time - mean[1]) / std[1])) / np.sqrt(2))))
+        )
     )
     return y
 
@@ -555,19 +561,19 @@ def define_model_double_skew(ui) -> pm.Model:
             transform=pm.distributions.transforms.univariate_ordered,
         )
         std = pm.HalfNormal(
-            "std", 
-            sigma = [np.ptp(time) / 3, np.ptp(time) / 3],
+            "std",
+            sigma=[np.ptp(time) / 3, np.ptp(time) / 3],
         )
         area = pm.HalfNormal(
-            "area", 
-            sigma = [np.max(intensity) * 0.9, np.max(intensity) * 0.9],
+            "area",
+            sigma=[np.max(intensity) * 0.9, np.max(intensity) * 0.9],
         )
         alpha = pm.Normal(
             "alpha",
             mu=[0, 0],
             sigma=3.5,
         )
-        
+
         # height is defined as the posterior with x = mode
         delta_formula = delta_calculation(alpha)
         delta = pm.Deterministic("delta", delta_formula)
@@ -588,9 +594,7 @@ def define_model_double_skew(ui) -> pm.Model:
         )
 
         # posterior
-        y = double_skew_normal_posterior(
-            baseline, area, time, mean, std, alpha
-        )
+        y = double_skew_normal_posterior(baseline, area, time, mean, std, alpha)
         y = pm.Deterministic("y", y)
 
         # likelihood
