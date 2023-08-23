@@ -38,6 +38,7 @@ packages = ["peak_performance"]
 test = [
   "pytest",
   "pytest-cov",
+  "twine",
 ]
 
 [project.urls]
