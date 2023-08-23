@@ -38,7 +38,7 @@ class TestDistributions:
         y1 = st.norm.pdf(x, loc=7.5, scale=0.6)
         y2 = st.norm.pdf(x, loc=9, scale=0.4) * 2
         y_double_pt = models.double_normal_posterior(
-            0, np.max(y1), np.max(y2), x, (7.5, 9), 0.6, 0.4
+            0, (np.max(y1), np.max(y2)), x, (7.5, 9), (0.6, 0.4)
         )
         y_double = y_double_pt.eval().astype(float)
         np.testing.assert_allclose(y1 + y2, y_double, rtol=1, atol=1e-20)
