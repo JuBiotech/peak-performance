@@ -138,13 +138,15 @@ class TestDistributions:
         pass
 
     def test_double_skew_normal_posterior(self):
-        x1 = np.arange(4,6,0.1)
-        x2 = np.arange(6,8,0.1)
+        x1 = np.arange(4, 6, 0.1)
+        x2 = np.arange(6, 8, 0.1)
         alpha = 5
         y1 = st.skewnorm.pdf(x1, alpha, loc=5, scale=0.2)
         y2 = st.skewnorm.pdf(x2, alpha, loc=6.3, scale=0.2)
         time = np.array(list(x1) + list(x2))
         intensity = np.array(list(y1) + list(y2))
-        y_double_pt = models.double_skew_normal_posterior(0, (1, 1), time, (5, 6.3), (0.2, 0.2), (5, 5))
+        y_double_pt = models.double_skew_normal_posterior(
+            0, (1, 1), time, (5, 6.3), (0.2, 0.2), (5, 5)
+        )
         y_double = y_double_pt.eval().astype(float)
         np.testing.assert_allclose(intensity, y_double, rtol=1, atol=1e-20)
