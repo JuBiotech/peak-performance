@@ -470,7 +470,7 @@ def define_model_skew(ui) -> pm.Model:
     return pmodel
 
 
-def double_skew_normal_posterior(baseline, area, time, mean, std, alpha):
+def double_skew_normal_posterior(baseline, area, time: np.ndarray, mean, std, alpha):
     """
     Define a univariate ordered skew normal distribution as the posterior.
 
