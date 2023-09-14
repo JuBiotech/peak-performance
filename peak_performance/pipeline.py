@@ -444,7 +444,7 @@ def sampling(pmodel, **sample_kwargs):
     Parameters
     ----------
     pmodel
-        A pymc model.
+        A PyMC model.
     **kwargs
         The keyword arguments are used in pm.sample().
     tune
@@ -588,7 +588,7 @@ def posterior_predictive_sampling(pmodel, idata):
     Parameters
     ----------
     pmodel
-        A pymc model.
+        A PyMC model.
     idata
         Previously sampled inference data object.
 
