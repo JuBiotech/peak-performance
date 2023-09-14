@@ -11,6 +11,7 @@ import pandas
 import pymc as pm
 import scipy.integrate
 import scipy.signal
+import textwrap
 
 from peak_performance import models, plots
 
@@ -516,11 +517,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                rejection_msg = f"""post-filtering: mean of std ({az_summary.loc["std", :]["mean"]} / {ui.peak_width_estimate / 100})
-                and/or standard deviation(s) area ({az_summary.loc["area", :]["sd"]} / {az_summary.loc["area", :]["mean"] * 0.2})
+                rejection_msg = textwrap.dedent(f"""
+                post-filtering: mean of std ({az_summary.loc["std", :]["mean"]} / {ui.peak_width_estimate / 100})
+                and/or standard deviation(s) of area ({az_summary.loc["area", :]["sd"]} / {az_summary.loc["area", :]["mean"] * 0.2})
                 and/or height ({az_summary.loc["height", :]["sd"]} / {az_summary.loc["height", :]["mean"] * 0.2})
                 were too large
-                """
+                """)
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
@@ -563,11 +565,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                rejection_msg = f"""post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]} / {ui.peak_width_estimate / 100})
-                and/or standard deviation(s) area ({az_summary.loc["area2", :]["sd"]} / {az_summary.loc["area2", :]["mean"] * 0.2})
+                rejection_msg = textwrap.dedent(f"""
+                post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]} / {ui.peak_width_estimate / 100})
+                and/or standard deviation(s) of area ({az_summary.loc["area2", :]["sd"]} / {az_summary.loc["area2", :]["mean"] * 0.2})
                 and/or height ({az_summary.loc["height2", :]["sd"]} / {az_summary.loc["height2", :]["mean"] * 0.2})
                 were too large
-                """
+                """)
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
