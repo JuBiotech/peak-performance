@@ -184,7 +184,8 @@ def define_model_doublepeak(ui) -> pm.Model:
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
-    with pm.Model() as pmodel:
+    coords = {"subpeak":["left", "right"]}
+    with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", time)
         pm.ConstantData("intensity", intensity)
@@ -215,10 +216,8 @@ def define_model_doublepeak(ui) -> pm.Model:
             "height",
             sigma=[0.95 * np.max(intensity), 0.96 * np.max(intensity)],
         )
-        pm.Deterministic("area", height[0] / (1 / (std[0] * np.sqrt(2 * np.pi))))
-        pm.Deterministic("area2", height[1] / (1 / (std[1] * np.sqrt(2 * np.pi))))
-        pm.Deterministic("sn", height[0] / noise)
-        pm.Deterministic("sn2", height[1] / noise)
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
+        pm.Deterministic("sn", height / noise, dims=("subpeak",))
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
@@ -530,7 +529,8 @@ def define_model_double_skew(ui) -> pm.Model:
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
-    with pm.Model() as pmodel:
+    coords = {"subpeak":["left", "right"]}
+    with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", time)
         pm.ConstantData("intensity", intensity)

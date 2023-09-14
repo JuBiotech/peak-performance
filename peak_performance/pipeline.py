@@ -660,13 +660,21 @@ def report_add_data_to_summary(
             "baseline_slope",
             "mean[0]",
             "noise",
-            "std",
-            "area",
-            "height",
-            "sn",
+            "std[0]",
+            "area[left]",
+            "height[0]",
+            "sn[left]",
         ]
         df = az_summary.loc[parameters, :]
-        df = df.rename(index={"mean[0]": "mean"})
+        df = df.rename(
+            index={
+                "mean[0]": "mean",
+                "std[0]": "std",
+                "area[left]": "area",
+                "height[0]": "height",
+                "sn[left]": "sn",
+            }
+        )
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
@@ -681,18 +689,18 @@ def report_add_data_to_summary(
             "baseline_slope",
             "mean[1]",
             "noise",
-            "std2",
-            "area2",
-            "height2",
-            "sn2",
+            "std[1]",
+            "area[right]",
+            "height[1]",
+            "sn[right]",
         ]
         df2 = az_summary.loc[parameters, :]
         df2 = df2.rename(
             index={
-                "area2": "area",
-                "height2": "height",
-                "sn2": "sn",
-                "std2": "std",
+                "area[right]": "area",
+                "height[1]": "height",
+                "sn[right]": "sn",
+                "std[1]": "std",
                 "mean[1]": "mean",
             }
         )
