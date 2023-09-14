@@ -107,19 +107,12 @@ def define_model_normal(ui) -> pm.Model:
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # define priors for parameters of a normally distributed posterior
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
@@ -179,7 +172,7 @@ def define_model_doublepeak(ui) -> pm.Model:
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
@@ -194,27 +187,20 @@ def define_model_doublepeak(ui) -> pm.Model:
         pm.ConstantData("slope_guess", slope_guess)
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
-        # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        # priors
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         std = pm.HalfNormal(
             "std",
-            sigma=[np.ptp(time) / 3, np.ptp(time) / 3.5],
+            sigma=[np.ptp(time) / 3, np.ptp(time) / 3],
         )
         height = pm.HalfNormal(
             "height",
-            sigma=[0.95 * np.max(intensity), 0.96 * np.max(intensity)],
+            sigma=[0.95 * np.max(intensity), 0.95 * np.max(intensity)],
         )
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
         pm.Deterministic("sn", height / noise, dims=("subpeak",))
@@ -402,7 +388,7 @@ def define_model_skew(ui) -> pm.Model:
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
@@ -417,19 +403,12 @@ def define_model_skew(ui) -> pm.Model:
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         alpha = pm.Normal("alpha", 0, 3.5)
@@ -524,7 +503,7 @@ def define_model_double_skew(ui) -> pm.Model:
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
@@ -540,19 +519,12 @@ def define_model_double_skew(ui) -> pm.Model:
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # use univariate ordered skew normal distribution
         mean = pm.Normal(
             "mean",
@@ -573,7 +545,7 @@ def define_model_double_skew(ui) -> pm.Model:
             mu=[0, 0],
             sigma=3.5,
         )
-
+        
         # height is defined as the posterior with x = mode
         delta_formula = delta_calculation(alpha)
         delta = pm.Deterministic("delta", delta_formula)
