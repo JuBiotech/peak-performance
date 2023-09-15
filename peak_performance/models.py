@@ -57,7 +57,7 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
 
-def normal_posterior(baseline, height, time: np.ndarray, mean, std):
+def normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Model a peak shaped like the PDF of a normal distribution.
 
@@ -65,14 +65,14 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     ----------
     baseline
         Baseline of the data.
-    height
-        Height of the normal distribution (starting from the baseline, thus not the total height).
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
         Standard deviation of the normal distribution.
+    height
+        Height of the normal distribution (starting from the baseline, thus not the total height).
 
     Returns
     -------
@@ -123,7 +123,7 @@ def define_model_normal(ui) -> pm.Model:
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
         pm.Deterministic("sn", height / noise)
         # posterior
-        y = normal_posterior(baseline, height, time, mean, std)
+        y = normal_posterior(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -132,7 +132,7 @@ def define_model_normal(ui) -> pm.Model:
     return pmodel
 
 
-def double_normal_posterior(baseline, height, time: np.ndarray, mean, std):
+def double_normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Define a univariate ordered normal distribution as the posterior.
 
@@ -140,14 +140,14 @@ def double_normal_posterior(baseline, height, time: np.ndarray, mean, std):
     ----------
     baseline
         Baseline of the data.
-    height
-        Height of the first and second peak.
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
         Standard deviation of the first and second peak.
+    height
+        Height of the first and second peak.
 
     Returns
     -------
@@ -219,7 +219,7 @@ def define_model_doublepeak(ui) -> pm.Model:
         )
 
         # posterior
-        y = double_normal_posterior(baseline, height, time, mean, std)
+        y = double_normal_posterior(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -347,7 +347,7 @@ def height_calculation(area, loc, scale, alpha, mode_skew):
     )
 
 
-def skew_normal_posterior(baseline, area, time, mean, std, alpha):
+def skew_normal_posterior(baseline, time, mean, std, alpha, *, area):
     """
     Define a skew normally distributed posterior.
 
@@ -355,8 +355,6 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     ----------
     baseline
         Baseline of the data.
-    area
-        Peak area.
     time
         NumPy array with the time values of the relevant timeframe.
     intensity
@@ -367,6 +365,8 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
         Scale parameter, i.e. standard deviation.
     alpha
         Skewness parameter.
+    area
+        Peak area.
 
     Returns
     -------
@@ -447,7 +447,7 @@ def define_model_skew(ui) -> pm.Model:
             height_formula,
         )
         pm.Deterministic("sn", height / noise)
-        y = skew_normal_posterior(baseline, area, time, mean, std, alpha)
+        y = skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -456,7 +456,7 @@ def define_model_skew(ui) -> pm.Model:
     return pmodel
 
 
-def double_skew_normal_posterior(baseline, area, time: np.ndarray, mean, std, alpha):
+def double_skew_normal_posterior(baseline, time: np.ndarray, mean, std, alpha, *, area):
     """
     Define a univariate ordered skew normal distribution as the posterior.
 
@@ -464,8 +464,6 @@ def double_skew_normal_posterior(baseline, area, time: np.ndarray, mean, std, al
     ----------
     baseline
         Baseline of the data.
-    area
-        Area of the first and second peak.
     time
         NumPy array with the time values of the relevant timeframe.
     mean
@@ -474,6 +472,8 @@ def double_skew_normal_posterior(baseline, area, time: np.ndarray, mean, std, al
         Scale parameter of the first and second peak.
     alpha
         Skewness parameter of the first and second peak.
+    area
+        Area of the first and second peak.
 
     Returns
     -------
@@ -584,7 +584,7 @@ def define_model_double_skew(ui) -> pm.Model:
         )
 
         # posterior
-        y = double_skew_normal_posterior(baseline, area, time, mean, std, alpha)
+        y = double_skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
         y = pm.Deterministic("y", y)
 
         # likelihood
