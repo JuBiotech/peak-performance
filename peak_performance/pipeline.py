@@ -11,7 +11,6 @@ import pandas
 import pymc as pm
 import scipy.integrate
 import scipy.signal
-import textwrap
 
 from peak_performance import models, plots
 
