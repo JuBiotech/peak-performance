@@ -111,7 +111,9 @@ def define_model_normal(ui) -> pm.Model:
         baseline_intercept = pm.Normal(
             "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
         )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # define priors for parameters of a normally distributed posterior
@@ -178,9 +180,11 @@ def define_model_doublepeak(ui) -> pm.Model:
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
-    df_data = pandas.DataFrame(data={"time":time, "intensity":intensity}, columns=["time", "intensity"])
+    df_data = pandas.DataFrame(
+        data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
+    )
     df_data.set_index("time", inplace=True)
-    coords = {"subpeak":["left", "right"]}
+    coords = {"subpeak": ["left", "right"]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
@@ -194,18 +198,14 @@ def define_model_doublepeak(ui) -> pm.Model:
         baseline_intercept = pm.Normal(
             "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
         )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
-        std = pm.HalfNormal(
-            "std",
-            sigma=[np.ptp(time) / 3, np.ptp(time) / 3],
-            dims=("subpeak",)
-        )
+        std = pm.HalfNormal("std", sigma=[np.ptp(time) / 3, np.ptp(time) / 3], dims=("subpeak",))
         height = pm.HalfNormal(
-            "height",
-            sigma=[0.95 * np.max(intensity), 0.95 * np.max(intensity)],
-            dims=("subpeak",)
+            "height", sigma=[0.95 * np.max(intensity), 0.95 * np.max(intensity)], dims=("subpeak",)
         )
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
         pm.Deterministic("sn", height / noise, dims=("subpeak",))
@@ -215,7 +215,7 @@ def define_model_doublepeak(ui) -> pm.Model:
             mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
             sigma=1,
             transform=pm.distributions.transforms.univariate_ordered,
-            dims=("subpeak",)
+            dims=("subpeak",),
         )
 
         # posterior
@@ -412,7 +412,9 @@ def define_model_skew(ui) -> pm.Model:
         baseline_intercept = pm.Normal(
             "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
         )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
@@ -514,9 +516,11 @@ def define_model_double_skew(ui) -> pm.Model:
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
-    df_data = pandas.DataFrame(data={"time":time, "intensity":intensity}, columns=["time", "intensity"])
+    df_data = pandas.DataFrame(
+        data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
+    )
     df_data.set_index("time", inplace=True)
-    coords = {"subpeak":["left", "right"]}
+    coords = {"subpeak": ["left", "right"]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
@@ -530,7 +534,9 @@ def define_model_double_skew(ui) -> pm.Model:
         baseline_intercept = pm.Normal(
             "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
         )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf))
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # use univariate ordered skew normal distribution
@@ -557,7 +563,7 @@ def define_model_double_skew(ui) -> pm.Model:
             sigma=3.5,
             dims=("subpeak",),
         )
-        
+
         # height is defined as the posterior with x = mode
         delta_formula = delta_calculation(alpha)
         delta = pm.Deterministic("delta", delta_formula)

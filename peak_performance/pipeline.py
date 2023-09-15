@@ -527,9 +527,13 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 if std <= ui.peak_width_estimate / 100:
                     reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
                 if area_sd > area_mean * 0.2:
-                    reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+                    reject_reasons.append(
+                        f"area estimate ({area_mean} ± {area_sd}) was too uncertain"
+                    )
                 if height_sd > height_mean * 0.2:
-                    reject_reasons.append(f"height estimate ({height_mean} ± {height_sd}) was too uncertain")
+                    reject_reasons.append(
+                        f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
+                    )
 
                 if reject_reasons:
                     rejection_msg = " and ".join(reject_reasons)
@@ -587,9 +591,13 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 if std <= ui.peak_width_estimate / 100:
                     reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
                 if area_sd > area_mean * 0.2:
-                    reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+                    reject_reasons.append(
+                        f"area estimate ({area_mean} ± {area_sd}) was too uncertain"
+                    )
                 if height_sd > height_mean * 0.2:
-                    reject_reasons.append(f"height estimate ({height_mean} ± {height_sd}) was too uncertain")
+                    reject_reasons.append(
+                        f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
+                    )
 
                 if reject_reasons:
                     rejection_msg = " and ".join(reject_reasons)
