@@ -507,8 +507,3 @@ def test_double_peak_report_add_data_to_summary(idata):
     assert all(df_summary["cause_for_rejection"] == "")
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
     pass
-
-
-def test_pipeline_loop():
-    # make sure the correctly named files are there; test the report sheets for similarity
-    pass

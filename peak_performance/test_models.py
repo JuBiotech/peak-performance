@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import numpy as np
+import pymc as pm
+import pytest
 import scipy.integrate
 import scipy.stats as st
 
-from peak_performance import models
+from peak_performance import models, pipeline
 
 
 def test_initial_guesses():
@@ -150,3 +154,52 @@ class TestDistributions:
         )
         y_double = y_double_pt.eval().astype(float)
         np.testing.assert_allclose(intensity, y_double, rtol=1, atol=1e-20)
+
+
+@pytest.mark.parametrize(
+    "model_type", ["normal", "skew_normal", "double_normal", "double_skew_normal"]
+)
+def test_pymc_sampling(model_type):
+    # create instance of the UserInput class
+    path = Path(__file__).absolute().parent.parent / "example"
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
+    data_file_format = ".npy"
+    double_peak = [False]
+    retention_time_estimate = [26.3]
+    peak_width_estimate = 1.5
+    pre_filtering = True
+    minimum_sn = 5
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
+    )
+    acquisition = "A1t1R1"
+    precursor_mz = 118
+    product_mz_start = 71.9
+    product_mz_end = 72.1
+    # positive test
+    ui = pipeline.UserInput(
+        path,
+        raw_data_files,
+        data_file_format,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        pre_filtering,
+        minimum_sn,
+        timeseries,
+        acquisition,
+        precursor_mz,
+        product_mz_start,
+        product_mz_end,
+    )
+    if model_type == "normal":
+        pmodel = models.define_model_normal(ui)
+    elif model_type == "skew_normal":
+        pmodel = models.define_model_skew(ui)
+    elif model_type == "double_normal":
+        pmodel = models.define_model_doublepeak(ui)
+    elif model_type == "double_skew_normal":
+        pmodel = models.define_model_double_skew(ui)
+    with pmodel:
+        pm.sample(cores=2, chains=2, tune=3, draws=5)
+    pass
