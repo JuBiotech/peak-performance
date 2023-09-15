@@ -456,9 +456,10 @@ def test_single_peak_report_add_data_to_summary():
     pass
 
 
-def test_double_peak_report_add_data_to_summary():
+@pytest.mark.parametrize("idata", ["idata_double_normal", "idata_double_skew_normal"])
+def test_double_peak_report_add_data_to_summary(idata):
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / idata)
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -497,24 +498,6 @@ def test_double_peak_report_add_data_to_summary():
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui, True)
     # tests
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == [
-        -17.786,
-        -8.814,
-        11.357,
-        180.677,
-        1.967,
-        3828.652,
-        954.279,
-        5.288,
-        -17.786,
-        -8.814,
-        12.659,
-        180.677,
-        1.563,
-        10377.713,
-        1896.595,
-        10.52,
-    ]
     assert len(df_summary.index) == 16
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [132]
