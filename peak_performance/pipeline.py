@@ -661,18 +661,18 @@ def report_add_data_to_summary(
             "mean[0]",
             "noise",
             "std[0]",
-            "area[left]",
+            "area[0]",
             "height[0]",
-            "sn[left]",
+            "sn[0]",
         ]
         df = az_summary.loc[parameters, :]
         df = df.rename(
             index={
                 "mean[0]": "mean",
                 "std[0]": "std",
-                "area[left]": "area",
+                "area[0]": "area",
                 "height[0]": "height",
-                "sn[left]": "sn",
+                "sn[0]": "sn",
             }
         )
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
@@ -690,16 +690,16 @@ def report_add_data_to_summary(
             "mean[1]",
             "noise",
             "std[1]",
-            "area[right]",
+            "area[1]",
             "height[1]",
-            "sn[right]",
+            "sn[1]",
         ]
         df2 = az_summary.loc[parameters, :]
         df2 = df2.rename(
             index={
-                "area[right]": "area",
+                "area[1]": "area",
                 "height[1]": "height",
-                "sn[right]": "sn",
+                "sn[1]": "sn",
                 "std[1]": "std",
                 "mean[1]": "mean",
             }
