@@ -517,12 +517,24 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             ):
                 # post-fit check failed
                 # add NaN values to summary DataFrame
-                rejection_msg = textwrap.dedent(f"""
-                post-filtering: mean of std ({az_summary.loc["std", :]["mean"]} / {ui.peak_width_estimate / 100})
-                and/or standard deviation(s) of area ({az_summary.loc["area", :]["sd"]} / {az_summary.loc["area", :]["mean"] * 0.2})
-                and/or height ({az_summary.loc["height", :]["sd"]} / {az_summary.loc["height", :]["mean"] * 0.2})
-                were too large
-                """)
+                # Get data needed for rejection decisions
+                std = az_summary.loc["std", "mean"]
+                area_sd = az_summary.loc["area", "sd"]
+                area_mean = az_summary.loc["area", "mean"]
+                height_sd = az_summary.loc["height", "sd"]
+                height_mean = az_summary.loc["height", "mean"]
+
+                reject_reasons = []
+                if std <= ui.peak_width_estimate / 100:
+                    reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
+                if area_sd > area_mean * 0.2:
+                    reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+                if height_sd > height_mean * 0.2:
+                    reject_reasons.append(f"height estimate ({height_mean} ± {height_sd}) was too uncertain")
+
+                if reject_reasons:
+                    rejection_msg = " and ".join(reject_reasons)
+
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
@@ -565,12 +577,24 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
                 double_not_found_second = True
             # if both peaks failed the r_hat and peak criteria tests, then continue
             if double_not_found_first and double_not_found_second:
-                rejection_msg = textwrap.dedent(f"""
-                post-filtering: mean of std ({az_summary.loc["std2", :]["mean"]} / {ui.peak_width_estimate / 100})
-                and/or standard deviation(s) of area ({az_summary.loc["area2", :]["sd"]} / {az_summary.loc["area2", :]["mean"] * 0.2})
-                and/or height ({az_summary.loc["height2", :]["sd"]} / {az_summary.loc["height2", :]["mean"] * 0.2})
-                were too large
-                """)
+                # Get data needed for rejection decisions
+                std = az_summary.loc["std", "mean"]
+                area_sd = az_summary.loc["area", "sd"]
+                area_mean = az_summary.loc["area", "mean"]
+                height_sd = az_summary.loc["height", "sd"]
+                height_mean = az_summary.loc["height", "mean"]
+
+                reject_reasons = []
+                if std <= ui.peak_width_estimate / 100:
+                    reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
+                if area_sd > area_mean * 0.2:
+                    reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+                if height_sd > height_mean * 0.2:
+                    reject_reasons.append(f"height estimate ({height_mean} ± {height_sd}) was too uncertain")
+
+                if reject_reasons:
+                    rejection_msg = " and ".join(reject_reasons)
+
                 df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
                 resample = False
                 discard = True
