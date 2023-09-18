@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peak_performance"
-version = "0.3.4"
+version = "0.4.0"
 authors = [
     {name = "Jochen Nießer", email = "j.niesser@fz-juelich.de"},
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
@@ -29,6 +29,7 @@ dependencies = [
     "pytensor",
     "scipy",
     "openpyxl",
+    "NumPy <=1.26.0",
 ]
 
 [tool.setuptools]
