@@ -95,13 +95,17 @@ def define_model_normal(ui) -> pm.Model:
     pmodel
         PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time)
-        pm.ConstantData("intensity", intensity)
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
@@ -396,13 +400,17 @@ def define_model_skew(ui) -> pm.Model:
     pmodel
         PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time)
-        pm.ConstantData("intensity", intensity)
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
