@@ -177,18 +177,18 @@ def define_model_doublepeak(ui) -> pm.Model:
     pmodel
         PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
-    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     df_data = pandas.DataFrame(
-        data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
     )
     df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
-        pm.ConstantData("intensity", df_data.intensity.values, dims=("data",))
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
@@ -513,18 +513,18 @@ def define_model_double_skew(ui) -> pm.Model:
     pmodel
         PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
-    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     df_data = pandas.DataFrame(
-        data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
     )
     df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
-        pm.ConstantData("intensity", df_data.intensity.values, dims=("data",))
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
