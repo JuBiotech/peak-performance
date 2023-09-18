@@ -249,7 +249,7 @@ def test_prefiltering():
 
 def test_postfiltering():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double.nc")
     # create df_summary
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -396,7 +396,7 @@ def test_double_peak_report_add_nan_to_summary():
 
 def test_single_peak_report_add_data_to_summary():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata")
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata.nc")
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -456,7 +456,7 @@ def test_single_peak_report_add_data_to_summary():
     pass
 
 
-@pytest.mark.parametrize("idata", ["idata_double_normal", "idata_double_skew_normal"])
+@pytest.mark.parametrize("idata", ["idata_double_normal.nc", "idata_double_skew_normal.nc"])
 def test_double_peak_report_add_data_to_summary(idata):
     # load exemplary inference data object
     idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / idata)

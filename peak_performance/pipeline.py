@@ -648,7 +648,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     """
     # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
     #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))
-    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}")
+    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}.nc")
     return
 
 
