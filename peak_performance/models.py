@@ -184,7 +184,7 @@ def define_model_doublepeak(ui) -> pm.Model:
         data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
     )
     df_data.set_index("time", inplace=True)
-    coords = {"subpeak": ["left", "right"]}
+    coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
@@ -520,7 +520,7 @@ def define_model_double_skew(ui) -> pm.Model:
         data={"time": time, "intensity": intensity}, columns=["time", "intensity"]
     )
     df_data.set_index("time", inplace=True)
-    coords = {"subpeak": ["left", "right"]}
+    coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
         pm.ConstantData("time", df_data.index.to_numpy(), dims=("data",))
