@@ -96,7 +96,8 @@ def define_model_normal(ui) -> pm.Model:
         PyMC model.
     """
     df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
     )
     df_data.set_index("time", inplace=True)
     time = df_data.index.to_numpy()
@@ -182,7 +183,8 @@ def define_model_doublepeak(ui) -> pm.Model:
         PyMC model.
     """
     df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
     )
     df_data.set_index("time", inplace=True)
     time = df_data.index.to_numpy()
@@ -401,7 +403,8 @@ def define_model_skew(ui) -> pm.Model:
         PyMC model.
     """
     df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
     )
     df_data.set_index("time", inplace=True)
     time = df_data.index.to_numpy()
@@ -522,7 +525,8 @@ def define_model_double_skew(ui) -> pm.Model:
         PyMC model.
     """
     df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]}, columns=["time", "intensity"]
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
     )
     df_data.set_index("time", inplace=True)
     time = df_data.index.to_numpy()

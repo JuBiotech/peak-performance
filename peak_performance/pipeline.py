@@ -501,67 +501,55 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     az_summary: pandas.DataFrame = az.summary(idata)
     if doublepeak is not True:
         # for single peak
-        if (
-            any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
-            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-        ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
-            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
-            if (
-                az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
-                or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-                or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            ):
-                # post-fit check failed
-                # add NaN values to summary DataFrame
-                # Get data needed for rejection decisions
-                std = az_summary.loc["std", "mean"]
-                area_sd = az_summary.loc["area", "sd"]
-                area_mean = az_summary.loc["area", "mean"]
-                height_sd = az_summary.loc["height", "sd"]
-                height_mean = az_summary.loc["height", "mean"]
+        # Get data needed for rejection decisions
+        max_rhat = max(az_summary.loc[:, "r_hat"])
+        std = az_summary.loc["std", "mean"]
+        area_sd = az_summary.loc["area", "sd"]
+        area_mean = az_summary.loc["area", "mean"]
+        height_sd = az_summary.loc["height", "sd"]
+        height_mean = az_summary.loc["height", "mean"]
 
-                reject_reasons = []
-                if std <= ui.peak_width_estimate / 100:
-                    reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
-                if area_sd > area_mean * 0.2:
-                    reject_reasons.append(
-                        f"area estimate ({area_mean} ± {area_sd}) was too uncertain"
-                    )
-                if height_sd > height_mean * 0.2:
-                    reject_reasons.append(
-                        f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
-                    )
+        # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+        # of normal distribution (std) and on the relative sizes of standard deviations of area and height
+        reject_reasons = []
+        if max_rhat > 1.05:
+            reject_reasons.append(f"maximum Rhat ({max_rhat:.3f}) was too high")
+        if std <= ui.peak_width_estimate / 100:
+            reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
+        if area_sd > area_mean * 0.2:
+            reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+        if height_sd > height_mean * 0.2:
+            reject_reasons.append(
+                f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
+            )
 
-                if reject_reasons:
-                    rejection_msg = " and ".join(reject_reasons)
+        if len(reject_reasons) == 1 and "Rhat" in reject_reasons[0]:
+            # r_hat failed but rest of post-fit check passed
+            # sample again with more tune samples to possibly reach convergence yet
+            resample = True
+            discard = False
+        elif reject_reasons:
+            rejection_msg = " and ".join(reject_reasons)
+            df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
+            resample = False
+            discard = True
 
-                df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
-                resample = False
-                discard = True
-            else:
-                # r_hat failed but rest of post-fit check passed
-                # sample again with more tune samples to possibly reach convergence yet
-                resample = True
-                discard = False
     else:
         # for double peak
         if (
             any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
-            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            or az_summary.loc["std2", :]["mean"] <= ui.peak_width_estimate / 100
-            or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
-            or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
+            or az_summary.loc["std[0]", :]["mean"] <= ui.peak_width_estimate / 100
+            or az_summary.loc["area[0]", :]["sd"] > az_summary.loc["area[0]", :]["mean"] * 0.2
+            or az_summary.loc["height[0]", :]["sd"] > az_summary.loc["height[0]", :]["mean"] * 0.2
+            or az_summary.loc["std[1]", :]["mean"] <= ui.peak_width_estimate / 100
+            or az_summary.loc["area[1]", :]["sd"] > az_summary.loc["area[1]", :]["mean"] * 0.2
+            or az_summary.loc["height[1]", :]["sd"] > az_summary.loc["height[1]", :]["mean"] * 0.2
         ):
             # Booleans to differentiate which peak is or is not detected
             double_not_found_first = False
             double_not_found_second = False
             # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
-            # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
+            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
             if (
                 az_summary.loc["std", :]["mean"] <= ui.peak_width_estimate / 100
                 or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
