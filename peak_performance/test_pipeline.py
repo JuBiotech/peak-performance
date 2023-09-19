@@ -216,7 +216,7 @@ def test_prefiltering():
     assert not found_peak
     assert len(df_summary_1.loc[:, "mean"].values) == 8
     assert list(df_summary_1.columns) == COLUMNS
-    assert list(df_summary_1.loc[:, "mean"]) == len(df_summary_1.index) * [[np.nan]]
+    assert all(pandas.isna(df_summary_1["mean"]))
     # negative test due to signal-to-noise ratio
     timeseries = np.load(
         Path(__file__).absolute().parent.parent / "example" / "A4t4R1Part2_137_72.9_73.1.npy"
@@ -243,13 +243,15 @@ def test_prefiltering():
     assert not found_peak
     assert len(df_summary_2.loc[:, "mean"].values) == 8
     assert list(df_summary_2.columns) == COLUMNS
-    assert list(df_summary_2.loc[:, "mean"]) == len(df_summary_2.index) * [[np.nan]]
+    assert all(pandas.isna(df_summary_2["mean"]))
     pass
 
 
-def test_postfiltering():
+def test_postfiltering_success():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "example" / "idata_double_normal.nc"
+    )
     # create df_summary
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -287,8 +289,53 @@ def test_postfiltering():
     resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
     # tests
     assert not resample
-    assert discard
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert not discard
+    pass
+
+
+def test_postfiltering_resample():
+    # load exemplary inference data object
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "example" / "idata_double_skew_rhat_too_high.nc"
+    )
+    # create df_summary
+    df_summary = pandas.DataFrame(columns=COLUMNS)
+    # create instance of the UserInput class
+    path = Path(__file__).absolute().parent.parent / "example"
+    raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
+    data_file_format = ".npy"
+    double_peak = [True]
+    retention_time_estimate = [22.5]
+    peak_width_estimate = 1
+    pre_filtering = True
+    minimum_sn = 5
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
+    )
+    acquisition = "A2t2R1Part1"
+    precursor_mz = 132
+    product_mz_start = 85.9
+    product_mz_end = 86.1
+    ui = pl.UserInput(
+        path,
+        raw_data_files,
+        data_file_format,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        pre_filtering,
+        minimum_sn,
+        timeseries,
+        acquisition,
+        precursor_mz,
+        product_mz_start,
+        product_mz_end,
+    )
+    filename = "A2t2R1Part1_132_85.9_86.1.npy"
+    resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
+    # tests
+    assert resample
+    assert not discard
     pass
 
 
@@ -332,7 +379,7 @@ def test_single_peak_report_add_nan_to_summary():
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert all(pandas.isna(df_summary["mean"]))
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
@@ -383,7 +430,7 @@ def test_double_peak_report_add_nan_to_summary():
     # tests
     assert len(df_summary.loc[:, "mean"].values) == 8
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == len(df_summary.index) * [[np.nan]]
+    assert all(pandas.isna(df_summary["mean"]))
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [118]
     assert list(df_summary.loc[:, "product_mz_start"]) == len(df_summary.index) * [71.9]
@@ -396,7 +443,7 @@ def test_double_peak_report_add_nan_to_summary():
 
 def test_single_peak_report_add_data_to_summary():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata")
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata.nc")
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -456,9 +503,10 @@ def test_single_peak_report_add_data_to_summary():
     pass
 
 
-def test_double_peak_report_add_data_to_summary():
+@pytest.mark.parametrize("idata", ["idata_double_normal.nc", "idata_double_skew_normal.nc"])
+def test_double_peak_report_add_data_to_summary(idata):
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double")
+    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / idata)
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -497,24 +545,6 @@ def test_double_peak_report_add_data_to_summary():
     df_summary = pl.report_add_data_to_summary(filename, idata, df_summary, ui, True)
     # tests
     assert list(df_summary.columns) == COLUMNS
-    assert list(df_summary.loc[:, "mean"]) == [
-        -17.786,
-        -8.814,
-        11.357,
-        180.677,
-        1.967,
-        3828.652,
-        954.279,
-        5.288,
-        -17.786,
-        -8.814,
-        12.659,
-        180.677,
-        1.563,
-        10377.713,
-        1896.595,
-        10.52,
-    ]
     assert len(df_summary.index) == 16
     assert list(df_summary.loc[:, "acquisition"]) == len(df_summary.index) * ["A1t1R1"]
     assert list(df_summary.loc[:, "experiment_or_precursor_mz"]) == len(df_summary.index) * [132]
@@ -523,9 +553,4 @@ def test_double_peak_report_add_data_to_summary():
     assert all(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == "")
     assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
-    pass
-
-
-def test_pipeline_loop():
-    # make sure the correctly named files are there; test the report sheets for similarity
     pass

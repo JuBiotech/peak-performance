@@ -1,4 +1,5 @@
 import numpy as np
+import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
@@ -56,7 +57,7 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
 
-def normal_posterior(baseline, height, time: np.ndarray, mean, std):
+def normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Model a peak shaped like the PDF of a normal distribution.
 
@@ -64,14 +65,14 @@ def normal_posterior(baseline, height, time: np.ndarray, mean, std):
     ----------
     baseline
         Baseline of the data.
-    height
-        Height of the normal distribution (starting from the baseline, thus not the total height).
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
         Standard deviation of the normal distribution.
+    height
+        Height of the normal distribution (starting from the baseline, thus not the total height).
 
     Returns
     -------
@@ -94,32 +95,32 @@ def define_model_normal(ui) -> pm.Model:
     pmodel
         PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time)
-        pm.ConstantData("intensity", intensity)
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # define priors for parameters of a normally distributed posterior
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
@@ -127,7 +128,7 @@ def define_model_normal(ui) -> pm.Model:
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
         pm.Deterministic("sn", height / noise)
         # posterior
-        y = normal_posterior(baseline, height, time, mean, std)
+        y = normal_posterior(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -136,7 +137,7 @@ def define_model_normal(ui) -> pm.Model:
     return pmodel
 
 
-def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, std, std2):
+def double_normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Define a univariate ordered normal distribution as the posterior.
 
@@ -144,18 +145,14 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     ----------
     baseline
         Baseline of the data.
-    height
-        Height of the first peak.
-    height2
-        Height of the second peak.
     time
         NumPy array with the time values of the relevant timeframe.
     mean
         Arithmetic mean of the normal distribution.
     std
-        Standard deviation of the first peak.
-    std2
-        Standard deviation of the second peak.
+        Standard deviation of the first and second peak.
+    height
+        Height of the first and second peak.
 
     Returns
     -------
@@ -164,8 +161,8 @@ def double_normal_posterior(baseline, height, height2, time: np.ndarray, mean, s
     """
     y = (
         baseline
-        + height * pt.exp(-0.5 * ((time - mean[0]) / std) ** 2)
-        + height2 * pt.exp(-0.5 * ((time - mean[1]) / std2) ** 2)
+        + height[0] * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2)
+        + height[1] * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2)
     )
     return y
 
@@ -183,52 +180,52 @@ def define_model_doublepeak(ui) -> pm.Model:
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
-    with pm.Model() as pmodel:
+    coords = {"subpeak": [0, 1]}
+    with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time)
-        pm.ConstantData("intensity", intensity)
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
-        # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        # priors
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
-        std = pm.HalfNormal("std", np.ptp(time) / 3)
-        std2 = pm.HalfNormal("std2", np.ptp(time) / 3)
-        height = pm.HalfNormal("height", 0.95 * np.max(intensity))
-        height2 = pm.HalfNormal("height2", 0.95 * np.max(intensity))
-        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
-        pm.Deterministic("area2", height2 / (1 / (std2 * np.sqrt(2 * np.pi))))
-        pm.Deterministic("sn", height / noise)
-        pm.Deterministic("sn2", height2 / noise)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        std = pm.HalfNormal("std", sigma=[np.ptp(time) / 3, np.ptp(time) / 3], dims=("subpeak",))
+        height = pm.HalfNormal(
+            "height", sigma=[0.95 * np.max(intensity), 0.95 * np.max(intensity)], dims=("subpeak",)
+        )
+        pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
+        pm.Deterministic("sn", height / noise, dims=("subpeak",))
         # use univariate ordered normal distribution
         mean = pm.Normal(
             "mean",
             mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
             sigma=1,
             transform=pm.distributions.transforms.univariate_ordered,
+            dims=("subpeak",),
         )
 
         # posterior
-        y = double_normal_posterior(baseline, height, height2, time, mean, std, std2)
+        y = double_normal_posterior(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -356,7 +353,7 @@ def height_calculation(area, loc, scale, alpha, mode_skew):
     )
 
 
-def skew_normal_posterior(baseline, area, time, mean, std, alpha):
+def skew_normal_posterior(baseline, time, mean, std, alpha, *, area):
     """
     Define a skew normally distributed posterior.
 
@@ -364,8 +361,6 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
     ----------
     baseline
         Baseline of the data.
-    area
-        Peak area.
     time
         NumPy array with the time values of the relevant timeframe.
     intensity
@@ -376,6 +371,8 @@ def skew_normal_posterior(baseline, area, time, mean, std, alpha):
         Scale parameter, i.e. standard deviation.
     alpha
         Skewness parameter.
+    area
+        Peak area.
 
     Returns
     -------
@@ -403,34 +400,34 @@ def define_model_skew(ui) -> pm.Model:
     Returns
     -------
     pmodel
-        Pymc model.
+        PyMC model.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time)
-        pm.ConstantData("intensity", intensity)
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
         pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
-        if intercept_guess == 0:
-            baseline_intercept = pm.Normal("baseline_intercept", intercept_guess, 20)
-        else:
-            baseline_intercept = pm.Normal(
-                "baseline_intercept", intercept_guess, abs(intercept_guess) / 2
-            )
-        baseline_slope = pm.Normal("baseline_slope", slope_guess, abs(slope_guess * 2) + 1)
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        # since log(0) leads to -inf, this case is handled by setting noise_width_guess to 10
-        if noise_width_guess > 0:
-            noise = pm.LogNormal("noise", np.log(noise_width_guess), 1)
-        elif noise_width_guess == 0:
-            noise = pm.LogNormal("noise", np.log(10), 1)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         alpha = pm.Normal("alpha", 0, 3.5)
@@ -461,7 +458,145 @@ def define_model_skew(ui) -> pm.Model:
             height_formula,
         )
         pm.Deterministic("sn", height / noise)
-        y = skew_normal_posterior(baseline, area, time, mean, std, alpha)
+        y = skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
+        y = pm.Deterministic("y", y)
+
+        # likelihood
+        pm.Normal("L", mu=y, sigma=noise, observed=intensity)
+
+    return pmodel
+
+
+def double_skew_normal_posterior(baseline, time: np.ndarray, mean, std, alpha, *, area):
+    """
+    Define a univariate ordered skew normal distribution as the posterior.
+
+    Parameters
+    ----------
+    baseline
+        Baseline of the data.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    mean
+        Location parameter.
+    std
+        Scale parameter of the first and second peak.
+    alpha
+        Skewness parameter of the first and second peak.
+    area
+        Area of the first and second peak.
+
+    Returns
+    -------
+    y
+        Probability density function (PDF) of a univariate ordered normal distribution as the posterior.
+    """
+    y = (
+        baseline
+        + area[0]
+        * (
+            2
+            * (1 / (std[0] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[0]) / std[0]) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha[0] * (time - mean[0]) / std[0])) / np.sqrt(2))))
+        )
+        + area[1]
+        * (
+            2
+            * (1 / (std[1] * np.sqrt(2 * np.pi)) * pt.exp(-0.5 * ((time - mean[1]) / std[1]) ** 2))
+            * (0.5 * (1 + pt.erf(((alpha[1] * (time - mean[1]) / std[1])) / np.sqrt(2))))
+        )
+    )
+    return y
+
+
+def define_model_double_skew(ui) -> pm.Model:
+    """
+    Define a model for fitting two ordered skew normal distributions to the peak data
+    (for when data contains two peaks or a double peak without baseline separation).
+
+    Parameters
+    ----------
+    ui
+        Instance of the UserInput class.
+
+    Returns
+    -------
+    pmodel
+        PyMC model.
+    """
+    df_data = pandas.DataFrame(
+        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
+        columns=["time", "intensity"],
+    )
+    df_data.set_index("time", inplace=True)
+    time = df_data.index.to_numpy()
+    intensity = df_data.intensity.to_numpy()
+    slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
+    coords = {"subpeak": [0, 1]}
+    with pm.Model(coords=coords) as pmodel:
+        # add observations to the pmodel as ConstantData
+        pm.ConstantData("time", time, dims=("data",))
+        pm.ConstantData("intensity", intensity, dims=("data",))
+        # add guesses to the pmodel as ConstantData
+        pm.ConstantData("intercept_guess", intercept_guess)
+        pm.ConstantData("slope_guess", slope_guess)
+        pm.ConstantData("noise_width_guess", noise_width_guess)
+
+        # priors plus error handling in case of mathematically impermissible values
+        baseline_intercept = pm.Normal(
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+        )
+        baseline_slope = pm.Normal(
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+        )
+        baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
+        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        # use univariate ordered skew normal distribution
+        mean = pm.Normal(
+            "mean",
+            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
+            sigma=1,
+            transform=pm.distributions.transforms.univariate_ordered,
+            dims=("subpeak",),
+        )
+        std = pm.HalfNormal(
+            "std",
+            sigma=[np.ptp(time) / 3, np.ptp(time) / 3],
+            dims=("subpeak",),
+        )
+        area = pm.HalfNormal(
+            "area",
+            sigma=[np.max(intensity) * 0.9, np.max(intensity) * 0.9],
+            dims=("subpeak",),
+        )
+        alpha = pm.Normal(
+            "alpha",
+            mu=[0, 0],
+            sigma=3.5,
+            dims=("subpeak",),
+        )
+
+        # height is defined as the posterior with x = mode
+        delta_formula = delta_calculation(alpha)
+        delta = pm.Deterministic("delta", delta_formula)
+        mue_z_formula = mue_z_calculation(delta)
+        mue_z = pm.Deterministic("mue_z", mue_z_formula)
+        sigma_z_formula = sigma_z_calculation(mue_z)
+        sigma_z = pm.Deterministic("sigma_z", sigma_z_formula)
+        skewness = skewness_calculation(delta)
+        mode_offset_formula = mode_offset_calculation(mue_z, skewness, sigma_z, alpha)
+        mode_offset = pm.Deterministic("mode_offset", mode_offset_formula)
+        mode_skew_formula = mode_skew_calculation(mean, std, mode_offset)
+        mode_skew = pm.Deterministic("mode_skew", mode_skew_formula)
+        # then calculate the height based on the mode
+        height_formula = height_calculation(area, mean, std, alpha, mode_skew)
+        pm.Deterministic(
+            "height",
+            height_formula,
+        )
+
+        # posterior
+        y = double_skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
         y = pm.Deterministic("y", y)
 
         # likelihood

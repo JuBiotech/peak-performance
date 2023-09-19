@@ -443,7 +443,7 @@ def sampling(pmodel, **sample_kwargs):
     Parameters
     ----------
     pmodel
-        A pymc model.
+        A PyMC model.
     **kwargs
         The keyword arguments are used in pm.sample().
     tune
@@ -498,76 +498,100 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
     doublepeak = ui.user_info[filename][0]
     resample = False
     discard = False
+    rejection_msg = ""
     az_summary: pandas.DataFrame = az.summary(idata)
     if doublepeak is not True:
         # for single peak
-        if (
-            any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= 0.1
-            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-        ):
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
-            # of normal distribution (std) and on the relative sizes of standard deviations of area and height
-            if (
-                az_summary.loc["std", :]["mean"] <= 0.1
-                or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-                or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            ):
-                # post-fit check failed
-                # add NaN values to summary DataFrame
-                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
-                df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
-                resample = False
-                discard = True
-            else:
-                # r_hat failed but rest of post-fit check passed
-                # sample again with more tune samples to possibly reach convergence yet
-                resample = True
-                discard = False
+        # Get data needed for rejection decisions
+        max_rhat = max(az_summary.loc[:, "r_hat"])
+        std = az_summary.loc["std", "mean"]
+        area_sd = az_summary.loc["area", "sd"]
+        area_mean = az_summary.loc["area", "mean"]
+        height_sd = az_summary.loc["height", "sd"]
+        height_mean = az_summary.loc["height", "mean"]
+
+        # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
+        # of normal distribution (std) and on the relative sizes of standard deviations of area and height
+        reject_reasons = []
+        if max_rhat > 1.05:
+            reject_reasons.append(f"maximum Rhat ({max_rhat:.3f}) was too high")
+        if std <= ui.peak_width_estimate / 100:
+            reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
+        if area_sd > area_mean * 0.2:
+            reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+        if height_sd > height_mean * 0.2:
+            reject_reasons.append(
+                f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
+            )
+
+        if len(reject_reasons) == 1 and "Rhat" in reject_reasons[0]:
+            # r_hat failed but rest of post-fit check passed
+            # sample again with more tune samples to possibly reach convergence yet
+            resample = True
+            discard = False
+        elif reject_reasons:
+            rejection_msg = " and ".join(reject_reasons)
+            df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
+            resample = False
+            discard = True
+
     else:
         # for double peak
-        if (
-            any(list(az_summary.loc[:, "r_hat"])) > 1.05
-            or az_summary.loc["std", :]["mean"] <= 0.1
-            or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-            or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            or az_summary.loc["std2", :]["mean"] <= 0.1
-            or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
-            or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
-        ):
-            # Booleans to differentiate which peak is or is not detected
-            double_not_found_first = False
-            double_not_found_second = False
-            # decide whether to discard signal or sample with more tune samples based on size of sigma parameter
-            # of normal distribution (std) and on the relative sizes of standard deviations of area and heigt
-            if (
-                az_summary.loc["std", :]["mean"] <= 0.1
-                or az_summary.loc["area", :]["sd"] > az_summary.loc["area", :]["mean"] * 0.2
-                or az_summary.loc["height", :]["sd"] > az_summary.loc["height", :]["mean"] * 0.2
-            ):
-                # post-fit check failed
-                # add NaN values to summary DataFrame
-                double_not_found_first = True
-            if (
-                az_summary.loc["std2", :]["mean"] <= 0.1
-                or az_summary.loc["area2", :]["sd"] > az_summary.loc["area2", :]["mean"] * 0.2
-                or az_summary.loc["height2", :]["sd"] > az_summary.loc["height2", :]["mean"] * 0.2
-            ):
-                # post-fit check failed
-                # add NaN values to summary DataFrame
-                double_not_found_second = True
-            # if both peaks failed the r_hat and peak criteria tests, then continue
-            if double_not_found_first and double_not_found_second:
-                rejection_msg = "post-filtering: mean of std and/or standard deviation(s) area and/or height were too large"
-                df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
-                resample = False
-                discard = True
-            else:
-                # r_hat failed but rest of post-fit check passed
-                # sample again with more tune samples to possibly reach convergence yet
-                resample = True
-                discard = False
+        max_rhat = max(az_summary.loc[:, "r_hat"])
+        std = az_summary.loc["std[0]", "mean"]
+        area_sd = az_summary.loc["area[0]", "sd"]
+        area_mean = az_summary.loc["area[0]", "mean"]
+        height_sd = az_summary.loc["height[0]", "sd"]
+        height_mean = az_summary.loc["height[0]", "mean"]
+        std2 = az_summary.loc["std[1]", "mean"]
+        area_sd2 = az_summary.loc["area[1]", "sd"]
+        area_mean2 = az_summary.loc["area[1]", "mean"]
+        height_sd2 = az_summary.loc["height[1]", "sd"]
+        height_mean2 = az_summary.loc["height[1]", "mean"]
+
+        if max_rhat > 1.05:
+            resample = True
+            discard = False
+            return resample, discard, df_summary
+        # Booleans to differentiate which peak is or is not detected
+        double_not_found_first = False
+        double_not_found_second = False
+        if std <= 1 / 100 or area_sd > area_mean * 0.2 or height_sd > height_mean * 0.2:
+            # post-fit check failed
+            # add NaN values to summary DataFrame
+            double_not_found_first = True
+        if std2 <= 1 / 100 or area_sd2 > area_mean2 * 0.2 or height_sd2 > height_mean2 * 0.2:
+            # post-fit check failed
+            # add NaN values to summary DataFrame
+            double_not_found_second = True
+        # if both peaks failed the peak criteria tests, then reject peaks
+        if double_not_found_first and double_not_found_second:
+            reject_reasons = []
+            if std <= ui.peak_width_estimate / 100:
+                reject_reasons.append(f"standard deviation estimate ({std:.2f}) was too low")
+            if std2 <= ui.peak_width_estimate / 100:
+                reject_reasons.append(f"standard deviation estimate ({std2:.2f}) was too low")
+            if area_sd > area_mean * 0.2:
+                reject_reasons.append(f"area estimate ({area_mean} ± {area_sd}) was too uncertain")
+            if area_sd2 > area_mean2 * 0.2:
+                reject_reasons.append(
+                    f"area estimate ({area_mean2} ± {area_sd2}) was too uncertain"
+                )
+            if height_sd > height_mean * 0.2:
+                reject_reasons.append(
+                    f"height estimate ({height_mean} ± {height_sd}) was too uncertain"
+                )
+            if height_sd2 > height_mean2 * 0.2:
+                reject_reasons.append(
+                    f"height estimate ({height_mean2} ± {height_sd2}) was too uncertain"
+                )
+
+            if reject_reasons:
+                rejection_msg = " and ".join(reject_reasons)
+
+            df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
+            resample = False
+            discard = True
     return resample, discard, df_summary
 
 
@@ -577,7 +601,7 @@ def posterior_predictive_sampling(pmodel, idata):
     Parameters
     ----------
     pmodel
-        A pymc model.
+        A PyMC model.
     idata
         Previously sampled inference data object.
 
@@ -606,7 +630,7 @@ def report_save_idata(idata, ui: UserInput, filename: str):
     """
     # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
     #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))
-    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}")
+    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}.nc")
     return
 
 
@@ -649,13 +673,21 @@ def report_add_data_to_summary(
             "baseline_slope",
             "mean[0]",
             "noise",
-            "std",
-            "area",
-            "height",
-            "sn",
+            "std[0]",
+            "area[0]",
+            "height[0]",
+            "sn[0]",
         ]
         df = az_summary.loc[parameters, :]
-        df = df.rename(index={"mean[0]": "mean"})
+        df = df.rename(
+            index={
+                "mean[0]": "mean",
+                "std[0]": "std",
+                "area[0]": "area",
+                "height[0]": "height",
+                "sn[0]": "sn",
+            }
+        )
         df["acquisition"] = len(parameters) * [f"{ui.acquisition}"]
         df["experiment_or_precursor_mz"] = len(parameters) * [ui.precursor]
         df["product_mz_start"] = len(parameters) * [ui.product_mz_start]
@@ -670,18 +702,18 @@ def report_add_data_to_summary(
             "baseline_slope",
             "mean[1]",
             "noise",
-            "std2",
-            "area2",
-            "height2",
-            "sn2",
+            "std[1]",
+            "area[1]",
+            "height[1]",
+            "sn[1]",
         ]
         df2 = az_summary.loc[parameters, :]
         df2 = df2.rename(
             index={
-                "area2": "area",
-                "height2": "height",
-                "sn2": "sn",
-                "std2": "std",
+                "area[1]": "area",
+                "height[1]": "height",
+                "sn[1]": "sn",
+                "std[1]": "std",
                 "mean[1]": "mean",
             }
         )
@@ -771,15 +803,15 @@ def report_add_nan_to_summary(
     """
     # create DataFrame with correct format and fill it with NaN
     nan_dictionary = {
-        "mean": [np.nan],
-        "sd": [np.nan],
-        "hdi_3%": [np.nan],
-        "hdi_97%": [np.nan],
-        "mcse_mean": [np.nan],
-        "mcse_sd": [np.nan],
-        "ess_bulk": [np.nan],
-        "ess_tail": [np.nan],
-        "r_hat": [np.nan],
+        "mean": np.nan,
+        "sd": np.nan,
+        "hdi_3%": np.nan,
+        "hdi_97%": np.nan,
+        "mcse_mean": np.nan,
+        "mcse_sd": np.nan,
+        "ess_bulk": np.nan,
+        "ess_tail": np.nan,
+        "r_hat": np.nan,
     }
     df = pandas.DataFrame(
         {
@@ -943,6 +975,8 @@ def pipeline_loop(
                 if plotting:
                     plots.plot_posterior(f"{file}", ui, idata, True)
                 continue
+        # perform posterior predictive sampling
+        idata = posterior_predictive_sampling(pmodel, idata)
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file

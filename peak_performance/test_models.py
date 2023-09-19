@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import numpy as np
+import pymc as pm
+import pytest
 import scipy.integrate
 import scipy.stats as st
 
-from peak_performance import models
+from peak_performance import models, pipeline
 
 
 def test_initial_guesses():
@@ -25,7 +29,7 @@ class TestDistributions:
     def test_normal_posterior(self):
         x = np.linspace(-5, 10, 10000)
         expected = st.norm.pdf(x, 3, 2)
-        actual_pt = models.normal_posterior(0, np.max(expected), x, 3, 2)
+        actual_pt = models.normal_posterior(0, x, 3, 2, height=np.max(expected))
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -38,7 +42,7 @@ class TestDistributions:
         y1 = st.norm.pdf(x, loc=7.5, scale=0.6)
         y2 = st.norm.pdf(x, loc=9, scale=0.4) * 2
         y_double_pt = models.double_normal_posterior(
-            0, np.max(y1), np.max(y2), x, (7.5, 9), 0.6, 0.4
+            0, x, (7.5, 9), (0.6, 0.4), height=(np.max(y1), np.max(y2))
         )
         y_double = y_double_pt.eval().astype(float)
         np.testing.assert_allclose(y1 + y2, y_double, rtol=1, atol=1e-20)
@@ -104,7 +108,7 @@ class TestDistributions:
         x = np.linspace(-1, 5.5, 10000)
         # test first with positive alpha
         expected = st.skewnorm.pdf(x, 3, loc=1.2, scale=1.1)
-        actual_pt = models.skew_normal_posterior(0, 1, x, 1.2, 1.1, 3)
+        actual_pt = models.skew_normal_posterior(0, x, 1.2, 1.1, 3, area=1)
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -113,7 +117,7 @@ class TestDistributions:
 
         # test again with negative alpha
         expected = st.skewnorm.pdf(x, -3, loc=1.2, scale=1.1)
-        actual_pt = models.skew_normal_posterior(0, 1, x, 1.2, 1.1, -3)
+        actual_pt = models.skew_normal_posterior(0, x, 1.2, 1.1, -3, area=1)
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -128,11 +132,74 @@ class TestDistributions:
         height = np.max(y)
         area = scipy.integrate.quad(lambda x: st.norm.pdf(x, loc=1, scale=1), -10, 10)[0]
         x = np.linspace(-10, 10, 10000)
-        y_actual_pt = models.normal_posterior(0, height, x, 1, 1)
-        y_skew_actual_pt = models.skew_normal_posterior(0, area, x, 1, 1, 0)
+        y_actual_pt = models.normal_posterior(0, x, 1, 1, height=height)
+        y_skew_actual_pt = models.skew_normal_posterior(0, x, 1, 1, 0, area=area)
         y_actual = y_actual_pt.eval().astype(float)
         y_skew_actual = y_skew_actual_pt.eval().astype(float)
         # many values are extremely close to zero so rtol was increased.
         # As guaranteed by the absurdly low atol, this will not mask any actual differences.
         np.testing.assert_allclose(y_skew_actual, y_actual, atol=1e-20, rtol=0.9)
         pass
+
+    def test_double_skew_normal_posterior(self):
+        x1 = np.arange(4, 6, 0.1)
+        x2 = np.arange(6, 8, 0.1)
+        alpha = 5
+        y1 = st.skewnorm.pdf(x1, alpha, loc=5, scale=0.2)
+        y2 = st.skewnorm.pdf(x2, alpha, loc=6.3, scale=0.2)
+        time = np.array(list(x1) + list(x2))
+        intensity = np.array(list(y1) + list(y2))
+        y_double_pt = models.double_skew_normal_posterior(
+            0, time, (5, 6.3), (0.2, 0.2), (5, 5), area=(1, 1)
+        )
+        y_double = y_double_pt.eval().astype(float)
+        np.testing.assert_allclose(intensity, y_double, rtol=1, atol=1e-20)
+
+
+@pytest.mark.parametrize(
+    "model_type", ["normal", "skew_normal", "double_normal", "double_skew_normal"]
+)
+def test_pymc_sampling(model_type):
+    # create instance of the UserInput class
+    path = Path(__file__).absolute().parent.parent / "example"
+    raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
+    data_file_format = ".npy"
+    double_peak = [False]
+    retention_time_estimate = [26.3]
+    peak_width_estimate = 1.5
+    pre_filtering = True
+    minimum_sn = 5
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
+    )
+    acquisition = "A1t1R1"
+    precursor_mz = 118
+    product_mz_start = 71.9
+    product_mz_end = 72.1
+    # positive test
+    ui = pipeline.UserInput(
+        path,
+        raw_data_files,
+        data_file_format,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        pre_filtering,
+        minimum_sn,
+        timeseries,
+        acquisition,
+        precursor_mz,
+        product_mz_start,
+        product_mz_end,
+    )
+    if model_type == "normal":
+        pmodel = models.define_model_normal(ui)
+    elif model_type == "skew_normal":
+        pmodel = models.define_model_skew(ui)
+    elif model_type == "double_normal":
+        pmodel = models.define_model_doublepeak(ui)
+    elif model_type == "double_skew_normal":
+        pmodel = models.define_model_double_skew(ui)
+    with pmodel:
+        pm.sample(cores=2, chains=2, tune=3, draws=5)
+    pass
