@@ -247,9 +247,11 @@ def test_prefiltering():
     pass
 
 
-def test_postfiltering():
+def test_postfiltering_success():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata_double.nc")
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "example" / "idata_double_normal.nc"
+    )
     # create df_summary
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -287,8 +289,53 @@ def test_postfiltering():
     resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
     # tests
     assert not resample
-    assert discard
-    assert all(pandas.isna(df_summary["mean"]))
+    assert not discard
+    pass
+
+
+def test_postfiltering_resample():
+    # load exemplary inference data object
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "example" / "idata_double_skew_rhat_too_high.nc"
+    )
+    # create df_summary
+    df_summary = pandas.DataFrame(columns=COLUMNS)
+    # create instance of the UserInput class
+    path = Path(__file__).absolute().parent.parent / "example"
+    raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
+    data_file_format = ".npy"
+    double_peak = [True]
+    retention_time_estimate = [22.5]
+    peak_width_estimate = 1
+    pre_filtering = True
+    minimum_sn = 5
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
+    )
+    acquisition = "A2t2R1Part1"
+    precursor_mz = 132
+    product_mz_start = 85.9
+    product_mz_end = 86.1
+    ui = pl.UserInput(
+        path,
+        raw_data_files,
+        data_file_format,
+        double_peak,
+        retention_time_estimate,
+        peak_width_estimate,
+        pre_filtering,
+        minimum_sn,
+        timeseries,
+        acquisition,
+        precursor_mz,
+        product_mz_start,
+        product_mz_end,
+    )
+    filename = "A2t2R1Part1_132_85.9_86.1.npy"
+    resample, discard, df_summary = pl.postfiltering(filename, idata, ui, df_summary)
+    # tests
+    assert resample
+    assert not discard
     pass
 
 
