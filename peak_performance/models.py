@@ -1,3 +1,6 @@
+from typing import Dict
+
+import arviz as az
 import numpy as np
 import pandas
 import pymc as pm
@@ -603,3 +606,48 @@ def define_model_double_skew(ui) -> pm.Model:
         pm.Normal("L", mu=y, sigma=noise, observed=intensity)
 
     return pmodel
+
+
+def compute_log_likelihood(pmodel: pm.Model, idata: az.InferenceData):
+    """
+    Method to compute the element-wise loglikelihood of every posterior sample and add it to a given inference data object.
+
+    Parameters
+    ----------
+    pmodel
+        PyMC model.
+    idata
+        Inference data object resulting from sampling.
+
+    Returns
+    -------
+    idata
+        Inference data object updated with element-wise loglikelihood of every posterior sample.
+    """
+    with pmodel:
+        pm.compute_log_likelihood(idata)
+    return idata
+
+
+def model_comparison(
+    compare_dict: Dict[str, az.InferenceData], ic: str = "loo"
+) -> pandas.DataFrame:
+    """
+    Method to compare the models detailed in compare_dict based on the leave-one-out cross-validation (loo)
+    or the widely-applicable information criterion (waic).
+
+    Parameters
+    ----------
+    compare_dict
+        Dictionary with the model denominations as keys and their respective inference data objects as values.
+    ic
+        Choice of the information criterion with which models are ranked ("loo" or "waic").
+        Default is "loo".
+
+    Returns
+    -------
+    df_comp
+        DataFrame containing the ranking of the given models.
+    """
+    df_comp = az.compare(compare_dict=compare_dict, ic=ic)
+    return df_comp

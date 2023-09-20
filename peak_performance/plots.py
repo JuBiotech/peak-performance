@@ -2,7 +2,7 @@ from pathlib import Path
 
 import arviz as az
 import numpy as np
-import pandas as pd
+import pandas
 import pymc as pm
 from matplotlib import pyplot as plt
 
@@ -100,7 +100,7 @@ def plot_density(
     return
 
 
-def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
+def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, discarded: bool):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
@@ -158,7 +158,7 @@ def plot_posterior_predictive(identifier: str, ui, idata, discarded: bool):
     return
 
 
-def plot_posterior(identifier: str, ui, idata, discarded: bool):
+def plot_posterior(identifier: str, ui, idata: az.InferenceData, discarded: bool):
     """
     Save plot of posterior, estimated baseline and original data points.
 
@@ -175,7 +175,7 @@ def plot_posterior(identifier: str, ui, idata, discarded: bool):
     """
     time = ui.timeseries[0]
     intensity = ui.timeseries[1]
-    az_summary: pd.DataFrame = az.summary(idata)
+    az_summary: pandas.DataFrame = az.summary(idata)
 
     fig, ax = plt.subplots()
     # plot the posterior
@@ -213,4 +213,33 @@ def plot_posterior(identifier: str, ui, idata, discarded: bool):
         )
     plt.close(fig)
 
+    return
+
+
+def plot_model_comparison(df_comp: pandas.DataFrame, identifier: str, ui):
+    """
+    Method to compute the element-wise loglikelihood of every posterior sample and add it to a given inference data object.
+
+    Parameters
+    ----------
+    pmodel
+        PyMC model.
+    idata
+        Inference data object resulting from sampling.
+
+    Returns
+    -------
+    idata
+        Inference data object updated with element-wise loglikelihood of every posterior sample.
+    """
+    axes = az.plot_compare(df_comp, insample_dev=False)
+    fig = axes.figure
+    plt.tight_layout()
+    fig.savefig(
+        Path(ui.path) / f"model_comparison_{identifier[:-len(ui.raw_data_file_format)]}.png"
+    )
+    fig.savefig(
+        Path(ui.path) / f"model_comparison_{identifier[:-len(ui.raw_data_file_format)]}.svg",
+        format="svg",
+    )
     return
