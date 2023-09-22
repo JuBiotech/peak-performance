@@ -309,6 +309,35 @@ def parse_data(
     )
 
 
+def parse_unique_identifiers(raw_data_files: List[str]):
+    """
+    Get a set of all mass traces based on the standardized raw data file names (excluding acquisitions).
+    Used to automatically fill out the unique_identifiers column in the Template.xlsx' signals tab.
+    
+    Parameters
+    ----------
+    raw_data_files
+        List with names of all files of the specified data type in path_raw_data.
+
+    Returns
+    -------
+    unique_identifiers
+        Set of all unique combinations of targeted molecules (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range).
+    """
+    # remove acquisition from file names
+    identifiers = []
+    for filename in raw_data_files:
+        pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
+        m = re.match(pattern, filename)
+        if m is not None:
+            acquisition, precursor, mz_start, mz_end = m.groups()
+        identifiers.append("_".join([precursor, mz_start, mz_end]))
+
+    # select only unique identifiers
+    unique_identifiers = set(identifiers)
+    return unique_identifiers
+
+
 def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
     """
     Create a folder for the results. Also create a zip file inside that folder. Also create df_summary.
