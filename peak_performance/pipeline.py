@@ -34,7 +34,7 @@ class UserInput:
         path: Union[str, os.PathLike],
         files: Sequence[str],
         raw_data_file_format: str,
-        double_peak: Sequence[bool],
+        peak_model: Sequence[str],
         retention_time_estimate: Union[Sequence[float], Sequence[int]],
         peak_width_estimate: Union[float, int],
         pre_filtering: bool,
@@ -54,9 +54,9 @@ class UserInput:
             List of raw data file names in path.
         raw_data_file_format
             Data format (suffix) of the raw data, default is '.npy'.
-        double_peak
-            List with Booleans in the same order as files.
-            Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
+        peak_model
+            List specifying models for peak fitting in the same order as files.
+            ("normal", "skew_normal", "double_normal", "double_skew_normal")
         retention_time_estimate
             In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
             In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
@@ -82,7 +82,7 @@ class UserInput:
         self.path = path
         self.files = list(files)
         self.raw_data_file_format = raw_data_file_format
-        self.double_peak = double_peak
+        self.peak_model = peak_model
         self.retention_time_estimate = retention_time_estimate
         self.peak_width_estimate = peak_width_estimate
         self.pre_filtering = pre_filtering
@@ -194,17 +194,17 @@ class UserInput:
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
         # # first, some sanity checks
-        # if len(self.files) != len(self.double_peak):
+        # if len(self.files) != len(self.peak_model):
         #     raise InputError(
-        #         f"The length of 'files' ({len(self.files)}) and of 'double_peak' ({len(self.double_peak)}) are not identical."
+        #         f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
         #     )
         # if self.pre_filtering:
         #     # check length of lists
-        #     if len(self.files) != len(self.pre_filtering) or len(self.double_peak) != len(
+        #     if len(self.files) != len(self.pre_filtering) or len(self.peak_model) != len(
         #         self.retention_time_estimate
         #     ):
         #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), "
+        #             f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
         #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
         #         )
         # else:
@@ -217,7 +217,7 @@ class UserInput:
         # if any(self.retention_time_estimate) < 0:
         #     raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
-        user_info = dict(zip(self.files, zip(self.double_peak, self.retention_time_estimate)))
+        user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
         user_info["peak_width_estimate"] = self.peak_width_estimate
         user_info["pre_filtering"] = self.pre_filtering
         user_info["minimum_sn"] = self.minimum_sn
@@ -241,10 +241,10 @@ def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
         List with names of all files of the specified data type in path.
     """
     all_files = os.listdir(path)
-    npy_files = [file for file in all_files if data_type in file]
-    if not npy_files:
-        raise FileNotFoundError(f"In the given directory '{path}', there are no {data_type} files.")
-    return npy_files
+    files = [file for file in all_files if data_type in file]
+    if not files:
+        raise FileNotFoundError(f"In the given directory '{path}', there are no '{data_type}' files.")
+    return files
 
 
 def parse_data(
@@ -386,7 +386,8 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "product_mz_end",
             "is_peak",
             "cause_for_rejection",
-            "double_peak",
+            "model_type",
+            "subpeak",
         ]
     )
     return df_summary, path
@@ -415,14 +416,14 @@ def prefiltering(
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # pre-fit tests for peaks to save computation time (optional)
-    doublepeak = ui.user_info[filename][0]
+    model = ui.user_info[filename][0]
     t_ret = ui.user_info[filename][1]
     est_width = ui.peak_width_estimate
     # find all potential peaks with scipy
     peaks, _ = scipy.signal.find_peaks(ui.timeseries[1])
     peak_candidates = []
     # differentiate between single and double peaks
-    if not doublepeak:
+    if model in ["normal", "skew_normal"]:
         # single peaks
         for peak in peaks:
             # define conditions for passing the pre-filtering
@@ -442,7 +443,7 @@ def prefiltering(
                 and check_succeeding_point
             ):
                 peak_candidates.append(peak)
-    else:
+    elif model in ["double_normal", "double_skew_normal"]:
         # double peaks
         for peak in peaks:
             # define conditions for passing the pre-filtering
@@ -463,6 +464,8 @@ def prefiltering(
                 and check_succeeding_point
             ):
                 peak_candidates.append(peak)
+        else:
+            raise NotImplementedError(f"The model {model} is not implemented.")
     if not peak_candidates:
         df_summary = report_add_nan_to_summary(filename, ui, df_summary, "pre-filtering")
         return False, df_summary
@@ -527,12 +530,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
         True: discard sample.
     """
     # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria were not met
-    doublepeak = ui.user_info[filename][0]
+    model = ui.user_info[filename][0]
     resample = False
     discard = False
     rejection_msg = ""
     az_summary: pandas.DataFrame = az.summary(idata)
-    if doublepeak is not True:
+    if model in ["normal", "skew_normal"]:
         # for single peak
         # Get data needed for rejection decisions
         max_rhat = max(az_summary.loc[:, "r_hat"])
@@ -567,7 +570,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             resample = False
             discard = True
 
-    else:
+    elif model in ["double_normal", "double_skew_normal"]:
         # for double peak
         max_rhat = max(az_summary.loc[:, "r_hat"])
         std = az_summary.loc["std[0]", "mean"]
@@ -624,6 +627,9 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
             resample = False
             discard = True
+
+    else:
+        raise NotImplementedError(f"The model {model} is not implemented.") 
     return resample, discard, df_summary
 
 
@@ -697,8 +703,9 @@ def report_add_data_to_summary(
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     az_summary: pandas.DataFrame = az.summary(idata)
+    model = ui.user_info[filename][0]
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
-    if ui.user_info[filename][0]:
+    if model in ["double_normal", "double_skew_normal"]:
         # first peak of double peak
         parameters = [
             "baseline_intercept",
@@ -726,7 +733,8 @@ def report_add_data_to_summary(
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["is_peak"] = is_peak
         df["cause_for_rejection"] = rejection_cause
-        df["double_peak"] = len(parameters) * ["1st"]
+        df["model_type"] = len(parameters) * [model]
+        df["subpeak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
         parameters = [
@@ -755,7 +763,8 @@ def report_add_data_to_summary(
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["is_peak"] = is_peak
         df2["cause_for_rejection"] = rejection_cause
-        df2["double_peak"] = len(parameters) * ["2nd"]
+        df2["model_type"] = len(parameters) * [model]
+        df2["subpeak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
 
@@ -778,7 +787,8 @@ def report_add_data_to_summary(
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["is_peak"] = is_peak
         df["cause_for_rejection"] = rejection_cause
-        df["double_peak"] = len(parameters) * [False]
+        df["model_type"] = len(parameters) * [model]
+        df["subpeak"] = len(parameters) * [""]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
     # save summary df as Excel file
@@ -833,6 +843,7 @@ def report_add_nan_to_summary(
     df_summary
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
+    model = ui.user_info[filename][0]
     # create DataFrame with correct format and fill it with NaN
     nan_dictionary = {
         "mean": np.nan,
@@ -862,13 +873,11 @@ def report_add_nan_to_summary(
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
-    df["is_peak"] = False
-    df["cause_for_rejection"] = rejection_cause
+    df["is_peak"] = len(df.index) * [False]
+    df["cause_for_rejection"] = len(df.index) * [rejection_cause]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
-    if ui.user_info[filename][0]:
-        df["double_peak"] = len(df.index) * [True]
-    else:
-        df["double_peak"] = len(df.index) * [False]
+    df["model_type"] = len(df.index) * [model]
+    df["subpeak"] = len(df.index) * [""]
     # concatenate to existing summary DataFrame
     df_summary = pandas.concat([df_summary, df])
     # save summary df as Excel file
