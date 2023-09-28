@@ -325,7 +325,7 @@ def parse_unique_identifiers(raw_data_files: List[str]):
     Returns
     -------
     unique_identifiers
-        Set of all unique combinations of targeted molecules (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range).
+        List with all unique combinations of targeted molecules (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range).
     """
     # remove acquisition from file names
     identifiers = []
@@ -337,7 +337,7 @@ def parse_unique_identifiers(raw_data_files: List[str]):
         identifiers.append("_".join([precursor, mz_start, mz_end]))
 
     # select only unique identifiers
-    unique_identifiers = set(identifiers)
+    unique_identifiers = list(set(identifiers))
     return unique_identifiers
 
 
