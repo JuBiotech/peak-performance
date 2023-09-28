@@ -84,27 +84,22 @@ def normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     return baseline + height * pt.exp(-0.5 * ((time - mean) / std) ** 2)
 
 
-def define_model_normal(ui) -> pm.Model:
+def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     """
     Define a model for fitting a normal distribution to the peak data.
 
     Parameters
     ----------
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
     pmodel
         PyMC model.
     """
-    df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
-        columns=["time", "intensity"],
-    )
-    df_data.set_index("time", inplace=True)
-    time = df_data.index.to_numpy()
-    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
@@ -170,28 +165,23 @@ def double_normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     return y
 
 
-def define_model_doublepeak(ui) -> pm.Model:
+def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     """
     Define a model for fitting two ordered normal distributions to the peak data
     (for when data contains two peaks or a double peak without baseline separation).
 
     Parameters
     ----------
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
     pmodel
         PyMC model.
     """
-    df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
-        columns=["time", "intensity"],
-    )
-    df_data.set_index("time", inplace=True)
-    time = df_data.index.to_numpy()
-    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
@@ -391,27 +381,22 @@ def skew_normal_posterior(baseline, time, mean, std, alpha, *, area):
     return y
 
 
-def define_model_skew(ui) -> pm.Model:
+def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     """
     Define a model for fitting a skew normal distribution to the peak data.
 
     Parameters
     ----------
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
     pmodel
         PyMC model.
     """
-    df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
-        columns=["time", "intensity"],
-    )
-    df_data.set_index("time", inplace=True)
-    time = df_data.index.to_numpy()
-    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
@@ -512,28 +497,23 @@ def double_skew_normal_posterior(baseline, time: np.ndarray, mean, std, alpha, *
     return y
 
 
-def define_model_double_skew(ui) -> pm.Model:
+def define_model_double_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     """
     Define a model for fitting two ordered skew normal distributions to the peak data
     (for when data contains two peaks or a double peak without baseline separation).
 
     Parameters
     ----------
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
 
     Returns
     -------
     pmodel
         PyMC model.
     """
-    df_data = pandas.DataFrame(
-        data={"time": ui.timeseries[0], "intensity": ui.timeseries[1]},
-        columns=["time", "intensity"],
-    )
-    df_data.set_index("time", inplace=True)
-    time = df_data.index.to_numpy()
-    intensity = df_data.intensity.to_numpy()
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
