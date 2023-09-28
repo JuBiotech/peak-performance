@@ -888,29 +888,6 @@ def report_add_nan_to_summary(
     return df_summary
 
 
-def model_selection(ic: str = "loo"):
-    """
-    Method to select the best model for every signal (i.e. combination of experiment number or precursor ion m/z ratio 
-    and product ion m/z ratio). This is realized by analyzing one representative sample of the batch with all models and 
-    comparing the results based on an informantion criterion.
-    
-    Parameters
-    ----------
-
-    Returns
-    ----------
-    
-    """
-    # create ui for every signal of the given sample
-    # get pmodel for every model type
-
-    # do this for every model type
-    idata = models.compute_log_likelihood(pmodel, idata)
-    models.model_comparison(compare_dict, ic)
-
-    return
-
-
 def pipeline_loop(
     path_raw_data: Union[str, os.PathLike],
     path_results: Union[str, os.PathLike],
