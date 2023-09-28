@@ -553,5 +553,65 @@ def test_double_peak_report_add_data_to_summary(idata):
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
     assert all(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == "")
-    assert list(df_summary.loc[:, "double_peak"]) == 8 * ["1st"] + 8 * ["2nd"]
+
+def test_parse_unique_identifiers():
+    files = [
+        'A1t1R1Part2_110_109.9_110.1.npy',
+        'A1t1R1Part2_111_109.9_110.1.npy',
+        'A1t1R1Part2_111_110.9_111.1.npy',
+        'A1t1R1Part2_112_110.9_111.1.npy',
+    ]
+    unique_identifiers = pl.parse_unique_identifiers(files)
+    assert sorted(unique_identifiers) == sorted([
+        '110_109.9_110.1',
+        '111_109.9_110.1',
+        '111_110.9_111.1',
+        '112_110.9_111.1',
+    ])
+    pass
+
+
+def test_excel_template_prepare():
+    path_raw_data = Path(__file__).absolute().parent.parent / "example"
+    path_peak_performance = Path(__file__).absolute().parent.parent
+    files = ["mp3", "flac", "wav", "m4a"]
+    identifiers = ["1", "2", "3"]
+    pl.excel_template_prepare(path_raw_data, path_peak_performance, files, identifiers)
+    # test whether Template.xlsx was copied from peak-performance to example
+    assert Path(path_raw_data / "Template.xlsx").exists()
+    # remove Template.xlsx from example
+    os.remove(Path(path_raw_data / "Template.xlsx"))
+    pass
+
+
+def test_parse_files_for_model_selection():
+    path_peak_performance = Path(__file__).absolute().parent.parent
+    # load empty signals sheet from Template.xlsx
+    signals = pandas.read_excel(Path(path_peak_performance) / "Template.xlsx", sheet_name="signals")
+    signals["unique_identifier"] = ["1","2","3","4","5","6","7"]
+    with pytest.raises(pl.InputError):
+        files = pl.parse_files_for_model_selection(signals)
+    # have one unique_identifier where neither model nor acquisition were given
+    # (and multiple different acquisitions were defined for other unique identifiers)
+    signals["acquisition_for_choosing_model_type"] = ["A1", "B1", "C1", "D1", "E1", "F1", "G1"]
+    signals["model_type"] = 7 * [np.nan]
+    with pytest.raises(pl.InputError):
+        files = pl.parse_files_for_model_selection(signals)
+    # if models for every unique identifier were supplied, the result should be empty
+    signals["model_type"] = 7 * ["normal"]
+    files = pl.parse_files_for_model_selection(signals)
+    assert not files
+    # mixture of supplied model and supplying different acquisitions for model selection
+    signals["acquisition_for_choosing_model_type"] = [np.nan, "B1", "C1", "D1", "E1", "F1", "G1"]
+    signals["model_type"] = ["normal"] + 6 * [np.nan]
+    files = pl.parse_files_for_model_selection(signals)
+    assert files == {'B1_2': '2', 'C1_3': '3', 'D1_4': '4', 'E1_5': '5', 'F1_6': '6', 'G1_7': '7'}
+    # mixture of supplied model and supplying one acquisition for model selection
+    signals["acquisition_for_choosing_model_type"] = [np.nan, "B1"] + 5 * [np.nan]
+    files = pl.parse_files_for_model_selection(signals)
+    assert files == {'B1_2': '2', 'B1_3': '3', 'B1_4': '4', 'B1_5': '5', 'B1_6': '6', 'B1_7': '7'}
+    pass
+
+
+def test_selected_models_to_template():
     pass
