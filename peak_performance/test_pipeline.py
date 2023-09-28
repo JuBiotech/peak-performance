@@ -600,7 +600,7 @@ def test_parse_files_for_model_selection():
         files = pl.parse_files_for_model_selection(signals)
     # have one unique_identifier where neither model nor acquisition were given
     # (and multiple different acquisitions were defined for other unique identifiers)
-    signals["acquisition_for_choosing_model_type"] = ["A1", "B1", "C1", "D1", "E1", "F1", "G1"]
+    signals["acquisition_for_choosing_model_type"] = ["A1", "B1", "C1", "D1", "E1", "F1", np.nan]
     signals["model_type"] = 7 * [np.nan]
     with pytest.raises(pl.InputError):
         files = pl.parse_files_for_model_selection(signals)
