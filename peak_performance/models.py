@@ -103,8 +103,8 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time, dims=("data",))
-        pm.ConstantData("intensity", intensity, dims=("data",))
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
@@ -186,8 +186,8 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time, dims=("data",))
-        pm.ConstantData("intensity", intensity, dims=("data",))
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
@@ -400,8 +400,8 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     slope_guess, intercept_guess, noise_width_guess = initial_guesses(time, intensity)
     with pm.Model() as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time, dims=("data",))
-        pm.ConstantData("intensity", intensity, dims=("data",))
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
@@ -518,8 +518,8 @@ def define_model_double_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Mode
     coords = {"subpeak": [0, 1]}
     with pm.Model(coords=coords) as pmodel:
         # add observations to the pmodel as ConstantData
-        pm.ConstantData("time", time, dims=("data",))
-        pm.ConstantData("intensity", intensity, dims=("data",))
+        pm.ConstantData("time", time)
+        pm.ConstantData("intensity", intensity)
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
