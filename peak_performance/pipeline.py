@@ -1108,3 +1108,232 @@ def pipeline(
         plotting,
     )
     return path_results
+
+
+def excel_template_prepare(path_raw_data: Union[str, os.PathLike], path_peak_performance: Union[str, os.PathLike], raw_data_files: List[str], unique_identifiers: List[str]):
+    """
+    Function to copy Template.xlsx from the peak performance directory to the directory containing the raw data files.
+    Subsequently, update Template.xlsx with a list of all raw data files and of all unique_identifiers.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    path_peak_performance
+        Path to the folder containing Peak Performance.    
+    raw_data_files
+        List with names of all files of the specified data type in path_raw_data.
+    unique_identifiers
+        List with all unique combinations of targeted molecules (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range).
+    """
+    # copy Template.xlsx from Peak Performance to the directory with the raw data
+    try:
+        shutil.copy(Path(path_peak_performance) / "Template.xlsx", Path(path_raw_data) / "Template.xlsx")
+    except:
+        raise ParsingError("Template.xlsx is not in the specified directory")
+    # load Template.xlsx
+    wb = load_workbook(Path(path_raw_data) / "Template.xlsx")
+    # add list of all files names to the files tab
+    wb_files = wb["files"]
+    df1 = pandas.DataFrame({"file_name": raw_data_files})
+    for r in dataframe_to_rows(df1, index=False, header=False):
+        wb_files.append(r)
+    # add list of all unique identifiers (i.e. mass traces) to the signals tab
+    wb_signals = wb["signals"]
+    df2 = pandas.DataFrame({"unique_identifier": unique_identifiers})
+    for r in dataframe_to_rows(df2, index=False, header=False):
+        wb_signals.append(r)
+    wb.save(Path(path_raw_data) / "Template.xlsx")
+    return
+
+
+def prepare_model_selection(path_raw_data: Union[str, os.PathLike]):
+    """
+    Function to prepare model selection by providing and mostly filling out an Excel template
+    Template.xlsx. After this step, the user has to provide relevant information in Template.xlsx
+    which is finally used for model selection.
+    
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+    """
+    # detect raw data files
+    raw_data_files = detect_raw_data(path_raw_data)
+    # parse unique identifiers
+    identifiers = parse_unique_identifiers(raw_data_files)
+    # copy Template.xlsx into raw data directory and add data from the previous commmands
+    excel_template_prepare(path_raw_data, raw_data_files, identifiers)
+    return
+
+
+def parse_files_for_model_selection(signals: pandas.DataFrame):
+    """
+    Function to parse the file names for model selection.
+    
+    Parameters
+    ----------
+    signals
+        DataFrame containing the signals tab of Template.xlsx.
+
+    Returns
+    ----------
+    files_for_selection
+        Dict with file names as keys and unique identifiers as values.
+    """
+    model_list = list(signals["model_type"].replace( "", np.nan).dropna())
+    acquisition_list = list(signals["acquisition_for_choosing_model_type"].replace( "", np.nan).dropna())
+    # sanity checks
+    if not model_list and not acquisition_list:
+        raise InputError("In the signals tab of Template.xlsx, no model or acquisition(s) for model selection were provided.")
+    
+    # multiple scenarios have to be covered
+    files_for_selection = {}
+    signals = signals.fillna("")
+    if len(model_list) == len(signals.index):
+        # scenario 1: a model was specified for every unique identifier (by the user) -> model selection obsolete
+        return files_for_selection
+    elif len(signals.index) - len(model_list) > 1 and len(acquisition_list) == 1:
+        # scenario 2: for more than one unique identifier no model was specified by the user
+        # but a single acquisition was given for model selection -> model selection from one acquisition
+        acquisition = acquisition_list[0]
+        # remove possible whitespace in front or after an entry made by the user
+        acquisition = acquisition.strip()
+        for idx, row in signals.iterrows():
+            if not signals.loc[idx, "model_type"]:
+                unique_identifier = getattr(row, "unique_identifier")
+                filename = "_".join([acquisition, unique_identifier])
+                files_for_selection[filename] = unique_identifier
+    elif len(signals.index) - len(model_list) == len(acquisition_list):
+        # scenario 3: for every unique identifier for which no model was specified by the user, they provided an acquistion for model selection
+        for idx, row in signals.iterrows():
+            if not signals.loc[idx, "model_type"]:
+                acquisition = getattr(row, "acquisition_for_choosing_model_type")
+                unique_identifier = getattr(row, "unique_identifier")
+                filename = "_".join([acquisition, unique_identifier])
+                files_for_selection[filename] = unique_identifier
+    else:
+        raise InputError("When using model selection, provide either one acquisition or one acquisition per unique identifier (no in-betweens).")
+    return files_for_selection
+
+
+def selected_models_to_template(path_raw_data: Union[str, os.PathLike], signals: pandas.DataFrame, model_dict: dict):
+    """
+    Function to update Template.xlsx with the selected model types.
+    
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    signals
+        DataFrame containing the signals tab of Template.xlsx.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
+    """
+    signals = signals.fillna("")
+    for idx, row in signals.iterrows():
+        if not signals.loc[idx, "model_type"]:
+            unique_identifier = getattr(row, "unique_identifier")
+            signals.loc[idx, "model_type"] = model_dict[unique_identifier]
+    # update in Excel
+    wb = load_workbook(Path(path_raw_data) / "Template.xlsx")
+    # update signals tab with model types by deleting rows and appending signals
+    wb_signals = wb["signals"]
+    wb_signals.delete_rows(wb_signals.min_row+1, wb_signals.max_row)
+    for r in dataframe_to_rows(signals, index=False, header=False):
+        wb_signals.append(r)
+    wb.save(Path(path_raw_data) / "Template.xlsx")
+    return
+
+
+def selection_loop(path_raw_data: Union[str, os.PathLike], *, files_for_selection: Dict[str, str], raw_data_files: List[str], ic: str):
+    """
+    This method 
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    files_for_selection
+        Dict with file names as keys and unique identifiers as values.
+    raw_data_files
+        List of raw data files returned by the detect_raw_data() function.
+        Is needed here only to get access to the file format.
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+    """
+    model_dict = {}
+    # get data file format from raw_data_files
+    file_format = raw_data_files[0].split(".")[-1]
+    # loop over all filenames in files_for_selection
+    for filename in files_for_selection.keys():
+        # load time series
+        timeseries = np.load(Path(path_raw_data) / ("." + filename))
+
+        # create pmodel for every model type
+        pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
+        pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
+        pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
+        pmodel_double_skew = models.define_model_double_skew(timeseries[0], timeseries[1])
+
+        # sample every model
+        idata_normal = sampling(pmodel_normal, tune=6000)
+        idata_skew = sampling(pmodel_skew, tune=6000)
+        idata_double_normal = sampling(pmodel_double_normal, tune=6000)
+        idata_double_skew = sampling(pmodel_double_skew, tune=6000)
+
+        # compute loglikelihood for every model
+        idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
+        idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
+        idata_double_normal = models.compute_log_likelihood(pmodel_normal, idata_double_normal)
+        idata_double_skew = models.compute_log_likelihood(pmodel_skew, idata_double_skew)
+
+        # perform the actual model comparison
+        compare_dict = {
+            "normal": idata_normal,
+            "skew_normal": idata_skew,
+            "double_normal": idata_double_normal,
+            "double_skew_normal": idata_double_skew,
+        }
+        result_df = models.model_comparison(compare_dict, ic)
+        selected_model = str(result_df.index[0])
+        # update model_dict with unique_identifier as key and selected_model as value
+        model_dict[files_for_selection[filename]] = selected_model
+        # optional: plot the results of model comparison   
+    return model_dict
+
+
+def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
+    """
+    Method to select the best model for every signal (i.e. combination of experiment number or precursor ion m/z ratio 
+    and product ion m/z ratio). This is realized by analyzing one representative sample of the batch with all models and 
+    comparing the results based on an informantion criterion.
+    
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+        
+    Returns
+    ----------
+    
+    """
+    # check for which signals model selection is wished and whether from one or different acquisitions
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    files_for_selection = parse_files_for_model_selection(df_signals)
+    # loop over all files_for_selection
+    model_dict = selection_loop(path_raw_data, files_for_selection)
+    # update signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    selected_models_to_template(path_raw_data, df_signals, model_dict)
+    return
