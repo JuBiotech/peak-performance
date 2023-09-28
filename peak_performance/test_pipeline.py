@@ -26,7 +26,8 @@ COLUMNS = [
     "product_mz_end",
     "is_peak",
     "cause_for_rejection",
-    "double_peak",
+    "model_type",
+    "subpeak",
 ]
 
 
@@ -34,7 +35,7 @@ def test_user_input_class():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
-    double_peak = [False]
+    model_type = ["normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -51,7 +52,7 @@ def test_user_input_class():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -72,7 +73,7 @@ def test_user_input_class():
             path,
             raw_data_files,
             data_file_format,
-            double_peak,
+            model_type,
             retention_time_estimate,
             peak_width_estimate,
             pre_filtering,
@@ -88,7 +89,7 @@ def test_user_input_class():
             path,
             raw_data_files,
             data_file_format,
-            double_peak,
+            model_type,
             retention_time_estimate,
             peak_width_estimate,
             pre_filtering,
@@ -162,7 +163,7 @@ def test_prefiltering():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
-    double_peak = [False]
+    model_type = ["normal"]
     retention_time_estimate = [26.3]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -179,7 +180,7 @@ def test_prefiltering():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -201,7 +202,7 @@ def test_prefiltering():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -228,7 +229,7 @@ def test_prefiltering():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -259,7 +260,7 @@ def test_postfiltering_success():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
     data_file_format = ".npy"
-    double_peak = [True]
+    model_type = ["double_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1
     pre_filtering = True
@@ -275,7 +276,7 @@ def test_postfiltering_success():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -305,7 +306,7 @@ def test_postfiltering_resample():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
     data_file_format = ".npy"
-    double_peak = [True]
+    model_type = ["double_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1
     pre_filtering = True
@@ -321,7 +322,7 @@ def test_postfiltering_resample():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -347,7 +348,7 @@ def test_single_peak_report_add_nan_to_summary():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
-    double_peak = [False]
+    model_type = ["skew_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -363,7 +364,7 @@ def test_single_peak_report_add_nan_to_summary():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -387,7 +388,7 @@ def test_single_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert not any(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == rejection_msg)
-    assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
+    assert list(df_summary.loc[:, "model_type"]) == len(df_summary.index) * ["skew_normal"]
     pass
 
 
@@ -398,7 +399,7 @@ def test_double_peak_report_add_nan_to_summary():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
-    double_peak = [True]
+    model_type = ["double_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -414,7 +415,7 @@ def test_double_peak_report_add_nan_to_summary():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -438,7 +439,7 @@ def test_double_peak_report_add_nan_to_summary():
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert not any(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == rejection_msg)
-    assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [True]
+    assert list(df_summary.loc[:, "model_type"]) == len(df_summary.index) * ["double_normal"]
     pass
 
 
@@ -451,7 +452,7 @@ def test_single_peak_report_add_data_to_summary():
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A1t1R1Part2_110_109.9_110.1.npy"]
     data_file_format = ".npy"
-    double_peak = [False]
+    model_type = ["skew_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -467,7 +468,7 @@ def test_single_peak_report_add_data_to_summary():
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -500,7 +501,7 @@ def test_single_peak_report_add_data_to_summary():
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [72.1]
     assert all(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == "")
-    assert list(df_summary.loc[:, "double_peak"]) == len(df_summary.index) * [False]
+    assert list(df_summary.loc[:, "model_type"]) == len(df_summary.index) * ["skew_normal"]
     pass
 
 
@@ -514,7 +515,7 @@ def test_double_peak_report_add_data_to_summary(idata):
     path = Path(__file__).absolute().parent.parent / "example"
     raw_data_files = ["A2t2R1Part1_132_85.9_86.1.npy"]
     data_file_format = ".npy"
-    double_peak = [True]
+    model_type = ["double_skew_normal"]
     retention_time_estimate = [22.5]
     peak_width_estimate = 1.5
     pre_filtering = True
@@ -530,7 +531,7 @@ def test_double_peak_report_add_data_to_summary(idata):
         path,
         raw_data_files,
         data_file_format,
-        double_peak,
+        model_type,
         retention_time_estimate,
         peak_width_estimate,
         pre_filtering,
@@ -553,6 +554,10 @@ def test_double_peak_report_add_data_to_summary(idata):
     assert list(df_summary.loc[:, "product_mz_end"]) == len(df_summary.index) * [86.1]
     assert all(df_summary["is_peak"])
     assert all(df_summary["cause_for_rejection"] == "")
+    assert list(df_summary.loc[:, "model_type"]) == 16 * ["double_skew_normal"]
+    assert list(df_summary.loc[:, "subpeak"]) == 8 * ["1st"] + 8 * ["2nd"]
+    pass
+
 
 def test_parse_unique_identifiers():
     files = [
