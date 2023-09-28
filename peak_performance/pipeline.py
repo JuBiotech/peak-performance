@@ -894,12 +894,6 @@ def pipeline_loop(
     raw_data_files: List[str],
     raw_data_file_format: str,
     df_summary: pandas.DataFrame,
-    pre_filtering: bool,
-    double_peak: Mapping[str, bool],
-    retention_time_estimate: Mapping[str, Union[float, int]],
-    peak_width_estimate: Union[float, int],
-    minimum_sn: Union[float, int],
-    plotting: bool,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -917,32 +911,18 @@ def pipeline_loop(
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
-    pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step.
-        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling
-        to potentially save a lot of computation time.
-        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
-    double_peak
-        Dictionary with the raw data file names (inlcuding data format) as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
-        Visually check this beforehand.
-    retention_time_estimate
-        Dictionary with the raw data file names (inlcuding data format) as keys and floats
-        or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
-        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
-    peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width
-        in minutes you would expect for your LC-MS/MS method.
-    minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio
-        for a signal to be defined as a peak during pre-filtering.
-    plotting
-        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
-    # unpack dictionaries into lists (to make sure they are in the correct order)
-    double_peak_list = [double_peak[x] for x in raw_data_files]
-    retention_time_estimate_list = [retention_time_estimate[x] for x in raw_data_files]
+    # read data and user input from the settings tab of Template.xlsx
+    df_settings = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter")
+    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
+    plotting = eval(df_settings.loc["plotting", "setting"])
+    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
+    minimum_sn = df_settings.loc["minimum_sn", "setting"]
+    # read data and user input from the signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    peak_model_list = list(df_signals.loc[:, "model_type"])
+    retention_time_estimate_list = list(df_signals.loc[:, "retention_time_estimate"])
+    # loop over filenames
     for file in raw_data_files:
         # parse the data and extract information from the (standardized) file name
         (
@@ -957,7 +937,7 @@ def pipeline_loop(
             path_results,
             raw_data_files,
             raw_data_file_format,
-            double_peak_list,
+            peak_model_list,
             retention_time_estimate_list,
             peak_width_estimate,
             pre_filtering,
@@ -968,12 +948,12 @@ def pipeline_loop(
             product_mz_start,
             product_mz_end,
         )
-        # calculate initial guesses for pre-filtering and defining prior probability distributions
-        slope_guess, intercept_guess, noise_guess = models.initial_guesses(
-            ui.timeseries[0], ui.timeseries[1]
-        )
         # apply pre-sampling filter (if selected)
         if pre_filtering:
+            # calculate noise guess for pre-filtering
+            slope_guess, intercept_guess, noise_guess = models.initial_guesses(
+                ui.timeseries[0], ui.timeseries[1]
+            )
             prefilter, df_summary = prefiltering(file, ui, noise_guess, df_summary)
             if not prefilter:
                 # if no peak candidates were found, continue with the next signal
@@ -1039,12 +1019,6 @@ def pipeline_loop(
 def pipeline(
     path_raw_data: Union[str, os.PathLike],
     raw_data_file_format: str,
-    pre_filtering: bool,
-    double_peak: Mapping[str, bool],
-    retention_time_estimate: Optional[Mapping[str, Union[float, int]]] = None,
-    peak_width_estimate: Union[float, int] = 1,
-    minimum_sn: Union[float, int] = 5,
-    plotting: bool = True,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -1056,27 +1030,6 @@ def pipeline(
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
-    pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step.
-        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio
-        before fitting/sampling to potentially save a lot of computation time.
-        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
-    double_peak
-        Dictionary with the raw data file names as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
-        Visually check this beforehand.
-    retention_time_estimate
-        Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
-        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
-    peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width
-        in minutes you would expect for your LC-MS/MS method.
-    minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal
-        to be defined as a peak during pre-filtering.
-    plotting
-        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
 
     Returns
     ----------
@@ -1095,12 +1048,6 @@ def pipeline(
         raw_data_files,
         raw_data_file_format,
         df_summary,
-        pre_filtering,
-        double_peak,
-        retention_time_estimate,
-        peak_width_estimate,
-        minimum_sn,
-        plotting,
     )
     return path_results
 
