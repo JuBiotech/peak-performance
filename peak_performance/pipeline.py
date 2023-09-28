@@ -980,13 +980,19 @@ def pipeline_loop(
                 if plotting:
                     plots.plot_raw_data(file, ui)
                 continue
-        # model selection
-        if ui.user_info[file][0]:
-            # double peak model
-            pmodel = models.define_model_doublepeak(ui)
+        # select model based on information in UserInput
+        model = ui.user_info[file][0]
+        if model == "normal":
+            pmodel = models.define_model_normal(ui.timeseries[0], ui.timeseries[1])
+        elif model == "skew_normal":
+            pmodel = models.define_model_skew(ui.timeseries[0], ui.timeseries[1])
+        elif model == "double_normal":
+            pmodel = models.define_model_double_normal(ui.timeseries[0], ui.timeseries[1])
+        elif model == "double_skew_normal":
+            pmodel = models.define_model_double_skew(ui.timeseries[0], ui.timeseries[1])        
         else:
-            # single peaks are first modeled with a skew normal distribution
-            pmodel = models.define_model_skew(ui)
+            raise NotImplementedError(f"The model '{model}' specified for file '{file}' is not implemented.")
+            
         # sample the chosen model
         idata = sampling(pmodel)
         # save the inference data object as a netcdf file
