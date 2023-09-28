@@ -561,18 +561,20 @@ def test_double_peak_report_add_data_to_summary(idata):
 
 def test_parse_unique_identifiers():
     files = [
-        'A1t1R1Part2_110_109.9_110.1.npy',
-        'A1t1R1Part2_111_109.9_110.1.npy',
-        'A1t1R1Part2_111_110.9_111.1.npy',
-        'A1t1R1Part2_112_110.9_111.1.npy',
+        "A1t1R1Part2_110_109.9_110.1.npy",
+        "A1t1R1Part2_111_109.9_110.1.npy",
+        "A1t1R1Part2_111_110.9_111.1.npy",
+        "A1t1R1Part2_112_110.9_111.1.npy",
     ]
     unique_identifiers = pl.parse_unique_identifiers(files)
-    assert sorted(unique_identifiers) == sorted([
-        '110_109.9_110.1',
-        '111_109.9_110.1',
-        '111_110.9_111.1',
-        '112_110.9_111.1',
-    ])
+    assert sorted(unique_identifiers) == sorted(
+        [
+            "110_109.9_110.1",
+            "111_109.9_110.1",
+            "111_110.9_111.1",
+            "112_110.9_111.1",
+        ]
+    )
     pass
 
 
@@ -593,7 +595,7 @@ def test_parse_files_for_model_selection():
     path_peak_performance = Path(__file__).absolute().parent.parent
     # load empty signals sheet from Template.xlsx
     signals = pandas.read_excel(Path(path_peak_performance) / "Template.xlsx", sheet_name="signals")
-    signals["unique_identifier"] = ["1","2","3","4","5","6","7"]
+    signals["unique_identifier"] = ["1", "2", "3", "4", "5", "6", "7"]
     with pytest.raises(pl.InputError):
         files = pl.parse_files_for_model_selection(signals)
     # have one unique_identifier where neither model nor acquisition were given
@@ -610,11 +612,11 @@ def test_parse_files_for_model_selection():
     signals["acquisition_for_choosing_model_type"] = [np.nan, "B1", "C1", "D1", "E1", "F1", "G1"]
     signals["model_type"] = ["normal"] + 6 * [np.nan]
     files = pl.parse_files_for_model_selection(signals)
-    assert files == {'B1_2': '2', 'C1_3': '3', 'D1_4': '4', 'E1_5': '5', 'F1_6': '6', 'G1_7': '7'}
+    assert files == {"B1_2": "2", "C1_3": "3", "D1_4": "4", "E1_5": "5", "F1_6": "6", "G1_7": "7"}
     # mixture of supplied model and supplying one acquisition for model selection
     signals["acquisition_for_choosing_model_type"] = [np.nan, "B1"] + 5 * [np.nan]
     files = pl.parse_files_for_model_selection(signals)
-    assert files == {'B1_2': '2', 'B1_3': '3', 'B1_4': '4', 'B1_5': '5', 'B1_6': '6', 'B1_7': '7'}
+    assert files == {"B1_2": "2", "B1_3": "3", "B1_4": "4", "B1_5": "5", "B1_6": "6", "B1_7": "7"}
     pass
 
 

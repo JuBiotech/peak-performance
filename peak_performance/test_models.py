@@ -6,7 +6,7 @@ import pytest
 import scipy.integrate
 import scipy.stats as st
 
-from peak_performance import models, pipeline
+from peak_performance import models
 
 
 def test_initial_guesses():
