@@ -1270,8 +1270,10 @@ def selection_loop(
         # compute loglikelihood for every model
         idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
         idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
-        idata_double_normal = models.compute_log_likelihood(pmodel_normal, idata_double_normal)
-        idata_double_skew = models.compute_log_likelihood(pmodel_skew, idata_double_skew)
+        idata_double_normal = models.compute_log_likelihood(
+            pmodel_double_normal, idata_double_normal
+        )
+        idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
 
         # perform the actual model comparison
         compare_dict = {
