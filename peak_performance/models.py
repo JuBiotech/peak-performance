@@ -223,7 +223,7 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
             "mean",
             mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
             sigma=1,
-            transform=pm.distributions.transforms.univariate_ordered,
+            transform=pm.distributions.transforms.ordered,
             dims=("subpeak",),
         )
 
@@ -549,7 +549,7 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
             "mean",
             mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
             sigma=1,
-            transform=pm.distributions.transforms.univariate_ordered,
+            transform=pm.distributions.transforms.ordered,
             dims=("subpeak",),
         )
         std = pm.HalfNormal(
