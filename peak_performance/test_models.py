@@ -164,14 +164,14 @@ def test_pymc_sampling(model_type):
         Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
     )
 
-    if model_type == "normal":
+    if model_type == models.ModelType.Normal:
         pmodel = models.define_model_normal(timeseries[0], timeseries[1])
-    elif model_type == "skew_normal":
+    elif model_type == models.ModelType.SkewNormal:
         pmodel = models.define_model_skew(timeseries[0], timeseries[1])
-    elif model_type == "double_normal":
+    elif model_type == models.ModelType.DoubleNormal:
         pmodel = models.define_model_double_normal(timeseries[0], timeseries[1])
-    elif model_type == "double_skew_normal":
-        pmodel = models.define_model_double_skew(timeseries[0], timeseries[1])
+    elif model_type == models.ModelType.DoubleSkewNormal:
+        pmodel = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
     with pmodel:
         pm.sample(cores=2, chains=2, tune=3, draws=5)
     pass

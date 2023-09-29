@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Mapping
 
 import arviz as az
@@ -6,6 +7,15 @@ import pandas
 import pymc as pm
 import pytensor.tensor as pt
 import scipy.stats as st
+
+
+class ModelType(str, Enum):
+    """Class containing all implemented model types."""
+
+    Normal = "normal"
+    SkewNormal = "skew_normal"
+    DoubleNormal = "double_normal"
+    DoubleSkewNormal = "double_skew_normal"
 
 
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):

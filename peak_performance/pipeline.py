@@ -967,14 +967,14 @@ def pipeline_loop(
                 continue
         # select model based on information in UserInput
         model = ui.user_info[file][0]
-        if model == "normal":
+        if model == models.ModelType.Normal:
             pmodel = models.define_model_normal(ui.timeseries[0], ui.timeseries[1])
-        elif model == "skew_normal":
+        elif model == models.ModelType.SkewNormal:
             pmodel = models.define_model_skew(ui.timeseries[0], ui.timeseries[1])
-        elif model == "double_normal":
+        elif model == models.ModelType.DoubleNormal:
             pmodel = models.define_model_double_normal(ui.timeseries[0], ui.timeseries[1])
-        elif model == "double_skew_normal":
-            pmodel = models.define_model_double_skew(ui.timeseries[0], ui.timeseries[1])
+        elif model == models.ModelType.DoubleSkewNormal:
+            pmodel = models.define_model_double_skew_normal(ui.timeseries[0], ui.timeseries[1])
         else:
             raise NotImplementedError(
                 f"The model '{model}' specified for file '{file}' is not implemented."
