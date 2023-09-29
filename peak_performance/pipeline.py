@@ -293,7 +293,7 @@ def parse_data(
             """
         )
     try:
-        pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
+        pattern = r"(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).*"
         m = re.match(pattern, filename)
         if m is not None:
             acquisition, precursor, mz_start, mz_end = m.groups()
@@ -333,7 +333,7 @@ def parse_unique_identifiers(raw_data_files: Sequence[str]) -> List[str]:
     # remove acquisition from file names
     identifiers = []
     for filename in raw_data_files:
-        pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
+        pattern = r"(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).*"
         m = re.match(pattern, filename)
         if m is not None:
             acquisition, precursor, mz_start, mz_end = m.groups()
