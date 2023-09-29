@@ -243,5 +243,5 @@ def plot_model_comparison(df_comp: pandas.DataFrame, identifier: str, ui):
         format="svg",
     )
     plt.close(fig)
-    
+
     return
