@@ -4,7 +4,7 @@ import re
 import shutil
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import Dict, List, Mapping, Sequence, Tuple, Union
 
 import arviz as az
 import numpy as np
@@ -314,7 +314,7 @@ def parse_data(
     )
 
 
-def parse_unique_identifiers(raw_data_files: List[str]):
+def parse_unique_identifiers(raw_data_files: Sequence[str]) -> List[str]:
     """
     Get a set of all mass traces based on the standardized raw data file names (excluding acquisitions).
     Used to automatically fill out the unique_identifiers column in the Template.xlsx' signals tab.
@@ -322,7 +322,7 @@ def parse_unique_identifiers(raw_data_files: List[str]):
     Parameters
     ----------
     raw_data_files
-        List with names of all files of the specified data type in path_raw_data.
+        Names of all files of the specified data type in path_raw_data.
 
     Returns
     -------
@@ -1060,8 +1060,8 @@ def pipeline(
 def excel_template_prepare(
     path_raw_data: Union[str, os.PathLike],
     path_peak_performance: Union[str, os.PathLike],
-    raw_data_files: List[str],
-    unique_identifiers: List[str],
+    raw_data_files: Union[List[str], Tuple[str]],
+    unique_identifiers: Union[List[str], Tuple[str]],
 ):
     """
     Function to copy Template.xlsx from the peak performance directory to the directory containing the raw data files.
@@ -1107,7 +1107,8 @@ def excel_template_prepare(
 
 
 def prepare_model_selection(
-    path_raw_data: Union[str, os.PathLike], path_peak_performance: Union[str, os.PathLike]
+    path_raw_data: Union[str, os.PathLike],
+    path_peak_performance: Union[str, os.PathLike],
 ):
     """
     Function to prepare model selection by providing and mostly filling out an Excel template
@@ -1188,7 +1189,9 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
 
 
 def selected_models_to_template(
-    path_raw_data: Union[str, os.PathLike], signals: pandas.DataFrame, model_dict: dict
+    path_raw_data: Union[str, os.PathLike],
+    signals: pandas.DataFrame,
+    model_dict: Mapping[str, str],
 ):
     """
     Function to update Template.xlsx with the selected model types.
@@ -1221,12 +1224,14 @@ def selected_models_to_template(
 def selection_loop(
     path_raw_data: Union[str, os.PathLike],
     *,
-    files_for_selection: Dict[str, str],
-    raw_data_files: List[str],
+    files_for_selection: Mapping[str, str],
+    raw_data_files: Union[List[str], Tuple[str]],
     ic: str,
-):
+) -> Dict[str, str]:
     """
-    This method
+    Function containing the loop over all filenames intended for the model selection.
+    Involves sampling every model featured by Peak Performance, computing the loglikelihood
+    and an information criterion, and comparing the results to ascertain the best model for every file.
 
     Parameters
     ----------

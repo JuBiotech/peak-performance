@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Mapping
 
 import arviz as az
 import numpy as np
@@ -610,7 +610,8 @@ def compute_log_likelihood(pmodel: pm.Model, idata: az.InferenceData):
 
 
 def model_comparison(
-    compare_dict: Dict[str, az.InferenceData], ic: str = "loo"
+    compare_dict: Mapping[str, az.InferenceData],
+    ic: str = "loo",
 ) -> pandas.DataFrame:
     """
     Method to compare the models detailed in compare_dict based on the leave-one-out cross-validation (loo)

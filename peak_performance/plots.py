@@ -242,4 +242,6 @@ def plot_model_comparison(df_comp: pandas.DataFrame, identifier: str, ui):
         Path(ui.path) / f"model_comparison_{identifier[:-len(ui.raw_data_file_format)]}.svg",
         format="svg",
     )
+    plt.close(fig)
+    
     return
