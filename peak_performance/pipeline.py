@@ -1259,7 +1259,7 @@ def selection_loop(
         pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
         pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
         pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
-        pmodel_double_skew = models.define_model_double_skew(timeseries[0], timeseries[1])
+        pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
 
         # sample every model
         idata_normal = sampling(pmodel_normal, tune=6000)

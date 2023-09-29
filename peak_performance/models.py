@@ -507,7 +507,7 @@ def double_skew_normal_posterior(baseline, time: np.ndarray, mean, std, alpha, *
     return y
 
 
-def define_model_double_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
+def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     """
     Define a model for fitting two ordered skew normal distributions to the peak data
     (for when data contains two peaks or a double peak without baseline separation).
