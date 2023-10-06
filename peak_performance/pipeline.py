@@ -957,11 +957,17 @@ def pipeline_loop(
         if pre_filtering:
             # test if necessary settings were provided by the user
             if not retention_time_estimate_list:
-                raise InputError("If selecting pre-filtering, provide a list of retention time estimate in Template.xlsx.")
+                raise InputError(
+                    "If selecting pre-filtering, provide a list of retention time estimate in Template.xlsx."
+                )
             if not minimum_sn:
-                raise InputError("If selecting pre-filtering, provide a minimum signal-to-noise ratio in Template.xlsx.")
+                raise InputError(
+                    "If selecting pre-filtering, provide a minimum signal-to-noise ratio in Template.xlsx."
+                )
             if not peak_width_estimate:
-                raise InputError("If selecting pre-filtering, provide a rough estimate of the general peak width in Template.xlsx.")
+                raise InputError(
+                    "If selecting pre-filtering, provide a rough estimate of the general peak width in Template.xlsx."
+                )
 
             # calculate noise guess for pre-filtering
             slope_guess, intercept_guess, noise_guess = models.initial_guesses(
@@ -1229,7 +1235,9 @@ def selected_models_to_template(
     return
 
 
-def model_selection_check(result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 25) -> str:
+def model_selection_check(
+    result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 25
+) -> str:
     """
     During model seleciton, double peak models are sometimes incorrectly preferred due to their increased complexity.
     Therefore, they have to outperform single peak models by an empirically determined value of the elpd.
@@ -1244,7 +1252,7 @@ def model_selection_check(result_df: pandas.DataFrame, ic: str, elpd_threshold: 
         "waic": widely applicable information criterion)
     elpd_threshold
         Threshold of the elpd difference between a double and a single peak model for the double peak model
-        to be accepted. 
+        to be accepted.
 
     Returns
     ----------
@@ -1320,7 +1328,7 @@ def selection_loop(
         idata_skew_normal_summary = az.summary(idata_skew)
         idata_double_normal_summary = az.summary(idata_double_normal)
         idata_double_skew_normal_summary = az.summary(idata_double_skew)
-        
+
         idata_dict = {
             "normal": [idata_normal_summary, idata_normal],
             "skew_normal": [idata_skew_normal_summary, idata_skew],

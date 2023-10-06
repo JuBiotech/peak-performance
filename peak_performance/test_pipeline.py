@@ -622,11 +622,17 @@ def test_parse_files_for_model_selection():
 
 def test_model_selection_check():
     # case 1: double peak is too close to single peak in elpd score
-    result_df = pandas.DataFrame({"elpd_loo":[50,30,29,-5], "ic":["loo","loo","loo","loo"]}, index=["double_normal", "double_skew_normal", "normal", "skew_normal"])
+    result_df = pandas.DataFrame(
+        {"elpd_loo": [50, 30, 29, -5], "ic": ["loo", "loo", "loo", "loo"]},
+        index=["double_normal", "double_skew_normal", "normal", "skew_normal"],
+    )
     selected_model = pl.model_selection_check(result_df, "loo", 25)
     assert selected_model == "normal"
     # case 2: double peak exceeds elpd score difference threshold and is thusly accepted
-    result_df = pandas.DataFrame({"elpd_loo":[50,30,10,-5], "ic":["loo","loo","loo","loo"]}, index=["double_normal", "double_skew_normal", "normal", "skew_normal"])
+    result_df = pandas.DataFrame(
+        {"elpd_loo": [50, 30, 10, -5], "ic": ["loo", "loo", "loo", "loo"]},
+        index=["double_normal", "double_skew_normal", "normal", "skew_normal"],
+    )
     selected_model = pl.model_selection_check(result_df, "loo", 25)
     assert selected_model == "double_normal"
     pass
