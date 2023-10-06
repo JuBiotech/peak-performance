@@ -1,9 +1,10 @@
 import importlib
 import os
 import re
+import shutil
 from datetime import date, datetime
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Mapping, Sequence, Tuple, Union
 
 import arviz as az
 import numpy as np
@@ -11,6 +12,8 @@ import pandas
 import pymc as pm
 import scipy.integrate
 import scipy.signal
+from openpyxl import load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 from peak_performance import models, plots
 
@@ -31,7 +34,7 @@ class UserInput:
         path: Union[str, os.PathLike],
         files: Sequence[str],
         raw_data_file_format: str,
-        double_peak: Sequence[bool],
+        peak_model: Sequence[str],
         retention_time_estimate: Union[Sequence[float], Sequence[int]],
         peak_width_estimate: Union[float, int],
         pre_filtering: bool,
@@ -51,9 +54,9 @@ class UserInput:
             List of raw data file names in path.
         raw_data_file_format
             Data format (suffix) of the raw data, default is '.npy'.
-        double_peak
-            List with Booleans in the same order as files.
-            Set to True, if the corresponding file contains a double peak, and set to False, if it contains a single peak.
+        peak_model
+            List specifying models for peak fitting in the same order as files.
+            ("normal", "skew_normal", "double_normal", "double_skew_normal")
         retention_time_estimate
             In case you set pre_filtering to True, give a retention time estimate (float) for each signal in files.
             In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats.
@@ -79,7 +82,7 @@ class UserInput:
         self.path = path
         self.files = list(files)
         self.raw_data_file_format = raw_data_file_format
-        self.double_peak = double_peak
+        self.peak_model = peak_model
         self.retention_time_estimate = retention_time_estimate
         self.peak_width_estimate = peak_width_estimate
         self.pre_filtering = pre_filtering
@@ -191,17 +194,17 @@ class UserInput:
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
         # # first, some sanity checks
-        # if len(self.files) != len(self.double_peak):
+        # if len(self.files) != len(self.peak_model):
         #     raise InputError(
-        #         f"The length of 'files' ({len(self.files)}) and of 'double_peak' ({len(self.double_peak)}) are not identical."
+        #         f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
         #     )
         # if self.pre_filtering:
         #     # check length of lists
-        #     if len(self.files) != len(self.pre_filtering) or len(self.double_peak) != len(
+        #     if len(self.files) != len(self.pre_filtering) or len(self.peak_model) != len(
         #         self.retention_time_estimate
         #     ):
         #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'double_peak' ({self.double_peak}), "
+        #             f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
         #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
         #         )
         # else:
@@ -214,7 +217,7 @@ class UserInput:
         # if any(self.retention_time_estimate) < 0:
         #     raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
-        user_info = dict(zip(self.files, zip(self.double_peak, self.retention_time_estimate)))
+        user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
         user_info["peak_width_estimate"] = self.peak_width_estimate
         user_info["pre_filtering"] = self.pre_filtering
         user_info["minimum_sn"] = self.minimum_sn
@@ -238,10 +241,12 @@ def detect_raw_data(path: Union[str, os.PathLike], *, data_type: str = ".npy"):
         List with names of all files of the specified data type in path.
     """
     all_files = os.listdir(path)
-    npy_files = [file for file in all_files if data_type in file]
-    if not npy_files:
-        raise FileNotFoundError(f"In the given directory '{path}', there are no {data_type} files.")
-    return npy_files
+    files = [file for file in all_files if data_type in file]
+    if not files:
+        raise FileNotFoundError(
+            f"In the given directory '{path}', there are no '{data_type}' files."
+        )
+    return files
 
 
 def parse_data(
@@ -288,7 +293,7 @@ def parse_data(
             """
         )
     try:
-        pattern = "(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).npy"
+        pattern = r"(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).*"
         m = re.match(pattern, filename)
         if m is not None:
             acquisition, precursor, mz_start, mz_end = m.groups()
@@ -307,6 +312,36 @@ def parse_data(
         product_mz_start_converted,
         product_mz_end_converted,
     )
+
+
+def parse_unique_identifiers(raw_data_files: Sequence[str]) -> List[str]:
+    """
+    Get a set of all mass traces based on the standardized raw data file names (excluding acquisitions).
+    Used to automatically fill out the unique_identifiers column in the Template.xlsx' signals tab.
+
+    Parameters
+    ----------
+    raw_data_files
+        Names of all files of the specified data type in path_raw_data.
+
+    Returns
+    -------
+    unique_identifiers
+        List with all unique combinations of targeted molecules.
+        (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range)
+    """
+    # remove acquisition from file names
+    identifiers = []
+    for filename in raw_data_files:
+        pattern = r"(.*?)_(\d+\.?\d*)_(\d+\.?\d*)_(\d+\.?\d*).*"
+        m = re.match(pattern, filename)
+        if m is not None:
+            acquisition, precursor, mz_start, mz_end = m.groups()
+        identifiers.append("_".join([precursor, mz_start, mz_end]))
+
+    # select only unique identifiers
+    unique_identifiers = list(set(identifiers))
+    return unique_identifiers
 
 
 def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
@@ -354,7 +389,8 @@ def initiate(path: Union[str, os.PathLike], *, run_dir: str = ""):
             "product_mz_end",
             "is_peak",
             "cause_for_rejection",
-            "double_peak",
+            "model_type",
+            "subpeak",
         ]
     )
     return df_summary, path
@@ -383,14 +419,14 @@ def prefiltering(
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # pre-fit tests for peaks to save computation time (optional)
-    doublepeak = ui.user_info[filename][0]
+    model = ui.user_info[filename][0]
     t_ret = ui.user_info[filename][1]
     est_width = ui.peak_width_estimate
     # find all potential peaks with scipy
     peaks, _ = scipy.signal.find_peaks(ui.timeseries[1])
     peak_candidates = []
     # differentiate between single and double peaks
-    if not doublepeak:
+    if model in ["normal", "skew_normal"]:
         # single peaks
         for peak in peaks:
             # define conditions for passing the pre-filtering
@@ -410,7 +446,7 @@ def prefiltering(
                 and check_succeeding_point
             ):
                 peak_candidates.append(peak)
-    else:
+    elif model in ["double_normal", "double_skew_normal"]:
         # double peaks
         for peak in peaks:
             # define conditions for passing the pre-filtering
@@ -431,6 +467,8 @@ def prefiltering(
                 and check_succeeding_point
             ):
                 peak_candidates.append(peak)
+        else:
+            raise NotImplementedError(f"The model {model} is not implemented.")
     if not peak_candidates:
         df_summary = report_add_nan_to_summary(filename, ui, df_summary, "pre-filtering")
         return False, df_summary
@@ -495,12 +533,12 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
         True: discard sample.
     """
     # check whether convergence, i.e. r_hat <= 1.05, was not reached OR peak criteria were not met
-    doublepeak = ui.user_info[filename][0]
+    model = ui.user_info[filename][0]
     resample = False
     discard = False
     rejection_msg = ""
     az_summary: pandas.DataFrame = az.summary(idata)
-    if doublepeak is not True:
+    if model in ["normal", "skew_normal"]:
         # for single peak
         # Get data needed for rejection decisions
         max_rhat = max(az_summary.loc[:, "r_hat"])
@@ -535,7 +573,7 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             resample = False
             discard = True
 
-    else:
+    elif model in ["double_normal", "double_skew_normal"]:
         # for double peak
         max_rhat = max(az_summary.loc[:, "r_hat"])
         std = az_summary.loc["std[0]", "mean"]
@@ -592,6 +630,9 @@ def postfiltering(filename: str, idata, ui: UserInput, df_summary: pandas.DataFr
             df_summary = report_add_nan_to_summary(filename, ui, df_summary, rejection_msg)
             resample = False
             discard = True
+
+    else:
+        raise NotImplementedError(f"The model {model} is not implemented.")
     return resample, discard, df_summary
 
 
@@ -665,8 +706,9 @@ def report_add_data_to_summary(
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     az_summary: pandas.DataFrame = az.summary(idata)
+    model = ui.user_info[filename][0]
     # split double peak into first and second peak (when extracting the data from az.summary(idata))
-    if ui.user_info[filename][0]:
+    if model in ["double_normal", "double_skew_normal"]:
         # first peak of double peak
         parameters = [
             "baseline_intercept",
@@ -694,7 +736,8 @@ def report_add_data_to_summary(
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["is_peak"] = is_peak
         df["cause_for_rejection"] = rejection_cause
-        df["double_peak"] = len(parameters) * ["1st"]
+        df["model_type"] = len(parameters) * [model]
+        df["subpeak"] = len(parameters) * ["1st"]
 
         # second peak of double peak
         parameters = [
@@ -723,7 +766,8 @@ def report_add_data_to_summary(
         df2["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df2["is_peak"] = is_peak
         df2["cause_for_rejection"] = rejection_cause
-        df2["double_peak"] = len(parameters) * ["2nd"]
+        df2["model_type"] = len(parameters) * [model]
+        df2["subpeak"] = len(parameters) * ["2nd"]
         df_double = pandas.concat([df, df2])
         df_summary = pandas.concat([df_summary, df_double])
 
@@ -746,7 +790,8 @@ def report_add_data_to_summary(
         df["product_mz_end"] = len(parameters) * [ui.product_mz_end]
         df["is_peak"] = is_peak
         df["cause_for_rejection"] = rejection_cause
-        df["double_peak"] = len(parameters) * [False]
+        df["model_type"] = len(parameters) * [model]
+        df["subpeak"] = len(parameters) * [""]
         df_summary = pandas.concat([df_summary, df])
     # pandas.concat(df_summary, df)
     # save summary df as Excel file
@@ -801,6 +846,7 @@ def report_add_nan_to_summary(
     df_summary
         Updated DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
+    model = ui.user_info[filename][0]
     # create DataFrame with correct format and fill it with NaN
     nan_dictionary = {
         "mean": np.nan,
@@ -830,13 +876,11 @@ def report_add_nan_to_summary(
     df["experiment_or_precursor_mz"] = len(df.index) * [ui.precursor]
     df["product_mz_start"] = len(df.index) * [ui.product_mz_start]
     df["product_mz_end"] = len(df.index) * [ui.product_mz_end]
-    df["is_peak"] = False
-    df["cause_for_rejection"] = rejection_cause
+    df["is_peak"] = len(df.index) * [False]
+    df["cause_for_rejection"] = len(df.index) * [rejection_cause]
     # if no peak was detected, there is no need for splitting double peaks, just give the info whether one was expected or not
-    if ui.user_info[filename][0]:
-        df["double_peak"] = len(df.index) * [True]
-    else:
-        df["double_peak"] = len(df.index) * [False]
+    df["model_type"] = len(df.index) * [model]
+    df["subpeak"] = len(df.index) * [""]
     # concatenate to existing summary DataFrame
     df_summary = pandas.concat([df_summary, df])
     # save summary df as Excel file
@@ -853,12 +897,6 @@ def pipeline_loop(
     raw_data_files: List[str],
     raw_data_file_format: str,
     df_summary: pandas.DataFrame,
-    pre_filtering: bool,
-    double_peak: Mapping[str, bool],
-    retention_time_estimate: Mapping[str, Union[float, int]],
-    peak_width_estimate: Union[float, int],
-    minimum_sn: Union[float, int],
-    plotting: bool,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -876,32 +914,20 @@ def pipeline_loop(
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
-    pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step.
-        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio before fitting/sampling
-        to potentially save a lot of computation time.
-        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
-    double_peak
-        Dictionary with the raw data file names (inlcuding data format) as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
-        Visually check this beforehand.
-    retention_time_estimate
-        Dictionary with the raw data file names (inlcuding data format) as keys and floats
-        or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
-        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
-    peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width
-        in minutes you would expect for your LC-MS/MS method.
-    minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio
-        for a signal to be defined as a peak during pre-filtering.
-    plotting
-        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
     """
-    # unpack dictionaries into lists (to make sure they are in the correct order)
-    double_peak_list = [double_peak[x] for x in raw_data_files]
-    retention_time_estimate_list = [retention_time_estimate[x] for x in raw_data_files]
+    # read data and user input from the settings tab of Template.xlsx
+    df_settings = pandas.read_excel(
+        Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter"
+    )
+    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
+    plotting = eval(df_settings.loc["plotting", "setting"])
+    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
+    minimum_sn = df_settings.loc["minimum_sn", "setting"]
+    # read data and user input from the signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    peak_model_list = list(df_signals.loc[:, "model_type"])
+    retention_time_estimate_list = list(df_signals.loc[:, "retention_time_estimate"])
+    # loop over filenames
     for file in raw_data_files:
         # parse the data and extract information from the (standardized) file name
         (
@@ -916,7 +942,7 @@ def pipeline_loop(
             path_results,
             raw_data_files,
             raw_data_file_format,
-            double_peak_list,
+            peak_model_list,
             retention_time_estimate_list,
             peak_width_estimate,
             pre_filtering,
@@ -927,25 +953,47 @@ def pipeline_loop(
             product_mz_start,
             product_mz_end,
         )
-        # calculate initial guesses for pre-filtering and defining prior probability distributions
-        slope_guess, intercept_guess, noise_guess = models.initial_guesses(
-            ui.timeseries[0], ui.timeseries[1]
-        )
         # apply pre-sampling filter (if selected)
         if pre_filtering:
+            # test if necessary settings were provided by the user
+            if not retention_time_estimate_list:
+                raise InputError(
+                    "If selecting pre-filtering, provide a list of retention time estimate in Template.xlsx."
+                )
+            if not minimum_sn:
+                raise InputError(
+                    "If selecting pre-filtering, provide a minimum signal-to-noise ratio in Template.xlsx."
+                )
+            if not peak_width_estimate:
+                raise InputError(
+                    "If selecting pre-filtering, provide a rough estimate of the general peak width in Template.xlsx."
+                )
+
+            # calculate noise guess for pre-filtering
+            slope_guess, intercept_guess, noise_guess = models.initial_guesses(
+                ui.timeseries[0], ui.timeseries[1]
+            )
             prefilter, df_summary = prefiltering(file, ui, noise_guess, df_summary)
             if not prefilter:
                 # if no peak candidates were found, continue with the next signal
                 if plotting:
                     plots.plot_raw_data(file, ui)
                 continue
-        # model selection
-        if ui.user_info[file][0]:
-            # double peak model
-            pmodel = models.define_model_doublepeak(ui)
+        # select model based on information in UserInput
+        model = ui.user_info[file][0]
+        if model == models.ModelType.Normal:
+            pmodel = models.define_model_normal(ui.timeseries[0], ui.timeseries[1])
+        elif model == models.ModelType.SkewNormal:
+            pmodel = models.define_model_skew(ui.timeseries[0], ui.timeseries[1])
+        elif model == models.ModelType.DoubleNormal:
+            pmodel = models.define_model_double_normal(ui.timeseries[0], ui.timeseries[1])
+        elif model == models.ModelType.DoubleSkewNormal:
+            pmodel = models.define_model_double_skew_normal(ui.timeseries[0], ui.timeseries[1])
         else:
-            # single peaks are first modeled with a skew normal distribution
-            pmodel = models.define_model_skew(ui)
+            raise NotImplementedError(
+                f"The model '{model}' specified for file '{file}' is not implemented."
+            )
+
         # sample the chosen model
         idata = sampling(pmodel)
         # save the inference data object as a netcdf file
@@ -992,12 +1040,6 @@ def pipeline_loop(
 def pipeline(
     path_raw_data: Union[str, os.PathLike],
     raw_data_file_format: str,
-    pre_filtering: bool,
-    double_peak: Mapping[str, bool],
-    retention_time_estimate: Optional[Mapping[str, Union[float, int]]] = None,
-    peak_width_estimate: Union[float, int] = 1,
-    minimum_sn: Union[float, int] = 5,
-    plotting: bool = True,
 ):
     """
     Method to run the complete Peak Performance pipeline.
@@ -1009,35 +1051,12 @@ def pipeline(
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
-    pre_filtering
-        Select whether to include (True) or exclude (False) the pre-filtering step.
-        Pre-filtering checks for peaks based on retention time and signal-to-noise ratio
-        before fitting/sampling to potentially save a lot of computation time.
-        If True is selected, specification of the parameters retention_time_estimate, peak_width_estimate, and minimum_sn is mandatory.
-    double_peak
-        Dictionary with the raw data file names as keys and Booleans as values.
-        Set to True for a given signal, if the signal contains a double peak, and set to False, if it contains a single peak.
-        Visually check this beforehand.
-    retention_time_estimate
-        Dictionary with the raw data file names as keys and floats or ints of the expected retention time of the given analyte as values.
-        In case you set pre_filtering to True, give a retention time estimate (float or int) for each signal.
-        In case of a double peak, give two retention times (in chronological order) as a tuple containing two floats or ints.
-    peak_width_estimate
-        In case you set pre_filtering to True, give a rough estimate of the average peak width
-        in minutes you would expect for your LC-MS/MS method.
-    minimum_sn
-        In case you set pre_filtering to True, give a minimum signal to noise ratio for a signal
-        to be defined as a peak during pre-filtering.
-    plotting
-        Decide whether to plot results of the analysis (True) or merely return Excel report files (False).
 
     Returns
     ----------
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
-    if retention_time_estimate is None:
-        retention_time_estimate = {}
     # obtain a list of raw data file names.
     raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
     # create data structure and DataFrame(s) for results
@@ -1048,11 +1067,319 @@ def pipeline(
         raw_data_files,
         raw_data_file_format,
         df_summary,
-        pre_filtering,
-        double_peak,
-        retention_time_estimate,
-        peak_width_estimate,
-        minimum_sn,
-        plotting,
     )
     return path_results
+
+
+def excel_template_prepare(
+    path_raw_data: Union[str, os.PathLike],
+    path_peak_performance: Union[str, os.PathLike],
+    raw_data_files: Union[List[str], Tuple[str]],
+    unique_identifiers: Union[List[str], Tuple[str]],
+):
+    """
+    Function to copy Template.xlsx from the peak performance directory to the directory containing the raw data files.
+    Subsequently, update Template.xlsx with a list of all raw data files and of all unique_identifiers.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    path_peak_performance
+        Path to the folder containing Peak Performance.
+    raw_data_files
+        List with names of all files of the specified data type in path_raw_data.
+    unique_identifiers
+        List with all unique combinations of targeted molecules.
+        (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range)
+    """
+    # copy Template.xlsx from Peak Performance to the directory with the raw data
+    try:
+        shutil.copy(
+            Path(path_peak_performance) / "Template.xlsx", Path(path_raw_data) / "Template.xlsx"
+        )
+    except FileNotFoundError:
+        raise ParsingError(f"Template.xlsx was not found in {path_peak_performance}.")
+    except Exception:
+        raise ParsingError(
+            f"Error while copying Template.xlsx from {path_peak_performance} into {path_raw_data}."
+        )
+    # load Template.xlsx
+    wb = load_workbook(Path(path_raw_data) / "Template.xlsx")
+    # add list of all files names to the files tab
+    wb_files = wb["files"]
+    df1 = pandas.DataFrame({"file_name": raw_data_files})
+    for r in dataframe_to_rows(df1, index=False, header=False):
+        wb_files.append(r)
+    # add list of all unique identifiers (i.e. mass traces) to the signals tab
+    wb_signals = wb["signals"]
+    df2 = pandas.DataFrame({"unique_identifier": unique_identifiers})
+    for r in dataframe_to_rows(df2, index=False, header=False):
+        wb_signals.append(r)
+    wb.save(Path(path_raw_data) / "Template.xlsx")
+    return
+
+
+def prepare_model_selection(
+    path_raw_data: Union[str, os.PathLike],
+    path_peak_performance: Union[str, os.PathLike],
+):
+    """
+    Function to prepare model selection by providing and mostly filling out an Excel template
+    Template.xlsx. After this step, the user has to provide relevant information in Template.xlsx
+    which is finally used for model selection.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    path_peak_performance
+        Path to the folder containing Peak Performance.
+    """
+    # detect raw data files
+    raw_data_files = detect_raw_data(path_raw_data)
+    # parse unique identifiers
+    identifiers = parse_unique_identifiers(raw_data_files)
+    # copy Template.xlsx into raw data directory and add data from the previous commmands
+    excel_template_prepare(path_raw_data, path_peak_performance, raw_data_files, identifiers)
+    return
+
+
+def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]:
+    """
+    Function to parse the file names for model selection.
+
+    Parameters
+    ----------
+    signals
+        DataFrame containing the signals tab of Template.xlsx.
+
+    Returns
+    ----------
+    files_for_selection
+        Dict with file names as keys and unique identifiers as values.
+    """
+    model_list = list(signals["model_type"].replace("", np.nan).dropna())
+    acquisition_list = list(
+        signals["acquisition_for_choosing_model_type"].replace("", np.nan).dropna()
+    )
+    # sanity checks
+    if not model_list and not acquisition_list:
+        raise InputError(
+            "In the signals tab of Template.xlsx, no model or acquisition(s) for model selection were provided."
+        )
+
+    # multiple scenarios have to be covered
+    files_for_selection: Dict[str, str] = {}
+    signals = signals.fillna("")
+    if len(model_list) == len(signals.index):
+        # scenario 1: a model was specified for every unique identifier (by the user) -> model selection obsolete
+        return files_for_selection
+    elif len(signals.index) - len(model_list) > 1 and len(acquisition_list) == 1:
+        # scenario 2: for more than one unique identifier no model was specified by the user
+        # but a single acquisition was given for model selection -> model selection from one acquisition
+        acquisition = acquisition_list[0]
+        # remove possible whitespace in front or after an entry made by the user
+        acquisition = acquisition.strip()
+        for idx, row in signals.iterrows():
+            if not signals.loc[idx, "model_type"]:
+                unique_identifier = getattr(row, "unique_identifier")
+                filename = "_".join([acquisition, unique_identifier])
+                files_for_selection[filename] = unique_identifier
+    elif len(signals.index) - len(model_list) == len(acquisition_list):
+        # scenario 3: for every unique identifier for which no model was specified by the user,
+        # they provided an acquistion for model selection
+        for idx, row in signals.iterrows():
+            if not signals.loc[idx, "model_type"]:
+                acquisition = getattr(row, "acquisition_for_choosing_model_type")
+                unique_identifier = getattr(row, "unique_identifier")
+                filename = "_".join([acquisition, unique_identifier])
+                files_for_selection[filename] = unique_identifier
+    else:
+        raise InputError(
+            "When using model selection, provide either one acquisition or one acquisition per unique identifier (no in-betweens)."
+        )
+    return files_for_selection
+
+
+def selected_models_to_template(
+    path_raw_data: Union[str, os.PathLike],
+    signals: pandas.DataFrame,
+    model_dict: Mapping[str, str],
+):
+    """
+    Function to update Template.xlsx with the selected model types.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    signals
+        DataFrame containing the signals tab of Template.xlsx.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
+    """
+    signals = signals.fillna("")
+    for idx, row in signals.iterrows():
+        if not signals.loc[idx, "model_type"]:
+            unique_identifier = getattr(row, "unique_identifier")
+            signals.loc[idx, "model_type"] = model_dict[unique_identifier]
+    # update in Excel
+    wb = load_workbook(Path(path_raw_data) / "Template.xlsx")
+    # update signals tab with model types by deleting rows and appending signals
+    wb_signals = wb["signals"]
+    wb_signals.delete_rows(wb_signals.min_row + 1, wb_signals.max_row)
+    for r in dataframe_to_rows(signals, index=False, header=False):
+        wb_signals.append(r)
+    wb.save(Path(path_raw_data) / "Template.xlsx")
+    return
+
+
+def model_selection_check(
+    result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 25
+) -> str:
+    """
+    During model seleciton, double peak models are sometimes incorrectly preferred due to their increased complexity.
+    Therefore, they have to outperform single peak models by an empirically determined value of the elpd.
+
+    Parameters
+    ----------
+    result_df
+        DataFrame with the result of model comparison via az.compare().
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+    elpd_threshold
+        Threshold of the elpd difference between a double and a single peak model for the double peak model
+        to be accepted.
+
+    Returns
+    ----------
+    selected_model
+        Name of the selected model type.
+    """
+    selected_model = str(result_df.index[0])
+    if "double" in selected_model:
+        df_single_peak_models = result_df[~result_df.index.str.contains("double")]
+        elpd_single = max(list(df_single_peak_models[f"elpd_{ic}"]))
+        elpd_double = max(list(result_df[f"elpd_{ic}"]))
+        if not elpd_double > elpd_single + elpd_threshold:
+            selected_model = str(df_single_peak_models.index[0])
+    return selected_model
+
+
+def selection_loop(
+    path_raw_data: Union[str, os.PathLike],
+    *,
+    files_for_selection: Mapping[str, str],
+    raw_data_files: Union[List[str], Tuple[str]],
+    ic: str,
+) -> Dict[str, str]:
+    """
+    Function containing the loop over all filenames intended for the model selection.
+    Involves sampling every model featured by Peak Performance, computing the loglikelihood
+    and an information criterion, and comparing the results to ascertain the best model for every file.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    files_for_selection
+        Dict with file names as keys and unique identifiers as values.
+    raw_data_files
+        List of raw data files returned by the detect_raw_data() function.
+        Is needed here only to get access to the file format.
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+    """
+    model_dict = {}
+    # get data file format from raw_data_files
+    file_format = raw_data_files[0].split(".")[-1]
+    # loop over all filenames in files_for_selection
+    for filename in files_for_selection.keys():
+        # load time series
+        timeseries = np.load(Path(path_raw_data) / (filename + "." + file_format))
+
+        # create pmodel for every model type
+        pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
+        pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
+        pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
+        pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
+
+        # sample every model
+        idata_normal = sampling(pmodel_normal, tune=6000)
+        idata_skew = sampling(pmodel_skew, tune=6000)
+        idata_double_normal = sampling(pmodel_double_normal, tune=6000)
+        idata_double_skew = sampling(pmodel_double_skew, tune=6000)
+
+        # compute loglikelihood for every model
+        idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
+        idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
+        idata_double_normal = models.compute_log_likelihood(
+            pmodel_double_normal, idata_double_normal
+        )
+        idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
+
+        # gather results in a DataFrame
+        idata_normal_summary = az.summary(idata_normal)
+        idata_skew_normal_summary = az.summary(idata_skew)
+        idata_double_normal_summary = az.summary(idata_double_normal)
+        idata_double_skew_normal_summary = az.summary(idata_double_skew)
+
+        idata_dict = {
+            "normal": [idata_normal_summary, idata_normal],
+            "skew_normal": [idata_skew_normal_summary, idata_skew],
+            "double_normal": [idata_double_normal_summary, idata_double_normal],
+            "double_skew_normal": [idata_double_skew_normal_summary, idata_double_skew],
+        }
+        # add model to compare_dict for model selection only if convergence criterion was met (r_hat <= 1.05)
+        compare_dict = {}
+        for model in idata_dict.keys():
+            if not (idata_dict[model][0].loc[:, "r_hat"] > 1.05).any():
+                compare_dict[model] = idata_dict[model][1]
+        # perform the actual model comparison
+        result_df = models.model_comparison(compare_dict, ic)
+        # double peak models are sometimes incorrectly preferred due to their increased complexity
+        # therefore, they have to outperform single peak models by an empirically determined value of the elpd
+        selected_model = model_selection_check(result_df, ic)
+        # update model_dict with unique_identifier as key and selected_model as value
+        model_dict[files_for_selection[filename]] = selected_model
+        # optional: plot the results of model comparison
+    return model_dict
+
+
+def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
+    """
+    Method to select the best model for every signal (i.e. combination of experiment number or precursor ion m/z ratio
+    and product ion m/z ratio). This is realized by analyzing one representative sample of the batch with all models and
+    comparing the results based on an informantion criterion.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the folder containing raw data.
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+
+    Returns
+    ----------
+
+    """
+    # check for which signals model selection is wished and whether from one or different acquisitions
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    files_for_selection = parse_files_for_model_selection(df_signals)
+    # get raw_data_files to get automatic access to file format in seleciton_loop
+    raw_data_files = detect_raw_data(path_raw_data)
+    # loop over all files_for_selection
+    model_dict = selection_loop(
+        path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
+    )
+    # update signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    selected_models_to_template(path_raw_data, df_signals, model_dict)
+    return
