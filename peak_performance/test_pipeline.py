@@ -636,7 +636,3 @@ def test_model_selection_check():
     selected_model = pl.model_selection_check(result_df, "loo", 25)
     assert selected_model == "double_normal"
     pass
-
-
-def test_selected_models_to_template():
-    pass
