@@ -955,6 +955,14 @@ def pipeline_loop(
         )
         # apply pre-sampling filter (if selected)
         if pre_filtering:
+            # test if necessary settings were provided by the user
+            if not retention_time_estimate_list:
+                raise InputError("If selecting pre-filtering, provide a list of retention time estimate in Template.xlsx.")
+            if not minimum_sn:
+                raise InputError("If selecting pre-filtering, provide a minimum signal-to-noise ratio in Template.xlsx.")
+            if not peak_width_estimate:
+                raise InputError("If selecting pre-filtering, provide a rough estimate of the general peak width in Template.xlsx.")
+
             # calculate noise guess for pre-filtering
             slope_guess, intercept_guess, noise_guess = models.initial_guesses(
                 ui.timeseries[0], ui.timeseries[1]
@@ -1221,6 +1229,38 @@ def selected_models_to_template(
     return
 
 
+def model_selection_check(result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 25) -> str:
+    """
+    During model seleciton, double peak models are sometimes incorrectly preferred due to their increased complexity.
+    Therefore, they have to outperform single peak models by an empirically determined value of the elpd.
+
+    Parameters
+    ----------
+    result_df
+        DataFrame with the result of model comparison via az.compare().
+    ic
+        Information criterion to be used for model selection.
+        ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
+        "waic": widely applicable information criterion)
+    elpd_threshold
+        Threshold of the elpd difference between a double and a single peak model for the double peak model
+        to be accepted. 
+
+    Returns
+    ----------
+    selected_model
+        Name of the selected model type.
+    """
+    selected_model = str(result_df.index[0])
+    if "double" in selected_model:
+        df_single_peak_models = result_df[~result_df.index.str.contains("double")]
+        elpd_single = max(list(df_single_peak_models[f"elpd_{ic}"]))
+        elpd_double = max(list(result_df[f"elpd_{ic}"]))
+        if not elpd_double > elpd_single + elpd_threshold:
+            selected_model = str(df_single_peak_models.index[0])
+    return selected_model
+
+
 def selection_loop(
     path_raw_data: Union[str, os.PathLike],
     *,
@@ -1275,15 +1315,28 @@ def selection_loop(
         )
         idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
 
-        # perform the actual model comparison
-        compare_dict = {
-            "normal": idata_normal,
-            "skew_normal": idata_skew,
-            "double_normal": idata_double_normal,
-            "double_skew_normal": idata_double_skew,
+        # gather results in a DataFrame
+        idata_normal_summary = az.summary(idata_normal)
+        idata_skew_normal_summary = az.summary(idata_skew)
+        idata_double_normal_summary = az.summary(idata_double_normal)
+        idata_double_skew_normal_summary = az.summary(idata_double_skew)
+        
+        idata_dict = {
+            "normal": [idata_normal_summary, idata_normal],
+            "skew_normal": [idata_skew_normal_summary, idata_skew],
+            "double_normal": [idata_double_normal_summary, idata_double_normal],
+            "double_skew_normal": [idata_double_skew_normal_summary, idata_double_skew],
         }
+        # add model to compare_dict for model selection only if convergence criterion was met (r_hat <= 1.05)
+        compare_dict = {}
+        for model in idata_dict.keys():
+            if not (idata_dict[model][0].loc[:, "r_hat"] > 1.05).any():
+                compare_dict[model] = idata_dict[model][1]
+        # perform the actual model comparison
         result_df = models.model_comparison(compare_dict, ic)
-        selected_model = str(result_df.index[0])
+        # double peak models are sometimes incorrectly preferred due to their increased complexity
+        # therefore, they have to outperform single peak models by an empirically determined value of the elpd
+        selected_model = model_selection_check(result_df, ic)
         # update model_dict with unique_identifier as key and selected_model as value
         model_dict[files_for_selection[filename]] = selected_model
         # optional: plot the results of model comparison
