@@ -419,7 +419,6 @@ def prefiltering(
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # pre-fit tests for peaks to save computation time (optional)
-    model = ui.user_info[filename][0]
     t_ret = ui.user_info[filename][1]
     est_width = ui.peak_width_estimate
     # find all potential peaks with scipy
@@ -429,9 +428,7 @@ def prefiltering(
     for peak in peaks:
         # define conditions for passing the pre-filtering
         # check proximity of any peak candidate to the estimated retention time
-        retention_time_condition = (
-            t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
-        )
+        retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
         # check signal to noise ratio
         signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
         # check the neighbouring data points to prevent classification of a single elevated data point as a peak
