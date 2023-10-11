@@ -197,7 +197,7 @@ def test_prefiltering():
     assert df_summary_1.values.all() == df_summary.values.all()
     assert df_summary_1.columns.all() == df_summary.columns.all()
     # negative test due to retention time
-    retention_time_estimate = [22.3]
+    retention_time_estimate = [0]
     ui = pl.UserInput(
         path,
         raw_data_files,
