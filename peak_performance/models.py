@@ -583,10 +583,11 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         mode_skew = pm.Deterministic("mode_skew", mode_skew_formula)
         # then calculate the height based on the mode
         height_formula = height_calculation(area, mean, std, alpha, mode_skew)
-        pm.Deterministic(
+        height = pm.Deterministic(
             "height",
             height_formula,
         )
+        pm.Deterministic("sn", height / noise, dims=("subpeak",))
 
         # posterior
         y = double_skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
