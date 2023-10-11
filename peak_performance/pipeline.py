@@ -1366,4 +1366,4 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # update signals tab of Template.xlsx
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
     selected_models_to_template(path_raw_data, df_signals, model_dict)
-    return
+    return model_dict
