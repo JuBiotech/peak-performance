@@ -441,6 +441,9 @@ def prefiltering(
             and check_succeeding_point
         ):
             peak_candidates.append(peak)
+    if not peak_candidates:
+        df_summary = report_add_nan_to_summary(filename, ui, df_summary, "pre-filtering")
+        return False, df_summary
     return True, df_summary
 
 
