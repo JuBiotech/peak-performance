@@ -193,29 +193,29 @@ class UserInput:
     @property
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
-        # # first, some sanity checks
-        # if len(self.files) != len(self.peak_model):
-        #     raise InputError(
-        #         f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
-        #     )
-        # if self.pre_filtering:
-        #     # check length of lists
-        #     if len(self.files) != len(self.pre_filtering) or len(self.peak_model) != len(
-        #         self.retention_time_estimate
-        #     ):
-        #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
-        #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
-        #         )
-        # else:
-        #     # if pre_filtering is False, then retention_time_estimate is not needed
-        #     # but the dictionary still needs to be created without errors -> set it to None
-        #     if len(self.retention_time_estimate) == 1:
-        #         self.retention_time_estimate = len(self.files) * None
-        #     elif not self.retention_time_estimate:
-        #         self.retention_time_estimate = len(self.files) * None
-        # if any(self.retention_time_estimate) < 0:
-        #     raise InputError("Retention time estimates below 0 are not valid.")
+        # first, some sanity checks
+        if len(self.files) != len(self.peak_model):
+            raise InputError(
+                f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
+            )
+        if self.pre_filtering:
+            # check length of lists
+            if len(self.files) != len(self.peak_model) or len(self.peak_model) != len(
+                self.retention_time_estimate
+            ):
+                raise InputError(
+                    f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
+                    f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+                )
+        else:
+            # if pre_filtering is False, then retention_time_estimate is not needed
+            # but the dictionary still needs to be created without errors -> set it to np.nan
+            if len(self.retention_time_estimate) == 1:
+                self.retention_time_estimate = len(self.files) * [np.nan]
+            elif not self.retention_time_estimate:
+                self.retention_time_estimate = len(self.files) * [np.nan]
+        if any(self.retention_time_estimate) < 0:
+            raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
         user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
         user_info["peak_width_estimate"] = self.peak_width_estimate
