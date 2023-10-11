@@ -787,7 +787,6 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     """
     # also save a version of df_summary only for areas with correct order and only necessary data
     df_area_summary = df_summary[df_summary.index == "area"]
-    # TODO: test whether this still works with the new layout of the report sheet
     sorted_area_summary = df_area_summary.sort_values(
         ["acquisition", "experiment_or_precursor_mz", "product_mz_start"]
     )
@@ -866,7 +865,6 @@ def report_add_nan_to_summary(
 def pipeline_loop(
     path_raw_data: Union[str, os.PathLike],
     path_results: Union[str, os.PathLike],
-    raw_data_files: List[str],
     raw_data_file_format: str,
     df_summary: pandas.DataFrame,
 ):
@@ -880,8 +878,6 @@ def pipeline_loop(
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     path_results
         Path to the directory for the results of a given Batch run of Peak Performance.
-    raw_data_files
-        List with names of all files of the specified data type in path_raw_data.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
@@ -896,9 +892,28 @@ def pipeline_loop(
     peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
     minimum_sn = df_settings.loc["minimum_sn", "setting"]
     # read data and user input from the signals tab of Template.xlsx
-    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
-    peak_model_list = list(df_signals.loc[:, "model_type"])
-    retention_time_estimate_list = list(df_signals.loc[:, "retention_time_estimate"])
+    df_signals = pandas.read_excel(
+        Path(path_raw_data) / "Template.xlsx", sheet_name="signals", index_col="unique_identifier"
+    )
+    unique_identifiers = list(df_signals.index)
+    if len(set(unique_identifiers)) != len(unique_identifiers):
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
+        )
+    peak_model_list = []
+    retention_time_estimate_list = []
+    # synchronize the lists of raw data files, peak models, and retention times
+    # they will be converted to the user_info dict when instantiating the UserInput class below
+    df_files = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="files")
+    raw_data_files = list(df_files.loc[:, "file_name"])
+    for file in raw_data_files:
+        for identifier in unique_identifiers:
+            if identifier in file:
+                peak_model_list.append(df_signals.loc[identifier, "model_type"])
+                retention_time_estimate_list.append(
+                    df_signals.loc[identifier, "retention_time_estimate"]
+                )
+
     # loop over filenames
     for file in raw_data_files:
         # parse the data and extract information from the (standardized) file name
@@ -1029,14 +1044,11 @@ def pipeline(
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
-    # obtain a list of raw data file names.
-    raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
     # create data structure and DataFrame(s) for results
     df_summary, path_results = initiate(path_raw_data)
     pipeline_loop(
         path_raw_data,
         path_results,
-        raw_data_files,
         raw_data_file_format,
         df_summary,
     )
