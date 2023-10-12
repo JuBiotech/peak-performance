@@ -193,29 +193,29 @@ class UserInput:
     @property
     def user_info(self):
         """Create a dictionary with the necessary user information based on the class attributes."""
-        # # first, some sanity checks
-        # if len(self.files) != len(self.peak_model):
-        #     raise InputError(
-        #         f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
-        #     )
-        # if self.pre_filtering:
-        #     # check length of lists
-        #     if len(self.files) != len(self.pre_filtering) or len(self.peak_model) != len(
-        #         self.retention_time_estimate
-        #     ):
-        #         raise InputError(
-        #             f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
-        #             f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
-        #         )
-        # else:
-        #     # if pre_filtering is False, then retention_time_estimate is not needed
-        #     # but the dictionary still needs to be created without errors -> set it to None
-        #     if len(self.retention_time_estimate) == 1:
-        #         self.retention_time_estimate = len(self.files) * None
-        #     elif not self.retention_time_estimate:
-        #         self.retention_time_estimate = len(self.files) * None
-        # if any(self.retention_time_estimate) < 0:
-        #     raise InputError("Retention time estimates below 0 are not valid.")
+        # first, some sanity checks
+        if len(self.files) != len(self.peak_model):
+            raise InputError(
+                f"The length of 'files' ({len(self.files)}) and of 'peak_model' ({len(self.peak_model)}) are not identical."
+            )
+        if self.pre_filtering:
+            # check length of lists
+            if len(self.files) != len(self.peak_model) or len(self.peak_model) != len(
+                self.retention_time_estimate
+            ):
+                raise InputError(
+                    f"The length of 'files' ({len(self.files)}), 'peak_model' ({self.peak_model}), "
+                    f"and retention_time_estimate ({len(self.retention_time_estimate)}) are not identical."
+                )
+        else:
+            # if pre_filtering is False, then retention_time_estimate is not needed
+            # but the dictionary still needs to be created without errors -> set it to np.nan
+            if len(self.retention_time_estimate) == 1:
+                self.retention_time_estimate = len(self.files) * [np.nan]
+            elif not self.retention_time_estimate:
+                self.retention_time_estimate = len(self.files) * [np.nan]
+        if any(self.retention_time_estimate) < 0:
+            raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
         user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
         user_info["peak_width_estimate"] = self.peak_width_estimate
@@ -419,56 +419,28 @@ def prefiltering(
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
     """
     # pre-fit tests for peaks to save computation time (optional)
-    model = ui.user_info[filename][0]
     t_ret = ui.user_info[filename][1]
     est_width = ui.peak_width_estimate
     # find all potential peaks with scipy
     peaks, _ = scipy.signal.find_peaks(ui.timeseries[1])
     peak_candidates = []
     # differentiate between single and double peaks
-    if model in ["normal", "skew_normal"]:
-        # single peaks
-        for peak in peaks:
-            # define conditions for passing the pre-filtering
-            # check proximity of any peak candidate to the estimated retention time
-            retention_time_condition = (
-                t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
-            )
-            # check signal to noise ratio
-            signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
-            # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-            check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
-            check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
-            if (
-                retention_time_condition
-                and signal_to_noise_condition
-                and check_preceding_point
-                and check_succeeding_point
-            ):
-                peak_candidates.append(peak)
-    elif model in ["double_normal", "double_skew_normal"]:
-        # double peaks
-        for peak in peaks:
-            # define conditions for passing the pre-filtering
-            # check proximity of any peak candidate to the estimated retention time
-            retention_time_condition = (
-                t_ret[0] - est_width <= ui.timeseries[0][peak] <= t_ret[0] + est_width
-                or t_ret[1] - est_width <= ui.timeseries[0][peak] <= t_ret[1] + est_width
-            )
-            # check signal to noise ratio
-            signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
-            # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-            check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
-            check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
-            if (
-                retention_time_condition
-                and signal_to_noise_condition
-                and check_preceding_point
-                and check_succeeding_point
-            ):
-                peak_candidates.append(peak)
-        else:
-            raise NotImplementedError(f"The model {model} is not implemented.")
+    for peak in peaks:
+        # define conditions for passing the pre-filtering
+        # check proximity of any peak candidate to the estimated retention time
+        retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
+        # check signal to noise ratio
+        signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
+        # check the neighbouring data points to prevent classification of a single elevated data point as a peak
+        check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
+        check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
+        if (
+            retention_time_condition
+            and signal_to_noise_condition
+            and check_preceding_point
+            and check_succeeding_point
+        ):
+            peak_candidates.append(peak)
     if not peak_candidates:
         df_summary = report_add_nan_to_summary(filename, ui, df_summary, "pre-filtering")
         return False, df_summary
@@ -656,7 +628,7 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str):
+def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str = ".npy"):
     """
     Saves inference data object within a zip file.
 
@@ -668,10 +640,11 @@ def report_save_idata(idata, ui: UserInput, filename: str):
         Instance of the UserInput class.
     filename
         Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
     """
-    # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
-    #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))
-    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}.nc")
+    fp = Path(ui.path) / f"{filename[:-len(raw_data_file_format)]}.nc"
+    idata.to_netcdf(str(fp.absolute()))
     return
 
 
@@ -815,7 +788,6 @@ def report_area_sheet(path: Union[str, os.PathLike], df_summary: pandas.DataFram
     """
     # also save a version of df_summary only for areas with correct order and only necessary data
     df_area_summary = df_summary[df_summary.index == "area"]
-    # TODO: test whether this still works with the new layout of the report sheet
     sorted_area_summary = df_area_summary.sort_values(
         ["acquisition", "experiment_or_precursor_mz", "product_mz_start"]
     )
@@ -894,12 +866,13 @@ def report_add_nan_to_summary(
 def pipeline_loop(
     path_raw_data: Union[str, os.PathLike],
     path_results: Union[str, os.PathLike],
-    raw_data_files: List[str],
     raw_data_file_format: str,
     df_summary: pandas.DataFrame,
+    *,
+    restart: bool = False,
 ):
     """
-    Method to run the complete Peak Performance pipeline.
+    Function to run the complete Peak Performance pipeline.
 
     Parameters
     ----------
@@ -908,12 +881,13 @@ def pipeline_loop(
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     path_results
         Path to the directory for the results of a given Batch run of Peak Performance.
-    raw_data_files
-        List with names of all files of the specified data type in path_raw_data.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
+    restart
+        If a pipeline broke for some reason, it can be restarted by setting restart to True.
+        That way, already analyzed files won't be analyzed again.
     """
     # read data and user input from the settings tab of Template.xlsx
     df_settings = pandas.read_excel(
@@ -924,9 +898,35 @@ def pipeline_loop(
     peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
     minimum_sn = df_settings.loc["minimum_sn", "setting"]
     # read data and user input from the signals tab of Template.xlsx
-    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
-    peak_model_list = list(df_signals.loc[:, "model_type"])
-    retention_time_estimate_list = list(df_signals.loc[:, "retention_time_estimate"])
+    df_signals = pandas.read_excel(
+        Path(path_raw_data) / "Template.xlsx", sheet_name="signals", index_col="unique_identifier"
+    )
+    unique_identifiers = list(df_signals.index)
+    if len(set(unique_identifiers)) != len(unique_identifiers):
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
+        )
+    peak_model_list = []
+    retention_time_estimate_list = []
+    # synchronize the lists of raw data files, peak models, and retention times
+    # they will be converted to the user_info dict when instantiating the UserInput class below
+    df_files = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="files")
+    raw_data_files = list(df_files.loc[:, "file_name"])
+    # in case of a restart, update raw_data_files to only contain files which have not been analyzed
+    if restart:
+        analyzed_files = os.listdir(path_results)
+        for raw in raw_data_files:
+            for analyzed in analyzed_files:
+                if raw in analyzed:
+                    raw_data_files.remove(raw)
+    for file in raw_data_files:
+        for identifier in unique_identifiers:
+            if identifier in file:
+                peak_model_list.append(df_signals.loc[identifier, "model_type"])
+                retention_time_estimate_list.append(
+                    df_signals.loc[identifier, "retention_time_estimate"]
+                )
+
     # loop over filenames
     for file in raw_data_files:
         # parse the data and extract information from the (standardized) file name
@@ -996,8 +996,8 @@ def pipeline_loop(
 
         # sample the chosen model
         idata = sampling(pmodel)
-        # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file)
+        # # save the inference data object as a netcdf file
+        # report_save_idata(idata, ui, file, raw_data_file_format)
         # apply post-sampling filter
         resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
         # if peak was discarded, continue with the next signal
@@ -1008,8 +1008,8 @@ def pipeline_loop(
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
             idata = sampling(pmodel, tune=4000)
-            # save the inference data object as a netcdf file
-            report_save_idata(idata, ui, file)
+            # # save the inference data object as a netcdf file
+            # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
                 plots.plot_posterior(f"{file}", ui, idata, True)
@@ -1028,7 +1028,7 @@ def pipeline_loop(
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file)
+        report_save_idata(idata, ui, file, raw_data_file_format)
         # plot data
         if plotting:
             plots.plot_posterior_predictive(file, ui, idata, False)
@@ -1042,7 +1042,7 @@ def pipeline(
     raw_data_file_format: str,
 ):
     """
-    Method to run the complete Peak Performance pipeline.
+    Function to run the complete Peak Performance pipeline.
 
     Parameters
     ----------
@@ -1057,18 +1057,52 @@ def pipeline(
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
-    # obtain a list of raw data file names.
-    raw_data_files = detect_raw_data(path_raw_data, data_type=raw_data_file_format)
     # create data structure and DataFrame(s) for results
     df_summary, path_results = initiate(path_raw_data)
     pipeline_loop(
         path_raw_data,
         path_results,
-        raw_data_files,
         raw_data_file_format,
         df_summary,
     )
     return path_results
+
+
+def pipeline_restart(
+    path_raw_data: Union[str, os.PathLike],
+    raw_data_file_format: str,
+    path_results: Union[str, os.PathLike],
+):
+    """
+    Function to restart a broken Peak Performance pipeline.
+    Files which are in the results directory of the broken pipeline will not be analyzed again.
+    WARNING: This only works once! If a pipeline fails more than once, copy all files (except the Excel report sheets)
+    into one directory and specify this directory as the path_results argument.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    path_results
+        Path variable pointing to the directory of the broken Peak Performance batch
+
+    Returns
+    ----------
+    path_results_new
+        Path variable pointing to the newly created folder for the restarted batch.
+    """
+    df_summary, path_results_new = initiate(path_raw_data)
+    pipeline_loop(
+        path_raw_data,
+        path_results,
+        raw_data_file_format,
+        df_summary,
+        restart=True,
+    )
+    return path_results_new
 
 
 def excel_template_prepare(
@@ -1275,7 +1309,7 @@ def selection_loop(
     files_for_selection: Mapping[str, str],
     raw_data_files: Union[List[str], Tuple[str]],
     ic: str,
-) -> Dict[str, str]:
+):
     """
     Function containing the loop over all filenames intended for the model selection.
     Involves sampling every model featured by Peak Performance, computing the loglikelihood
@@ -1294,6 +1328,13 @@ def selection_loop(
         Information criterion to be used for model selection.
         ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
         "waic": widely applicable information criterion)
+
+    Returns
+    ----------
+    result_df
+        DataFrame containing the ranking and scores of the model selection.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
     """
     model_dict = {}
     # get data file format from raw_data_files
@@ -1348,7 +1389,7 @@ def selection_loop(
         # update model_dict with unique_identifier as key and selected_model as value
         model_dict[files_for_selection[filename]] = selected_model
         # optional: plot the results of model comparison
-    return model_dict
+    return result_df, model_dict
 
 
 def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
@@ -1368,7 +1409,10 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
 
     Returns
     ----------
-
+    comparison_results
+        DataFrame containing all rankings from model selection.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
     """
     # check for which signals model selection is wished and whether from one or different acquisitions
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
@@ -1376,10 +1420,12 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # get raw_data_files to get automatic access to file format in seleciton_loop
     raw_data_files = detect_raw_data(path_raw_data)
     # loop over all files_for_selection
-    model_dict = selection_loop(
+    comparison_results = pandas.DataFrame()
+    result_df, model_dict = selection_loop(
         path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
     )
+    comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
     selected_models_to_template(path_raw_data, df_signals, model_dict)
-    return
+    return comparison_results, model_dict
