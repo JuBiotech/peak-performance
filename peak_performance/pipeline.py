@@ -1278,6 +1278,13 @@ def selection_loop(
         Information criterion to be used for model selection.
         ("loo": pareto-smoothed importance sampling leave-one-out cross-validation,
         "waic": widely applicable information criterion)
+
+    Returns
+    ----------
+    result_df
+        DataFrame containing the ranking and scores of the model selection.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
     """
     model_dict = {}
     # get data file format from raw_data_files
@@ -1332,7 +1339,7 @@ def selection_loop(
         # update model_dict with unique_identifier as key and selected_model as value
         model_dict[files_for_selection[filename]] = selected_model
         # optional: plot the results of model comparison
-    return model_dict
+    return result_df, model_dict
 
 
 def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
@@ -1352,7 +1359,10 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
 
     Returns
     ----------
-
+    comparison_results
+        DataFrame containing all rankings from model selection.
+    model_dict
+        Dict with unique identifiers as keys and model types as values.
     """
     # check for which signals model selection is wished and whether from one or different acquisitions
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
@@ -1360,10 +1370,12 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # get raw_data_files to get automatic access to file format in seleciton_loop
     raw_data_files = detect_raw_data(path_raw_data)
     # loop over all files_for_selection
-    model_dict = selection_loop(
+    comparison_results = pandas.DataFrame() 
+    result_df, model_dict = selection_loop(
         path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
     )
+    comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
     selected_models_to_template(path_raw_data, df_signals, model_dict)
-    return model_dict
+    return comparison_results, model_dict
