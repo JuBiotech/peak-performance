@@ -628,7 +628,7 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str):
+def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str):
     """
     Saves inference data object within a zip file.
 
@@ -640,10 +640,10 @@ def report_save_idata(idata, ui: UserInput, filename: str):
         Instance of the UserInput class.
     filename
         Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
     """
-    # with zipfile.ZipFile(rf"{ui.path}/idata.zip", mode="a") as archive:
-    #     archive.write(idata.to_netcdf(f"{filename[:-4]}"))
-    idata.to_netcdf(rf"{ui.path}/{filename[:-4]}.nc")
+    idata.to_netcdf(rf"{ui.path}/{filename[:-len(raw_data_file_format)]}.nc")
     return
 
 
@@ -984,7 +984,7 @@ def pipeline_loop(
         # sample the chosen model
         idata = sampling(pmodel)
         # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file)
+        report_save_idata(idata, ui, file, raw_data_file_format)
         # apply post-sampling filter
         resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
         # if peak was discarded, continue with the next signal
@@ -996,7 +996,7 @@ def pipeline_loop(
         if resample:
             idata = sampling(pmodel, tune=4000)
             # save the inference data object as a netcdf file
-            report_save_idata(idata, ui, file)
+            report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
                 plots.plot_posterior(f"{file}", ui, idata, True)
@@ -1015,7 +1015,7 @@ def pipeline_loop(
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file)
+        report_save_idata(idata, ui, file, raw_data_file_format)
         # plot data
         if plotting:
             plots.plot_posterior_predictive(file, ui, idata, False)
