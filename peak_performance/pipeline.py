@@ -983,8 +983,8 @@ def pipeline_loop(
 
         # sample the chosen model
         idata = sampling(pmodel)
-        # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file, raw_data_file_format)
+        # # save the inference data object as a netcdf file
+        # report_save_idata(idata, ui, file, raw_data_file_format)
         # apply post-sampling filter
         resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
         # if peak was discarded, continue with the next signal
@@ -995,8 +995,8 @@ def pipeline_loop(
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
             idata = sampling(pmodel, tune=4000)
-            # save the inference data object as a netcdf file
-            report_save_idata(idata, ui, file, raw_data_file_format)
+            # # save the inference data object as a netcdf file
+            # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
                 plots.plot_posterior(f"{file}", ui, idata, True)
