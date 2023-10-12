@@ -867,9 +867,11 @@ def pipeline_loop(
     path_results: Union[str, os.PathLike],
     raw_data_file_format: str,
     df_summary: pandas.DataFrame,
+    *,
+    restart: bool = False,
 ):
     """
-    Method to run the complete Peak Performance pipeline.
+    Function to run the complete Peak Performance pipeline.
 
     Parameters
     ----------
@@ -882,6 +884,9 @@ def pipeline_loop(
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
         DataFrame for collecting the results (i.e. peak parameters) of every signal of a given pipeline.
+    restart
+        If a pipeline broke for some reason, it can be restarted by setting restart to True.
+        That way, already analyzed files won't be analyzed again.
     """
     # read data and user input from the settings tab of Template.xlsx
     df_settings = pandas.read_excel(
@@ -906,6 +911,13 @@ def pipeline_loop(
     # they will be converted to the user_info dict when instantiating the UserInput class below
     df_files = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="files")
     raw_data_files = list(df_files.loc[:, "file_name"])
+    # in case of a restart, update raw_data_files to only contain files which have not been analyzed
+    if restart:
+        analyzed_files = os.listdir(path_results)
+        for raw in raw_data_files:
+            for analyzed in analyzed_files:
+                if raw in analyzed:
+                    raw_data_files.remove(raw)
     for file in raw_data_files:
         for identifier in unique_identifiers:
             if identifier in file:
@@ -1029,7 +1041,7 @@ def pipeline(
     raw_data_file_format: str,
 ):
     """
-    Method to run the complete Peak Performance pipeline.
+    Function to run the complete Peak Performance pipeline.
 
     Parameters
     ----------
@@ -1053,6 +1065,43 @@ def pipeline(
         df_summary,
     )
     return path_results
+
+
+def pipeline_restart(
+    path_raw_data: Union[str, os.PathLike],
+    raw_data_file_format: str,
+    path_results: Union[str, os.PathLike],
+):
+    """
+    Function to restart a broken Peak Performance pipeline.
+    Files which are in the results directory of the broken pipeline will not be analyzed again.
+    WARNING: This only works once! If a pipeline fails more than once, copy all files (except the Excel report sheets)
+    into one directory and specify this directory as the path_results argument.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+    raw_data_file_format
+        Data format (suffix) of the raw data, default is '.npy'.
+    path_results
+        Path variable pointing to the directory of the broken Peak Performance batch
+
+    Returns
+    ----------
+    path_results_new
+        Path variable pointing to the newly created folder for the restarted batch.
+    """
+    df_summary, path_results_new = initiate(path_raw_data)
+    pipeline_loop(
+        path_raw_data,
+        path_results,
+        raw_data_file_format,
+        df_summary,
+        restart=True,
+    )
+    return path_results_new
 
 
 def excel_template_prepare(
@@ -1259,7 +1308,7 @@ def selection_loop(
     files_for_selection: Mapping[str, str],
     raw_data_files: Union[List[str], Tuple[str]],
     ic: str,
-) -> Dict[str, str]:
+):
     """
     Function containing the loop over all filenames intended for the model selection.
     Involves sampling every model featured by Peak Performance, computing the loglikelihood
@@ -1370,7 +1419,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # get raw_data_files to get automatic access to file format in seleciton_loop
     raw_data_files = detect_raw_data(path_raw_data)
     # loop over all files_for_selection
-    comparison_results = pandas.DataFrame() 
+    comparison_results = pandas.DataFrame()
     result_df, model_dict = selection_loop(
         path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
     )
