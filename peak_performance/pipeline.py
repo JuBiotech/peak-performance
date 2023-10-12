@@ -628,7 +628,7 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str=".npy"):
+def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str = ".npy"):
     """
     Saves inference data object within a zip file.
 
