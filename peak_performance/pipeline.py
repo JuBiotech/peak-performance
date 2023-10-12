@@ -628,7 +628,7 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str):
+def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str=".npy"):
     """
     Saves inference data object within a zip file.
 
@@ -643,7 +643,8 @@ def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format:
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     """
-    idata.to_netcdf(rf"{ui.path}/{filename[:-len(raw_data_file_format)]}.nc")
+    fp = Path(ui.path) / f"{filename[:-len(raw_data_file_format)]}.nc"
+    idata.to_netcdf(str(fp.absolute()))
     return
 
 
