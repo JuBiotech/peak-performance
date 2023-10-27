@@ -25,7 +25,11 @@ Since model selection is a computationally demanding and time consuming process,
 ## Examples
 
 ## Troubleshooting
+### A batch run broke and I want to restart it.
 If an error occured in the middle of a batch run, then you can use the `pipeline_restart` function to create a new batch which will analyze only those samples, which have not been analyzed previously.
+
+### The model parameters don't converge and/or the fit does not describe the raw data well.
+Due to the vast number of LC-MS methods out there, it is probably not possible to formulate befitting prior probability distributions (priors) for all of them. Therefore, one of the first things should be to check in `models.py` whether the model priors make sense for your application and change them according to your data in case they are way off. Also, make sure the time series containing the signal to be analyzed contains the peak or double peak (preferrably in the center) and a) no other peaks as well as b) an area around the peak for estimating the baseline (a window size of roughly 5 times the peak width should be fine).
 
 # How to contribute
 If you encounter bugs while using Peak Performance, bring it to our attention by opening an issue. When doing so, describe the problem in detail and add screenshots/code snippets or whatever helpful material you can provide.  
