@@ -642,7 +642,7 @@ def posterior_predictive_sampling(pmodel, idata):
         Inference data object updated with the posterior predictive samples.
     """
     with pmodel:
-        idata.extend(pm.sample_posterior_predictive(idata))
+        idata.extend(pm.sample_posterior_predictive(idata, var_names=["y"]))
     return idata
 
 
