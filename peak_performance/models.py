@@ -240,9 +240,7 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         # use a zero sum normal distribution to describe the distance of the mean values
         # from the mean of the mean values ("mean_mean")
         mean_mean = pm.Normal(
-            "mean_mean",
-            mu=np.min(time) + np.ptp(time) / 2,
-            sigma=np.ptp(time) / 6
+            "mean_mean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6
         )
         diff = pm.ZeroSumNormal(
             "diff",
@@ -578,9 +576,7 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         # use a zero sum normal distribution to describe the distance of the mean values
         # from the mean of the mean values ("mean_mean")
         mean_mean = pm.Normal(
-            "mean_mean",
-            mu=np.min(time) + np.ptp(time) / 2,
-            sigma=np.ptp(time) / 6
+            "mean_mean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6
         )
         diff = pm.ZeroSumNormal(
             "diff",
