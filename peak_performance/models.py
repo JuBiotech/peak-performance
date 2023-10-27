@@ -236,10 +236,22 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         )
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
         pm.Deterministic("sn", height / noise, dims=("subpeak",))
-        # use univariate ordered normal distribution
+        # use univariate ordered normal distribution for the mean values
+        # use a zero sum normal distribution to describe the distance of the mean values
+        # from the mean of the mean values ("mean_mean")
+        mean_mean = pm.Normal(
+            "mean_mean",
+            mu=np.min(time) + np.ptp(time) / 2,
+            sigma=np.ptp(time) / 6
+        )
+        diff = pm.ZeroSumNormal(
+            "diff",
+            sigma=1,
+            dims=("subpeak",),
+        )
         mean = pm.Normal(
             "mean",
-            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
+            mu=mean_mean + diff,
             sigma=1,
             transform=pm.distributions.transforms.ordered,
             dims=("subpeak",),
@@ -562,10 +574,22 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
-        # use univariate ordered skew normal distribution
+        # use univariate ordered normal distribution for the mean values
+        # use a zero sum normal distribution to describe the distance of the mean values
+        # from the mean of the mean values ("mean_mean")
+        mean_mean = pm.Normal(
+            "mean_mean",
+            mu=np.min(time) + np.ptp(time) / 2,
+            sigma=np.ptp(time) / 6
+        )
+        diff = pm.ZeroSumNormal(
+            "diff",
+            sigma=1,
+            dims=("subpeak",),
+        )
         mean = pm.Normal(
             "mean",
-            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
+            mu=mean_mean + diff,
             sigma=1,
             transform=pm.distributions.transforms.ordered,
             dims=("subpeak",),
