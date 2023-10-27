@@ -140,10 +140,10 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
         )
         baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
@@ -223,10 +223,10 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
 
         # priors
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
         )
         baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
@@ -437,10 +437,10 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
         )
         baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
@@ -555,10 +555,10 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess), 40, np.inf) / 2
+            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
         )
         baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess * 2), 1, np.inf)
+            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
