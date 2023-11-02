@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import arviz as az
 import numpy as np
 import pymc as pm
 import pytest
@@ -161,7 +162,7 @@ class TestDistributions:
 )
 def test_pymc_sampling(model_type):
     timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A1t1R1Part2_110_109.9_110.1.npy"
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
     )
 
     if model_type == models.ModelType.Normal:
@@ -173,5 +174,10 @@ def test_pymc_sampling(model_type):
     elif model_type == models.ModelType.DoubleSkewNormal:
         pmodel = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
     with pmodel:
-        pm.sample(cores=2, chains=2, tune=3, draws=5)
+        idata = pm.sample(cores=2, chains=2, tune=3, draws=5)
+    if model_type in [models.ModelType.DoubleNormal, models.ModelType.DoubleSkewNormal]:
+        summary = az.summary(idata)
+        # test whether the ordered transformation and the subpeak dimension work as intended
+        assert summary.loc["mean[0]", "mean"] < summary.loc["mean[1]", "mean"]
+        # assert summary.loc["area[0]", "mean"] < summary.loc["area[1]", "mean"]
     pass

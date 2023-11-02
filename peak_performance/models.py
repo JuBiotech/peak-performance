@@ -163,6 +163,40 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     return pmodel
 
 
+def double_model_mean_prior(time):
+    """
+    Function creating prior probability distributions for double peaks using a ZeroSumNormal distribution.
+
+    Parameters
+    ----------
+    time
+        NumPy array with the time values of the relevant timeframe.
+
+    Returns
+    -------
+    mean
+        Normally distributed prior for the ordered means of the double peak model.
+    diff
+        Difference between meanmean and mean.
+    meanmean
+        Normally distributed prior for the mean of the double peak means.
+    """
+    meanmean = pm.Normal("meanmean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6)
+    diff = pm.ZeroSumNormal(
+        "diff",
+        sigma=1,
+        shape=(2,),  # currently no dims due to bug with ordered transformation
+    )
+    mean = pm.Normal(
+        "mean",
+        mu=meanmean + diff,
+        sigma=1,
+        transform=pm.distributions.transforms.ordered,
+        dims=("subpeak",),
+    )
+    return mean, diff, meanmean
+
+
 def double_normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Define a univariate ordered normal distribution as the posterior.
@@ -236,14 +270,10 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         )
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))), dims=("subpeak",))
         pm.Deterministic("sn", height / noise, dims=("subpeak",))
-        # use univariate ordered normal distribution
-        mean = pm.Normal(
-            "mean",
-            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
-            sigma=1,
-            transform=pm.distributions.transforms.ordered,
-            dims=("subpeak",),
-        )
+        # use univariate ordered normal distribution for the mean values
+        # use a zero sum normal distribution to describe the distance of the mean values
+        # from the mean of the mean values ("meanmean")
+        mean, diff, meanmean = double_model_mean_prior(time)
 
         # posterior
         y = double_normal_posterior(baseline, time, mean, std, height=height)
@@ -562,14 +592,10 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         )
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
-        # use univariate ordered skew normal distribution
-        mean = pm.Normal(
-            "mean",
-            mu=[time[0] + np.ptp(time) * 1 / 4, time[0] + np.ptp(time) * 3 / 4],
-            sigma=1,
-            transform=pm.distributions.transforms.ordered,
-            dims=("subpeak",),
-        )
+        # use univariate ordered normal distribution for the mean values
+        # use a zero sum normal distribution to describe the distance of the mean values
+        # from the mean of the mean values ("meanmean")
+        mean, diff, meanmean = double_model_mean_prior(time)
         std = pm.HalfNormal(
             "std",
             sigma=[np.ptp(time) / 3, np.ptp(time) / 3],
