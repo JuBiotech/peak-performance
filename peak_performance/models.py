@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from enum import Enum
-from typing import Mapping
+from typing import Mapping, Union
 
 import arviz as az
 import numpy as np
@@ -88,6 +88,36 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
 
+def baseline_intercept_prior_params(intercept_guess: Union[float, int]) -> Mapping[str, float]:
+    """
+    Centralized function for supplying parameters for the baseline intercept prior.
+
+    Returns
+    -------
+    parameter_dict
+        Dictionary containing mu and sigma for the normally distributed prior.
+    """
+    return {
+        "mu": intercept_guess,
+        "sigma": np.clip(abs(intercept_guess / 20), 0.05, np.inf),
+    }
+
+
+def baseline_slope_prior_params(slope_guess: Union[float, int]) -> Mapping[str, float]:
+    """
+    Centralized function for supplying parameters for the baseline slope prior.
+
+    Returns
+    -------
+    parameter_dict
+        Dictionary containing mu and sigma for the normally distributed prior.
+    """
+    return {
+        "mu": slope_guess,
+        "sigma": np.clip(abs(slope_guess / 25), 0.5, np.inf),
+    }
+
+
 def normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
     """
     Model a peak shaped like the PDF of a normal distribution.
@@ -140,11 +170,9 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
+            "baseline_intercept", **baseline_intercept_prior_params(intercept_guess)
         )
-        baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
-        )
+        baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # define priors for parameters of a normally distributed posterior
@@ -223,11 +251,9 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
 
         # priors
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
+            "baseline_intercept", **baseline_intercept_prior_params(intercept_guess)
         )
-        baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
-        )
+        baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         std = pm.HalfNormal("std", sigma=[np.ptp(time) / 3, np.ptp(time) / 3], dims=("subpeak",))
@@ -437,11 +463,9 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
+            "baseline_intercept", **baseline_intercept_prior_params(intercept_guess)
         )
-        baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
-        )
+        baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
@@ -555,11 +579,9 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
-            "baseline_intercept", intercept_guess, np.clip(abs(intercept_guess / 20), 0.05, np.inf)
+            "baseline_intercept", **baseline_intercept_prior_params(intercept_guess)
         )
-        baseline_slope = pm.Normal(
-            "baseline_slope", slope_guess, np.clip(abs(slope_guess / 25), 0.5, np.inf)
-        )
+        baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
         # use univariate ordered skew normal distribution
