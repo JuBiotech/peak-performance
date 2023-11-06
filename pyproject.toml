@@ -25,7 +25,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
-    "pymc",
+    "pymc>=5.9.1",
     "pytensor",
     "scipy",
     "openpyxl",
