@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "peak_performance"
-version = "0.5.0"
+version = "0.5.1"
 authors = [
     {name = "Jochen Nießer", email = "j.niesser@fz-juelich.de"},
     {name = "Michael Osthege", email = "m.osthege@fz-juelich.de"},
@@ -25,7 +25,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
-    "pymc@git+https://github.com/Y0dler/pymc#egg=nutpie-issue-74",
+    "pymc",
     "pytensor",
     "scipy",
     "openpyxl",
