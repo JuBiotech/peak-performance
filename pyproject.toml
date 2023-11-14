@@ -30,7 +30,6 @@ dependencies = [
     "scipy",
     "openpyxl",
     "numpy<1.26.0",
-    "m2w64-toolchain",
 ]
 
 [tool.setuptools.packages.find]
