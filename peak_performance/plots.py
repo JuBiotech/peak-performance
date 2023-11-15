@@ -140,7 +140,7 @@ def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, disc
     plot_density(
         ax=ax,
         x=time,
-        samples=idata.posterior_predictive.L.stack(sample=("chain", "draw")).T.values,
+        samples=idata.posterior_predictive.y.stack(sample=("chain", "draw")).T.values,
         percentiles=(2.5, 97.5),
     )
     # plot the raw data points
