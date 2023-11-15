@@ -1,5 +1,5 @@
 """
-Peak Performance
+PeakPerformance
 Copyright (C) 2023 Forschungszentrum Jülich GmbH
 
 This program is free software: you can redistribute it and/or modify
@@ -890,7 +890,7 @@ def pipeline_loop(
     restart: bool = False,
 ):
     """
-    Function to run the complete Peak Performance pipeline.
+    Function to run the complete PeakPerformance pipeline.
 
     Parameters
     ----------
@@ -898,7 +898,7 @@ def pipeline_loop(
         Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     path_results
-        Path to the directory for the results of a given Batch run of Peak Performance.
+        Path to the directory for the results of a given Batch run of PeakPerformance.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
@@ -1060,7 +1060,7 @@ def pipeline(
     raw_data_file_format: str,
 ):
     """
-    Function to run the complete Peak Performance pipeline.
+    Function to run the complete PeakPerformance pipeline.
 
     Parameters
     ----------
@@ -1092,7 +1092,7 @@ def pipeline_restart(
     path_results: Union[str, os.PathLike],
 ):
     """
-    Function to restart a broken Peak Performance pipeline.
+    Function to restart a broken PeakPerformance pipeline.
     Files which are in the results directory of the broken pipeline will not be analyzed again.
     WARNING: This only works once! If a pipeline fails more than once, copy all files (except the Excel report sheets)
     into one directory and specify this directory as the path_results argument.
@@ -1105,7 +1105,7 @@ def pipeline_restart(
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     path_results
-        Path variable pointing to the directory of the broken Peak Performance batch
+        Path variable pointing to the directory of the broken PeakPerformance batch
 
     Returns
     ----------
@@ -1138,14 +1138,14 @@ def excel_template_prepare(
     path_raw_data
         Path to the folder containing raw data.
     path_peak_performance
-        Path to the folder containing Peak Performance.
+        Path to the folder containing PeakPerformance.
     raw_data_files
         List with names of all files of the specified data type in path_raw_data.
     unique_identifiers
         List with all unique combinations of targeted molecules.
         (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range)
     """
-    # copy Template.xlsx from Peak Performance to the directory with the raw data
+    # copy Template.xlsx from PeakPerformance to the directory with the raw data
     try:
         shutil.copy(
             Path(path_peak_performance) / "Template.xlsx", Path(path_raw_data) / "Template.xlsx"
@@ -1174,7 +1174,7 @@ def excel_template_prepare(
 
 def prepare_model_selection(
     path_raw_data: Union[str, os.PathLike],
-    path_peak_performance: Union[str, os.PathLike],
+    path_template: Union[str, os.PathLike],
 ):
     """
     Function to prepare model selection by providing and mostly filling out an Excel template
@@ -1185,15 +1185,15 @@ def prepare_model_selection(
     ----------
     path_raw_data
         Path to the folder containing raw data.
-    path_peak_performance
-        Path to the folder containing Peak Performance.
+    path_template
+        Path to the folder containing Template.xlsx from PeakPerformance.
     """
     # detect raw data files
     raw_data_files = detect_raw_data(path_raw_data)
     # parse unique identifiers
     identifiers = parse_unique_identifiers(raw_data_files)
     # copy Template.xlsx into raw data directory and add data from the previous commmands
-    excel_template_prepare(path_raw_data, path_peak_performance, raw_data_files, identifiers)
+    excel_template_prepare(path_raw_data, path_template, raw_data_files, identifiers)
     return
 
 
@@ -1330,7 +1330,7 @@ def selection_loop(
 ):
     """
     Function containing the loop over all filenames intended for the model selection.
-    Involves sampling every model featured by Peak Performance, computing the loglikelihood
+    Involves sampling every model featured by PeakPerformance, computing the loglikelihood
     and an information criterion, and comparing the results to ascertain the best model for every file.
 
     Parameters
