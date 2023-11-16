@@ -449,7 +449,9 @@ def prefiltering(
         # check proximity of any peak candidate to the estimated retention time
         retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
         # check signal to noise ratio
-        signal_to_noise_condition = ui.timeseries[1][peak] / (noise_width_guess + 0.1) > ui.minimum_sn
+        signal_to_noise_condition = (
+            ui.timeseries[1][peak] / (noise_width_guess + 0.1) > ui.minimum_sn
+        )
         # check the neighbouring data points to prevent classification of a single elevated data point as a peak
         check_preceding_point = ui.timeseries[1][peak - 1] / (noise_width_guess + 0.1) > 2
         check_succeeding_point = ui.timeseries[1][peak + 1] / (noise_width_guess + 0.1) > 2
@@ -921,13 +923,15 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
     if not isinstance(peak_width_estimate, float) and not isinstance(peak_width_estimate, int):
         try:
             peak_width_estimate = float(peak_width_estimate)
-        except:
-            raise InputError("peak_width_estimate under settings in Template.xlsx must be an int or float.")
+        except:  # noqa: E722
+            raise InputError(
+                "peak_width_estimate under settings in Template.xlsx must be an int or float."
+            )
     minimum_sn = df_settings.loc["minimum_sn", "setting"]
     if not isinstance(minimum_sn, float) and not isinstance(minimum_sn, int):
         try:
             minimum_sn = float(minimum_sn)
-        except:
+        except:  # noqa: E722
             raise InputError("minimum_sn under settings in Template.xlsx must be an int or float.")
 
     # read data and user input from the signals tab of Template.xlsx
@@ -946,13 +950,16 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
     for x in range(len(df_signals)):
         if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["model_type"][x]:
             raise InputError(
-            f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
-        )
+                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
+            )
         if pre_filtering:
-            if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["retention_time_estimate"][x]:
+            if (
+                not df_signals.isnull()["unique_identifier"][x]
+                and df_signals.isnull()["retention_time_estimate"][x]
+            ):
                 raise InputError(
-            f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
-        )
+                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
+                )
     df_signals.set_index("unique_identifier", inplace=True)
     return pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers
 
@@ -984,7 +991,14 @@ def pipeline_loop(
         That way, already analyzed files won't be analyzed again.
     """
     # read data and user input from the settings tab of Template.xlsx
-    pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers = pipeline_read_template(path_raw_data)
+    (
+        pre_filtering,
+        plotting,
+        peak_width_estimate,
+        minimum_sn,
+        df_signals,
+        unique_identifiers,
+    ) = pipeline_read_template(path_raw_data)
     peak_model_list = []
     retention_time_estimate_list = []
     # synchronize the lists of raw data files, peak models, and retention times
@@ -1282,16 +1296,15 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
     )
     # sanity checks
     if not identifier_list:
-        raise InputError(
-            "In the signals tab of Template.xlsx, there are no unqiue_identifiers."
-        )
+        raise InputError("In the signals tab of Template.xlsx, there are no unqiue_identifiers.")
     if not model_list and not acquisition_list:
         raise InputError(
             "In the signals tab of Template.xlsx, no model or acquisition(s) for model selection were provided."
         )
     if len(identifier_list) == len(model_list):
         raise InputError(
-            "In the signals tab of Template.xlsx, for each unique identifier a model type was provided. Thus, no model seleciton is performed."
+            """In the signals tab of Template.xlsx, for each unique identifier a model type was provided.
+Thus, no model seleciton is performed."""
         )
     # multiple scenarios have to be covered
     files_for_selection: Dict[str, str] = {}
@@ -1474,7 +1487,9 @@ def selection_loop(
         # compare_dict needs at least two entries for model comparison
         # if not enough pass the r_hat test, accept all for now to avoid error
         if len(compare_dict) < 2:
-            warnings.warn(f"Only one or less models converged during model selection for {filename}.")
+            warnings.warn(
+                f"Only one or less models converged during model selection for {filename}."
+            )
             for model in idata_dict.keys():
                 compare_dict[model] = idata_dict[model][1]
         # perform the actual model comparison
@@ -1526,5 +1541,8 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     try:
         selected_models_to_template(path_raw_data, df_signals, model_dict)
     except PermissionError:
-        warnings.warn("Since Template.xlsx was open during model selection, it could not be updated. Use the returned variables and pl.selected_models_to_template() to update it.")
+        warnings.warn(
+            """Since Template.xlsx was open during model selection, it could not be updated.
+Use the returned variables and pl.selected_models_to_template() to update it."""
+        )
     return comparison_results, model_dict
