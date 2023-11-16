@@ -233,7 +233,7 @@ class UserInput:
                 self.retention_time_estimate = len(self.files) * [np.nan]
             elif not self.retention_time_estimate:
                 self.retention_time_estimate = len(self.files) * [np.nan]
-        if any(self.retention_time_estimate) < 0:
+        if np.any(np.array(self.retention_time_estimate) < 0):
             raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
         user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
