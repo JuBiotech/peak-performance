@@ -99,7 +99,7 @@ def baseline_intercept_prior_params(intercept_guess: Union[float, int]) -> Mappi
     """
     return {
         "mu": intercept_guess,
-        "sigma": np.clip(abs(intercept_guess / 20), 0.05, np.inf),
+        "sigma": np.clip(abs(intercept_guess / 6), 0.05, np.inf),
     }
 
 
@@ -114,7 +114,7 @@ def baseline_slope_prior_params(slope_guess: Union[float, int]) -> Mapping[str, 
     """
     return {
         "mu": slope_guess,
-        "sigma": np.clip(abs(slope_guess / 25), 0.5, np.inf),
+        "sigma": np.clip(abs(slope_guess / 5), 0.5, np.inf),
     }
 
 
