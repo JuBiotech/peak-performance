@@ -1026,7 +1026,10 @@ def pipeline_loop(
             continue
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
-            idata = sampling(pmodel, tune=4000)
+            if "double" in model:
+                idata = sampling(pmodel, tune=16000)
+            else:
+                idata = sampling(pmodel, tune=6000)
             # # save the inference data object as a netcdf file
             # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
