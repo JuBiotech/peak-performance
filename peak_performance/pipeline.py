@@ -882,6 +882,81 @@ def report_add_nan_to_summary(
     return df_summary
 
 
+def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
+    """
+    Function to read and check the input settings and data from Template.xlsx when running the data pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+
+    Returns
+    -------
+    pre_filtering
+        If True, potential peaks will be filtered based on retention time and signal to noise ratio before sampling.
+    plotting
+        If True, PeakPerformance will plot results.
+    peak_width_estimate
+        Rough estimate of the average peak width in minutes expected for the LC-MS method with which the data was obtained.
+    minimum_sn
+        Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering.
+    df_signals
+        Read-out of the signals tab from Template.xlsx as a DataFrame.
+    unique_identifiers
+        List of unique identifiers from the signals tab of Template.xlsx.
+    """
+    # read data and user input from the settings tab of Template.xlsx
+    df_settings = pandas.read_excel(
+        Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter"
+    )
+    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
+    if not isinstance(pre_filtering, bool):
+        raise InputError("pre_filtering under settings in Template.xlsx must be a bool.")
+    plotting = eval(df_settings.loc["plotting", "setting"])
+    if not isinstance(plotting, bool):
+        raise InputError("plotting under settings in Template.xlsx must be a bool.")
+    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
+    if not isinstance(peak_width_estimate, float) and not isinstance(peak_width_estimate, int):
+        try:
+            peak_width_estimate = float(peak_width_estimate)
+        except:
+            raise InputError("peak_width_estimate under settings in Template.xlsx must be an int or float.")
+    minimum_sn = df_settings.loc["minimum_sn", "setting"]
+    if not isinstance(minimum_sn, float) and not isinstance(minimum_sn, int):
+        try:
+            minimum_sn = float(minimum_sn)
+        except:
+            raise InputError("minimum_sn under settings in Template.xlsx must be an int or float.")
+
+    # read data and user input from the signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    unique_identifiers = list(df_signals["unique_identifier"].replace("", np.nan).dropna())
+    unique_identifiers = [str(identifier) for identifier in unique_identifiers]
+    if not unique_identifiers:
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must not be empty."
+        )
+    if len(set(unique_identifiers)) != len(unique_identifiers):
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
+        )
+    # test whether df_signals is filled out correctly
+    for x in range(len(df_signals)):
+        if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["model_type"][x]:
+            raise InputError(
+            f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
+        )
+        if pre_filtering:
+            if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["retention_time_estimate"][x]:
+                raise InputError(
+            f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
+        )
+    df_signals.set_index("unique_identifier", inplace=True)
+    return pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers
+
+
 def pipeline_loop(
     path_raw_data: Union[str, os.PathLike],
     path_results: Union[str, os.PathLike],
@@ -909,22 +984,7 @@ def pipeline_loop(
         That way, already analyzed files won't be analyzed again.
     """
     # read data and user input from the settings tab of Template.xlsx
-    df_settings = pandas.read_excel(
-        Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter"
-    )
-    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
-    plotting = eval(df_settings.loc["plotting", "setting"])
-    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
-    minimum_sn = df_settings.loc["minimum_sn", "setting"]
-    # read data and user input from the signals tab of Template.xlsx
-    df_signals = pandas.read_excel(
-        Path(path_raw_data) / "Template.xlsx", sheet_name="signals", index_col="unique_identifier"
-    )
-    unique_identifiers = list(df_signals.index)
-    if len(set(unique_identifiers)) != len(unique_identifiers):
-        raise InputError(
-            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
-        )
+    pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers = pipeline_read_template(path_raw_data)
     peak_model_list = []
     retention_time_estimate_list = []
     # synchronize the lists of raw data files, peak models, and retention times
@@ -941,7 +1001,7 @@ def pipeline_loop(
     for file in raw_data_files:
         for identifier in unique_identifiers:
             if identifier in file:
-                peak_model_list.append(df_signals.loc[identifier, "model_type"])
+                peak_model_list.append(str(df_signals.loc[identifier, "model_type"]))
                 retention_time_estimate_list.append(
                     df_signals.loc[identifier, "retention_time_estimate"]
                 )
