@@ -1400,6 +1400,12 @@ def selection_loop(
         for model in idata_dict.keys():
             if not (idata_dict[model][0].loc[:, "r_hat"] > 1.05).any():
                 compare_dict[model] = idata_dict[model][1]
+        # compare_dict needs at least two entries for model comparison
+        # if not enough pass the r_hat test, accept all for now to avoid error
+        if len(compare_dict) < 2:
+            warnings.warn(f"Only one or less models converged during model selection for {filename}.")
+            for model in idata_dict.keys():
+                compare_dict[model] = idata_dict[model][1]
         # perform the actual model comparison
         result_df = models.model_comparison(compare_dict, ic)
         # double peak models are sometimes incorrectly preferred due to their increased complexity
