@@ -7,13 +7,13 @@ It is highly recommended to follow these steps:
 mamba create -c conda-forge -n name_of_environment pymc nutpie arviz jupyter matplotlib openpyxl "python=3.10"
 ```
 4. Install PeakPerformance:
-- For __regular users__: Download the latest Python wheel, then open the command line, navigate to the directory containing the wheel, activate the Python environment created above, and install PeakPerformance via
-```
-pip install name_of_wheel.whl
-```
-- For __developers__: Clone the PeakPerformance repository, then open the command line, navigate to your local clone, activate a Python environment, and install PeakPerformance via
+- Recommended: Clone the PeakPerformance repository, then open the command line, navigate to your local clone, activate a Python environment, and install PeakPerformance via
 ```
 pip install -e .
+```
+- Alternatively: Download the latest Python wheel, then open the command line, navigate to the directory containing the wheel, activate the Python environment created above, and install PeakPerformance via
+```
+pip install name_of_wheel.whl
 ```
 
 # How to use PeakPerformance
