@@ -252,7 +252,8 @@ def test_prefiltering():
 def test_postfiltering_success():
     # load exemplary inference data object
     idata = az.from_netcdf(
-        Path(__file__).absolute().parent.parent / "example" / "idata_double_normal.nc"
+        Path(__file__).absolute().parent.parent
+        / "test_data/test_postfiltering_success/idata_double_normal.nc"
     )
     # create df_summary
     df_summary = pandas.DataFrame(columns=COLUMNS)
@@ -298,7 +299,8 @@ def test_postfiltering_success():
 def test_postfiltering_resample():
     # load exemplary inference data object
     idata = az.from_netcdf(
-        Path(__file__).absolute().parent.parent / "example" / "idata_double_skew_rhat_too_high.nc"
+        Path(__file__).absolute().parent.parent
+        / "test_data/test_postfiltering_resample/idata_double_skew_rhat_too_high.nc"
     )
     # create df_summary
     df_summary = pandas.DataFrame(columns=COLUMNS)
@@ -443,9 +445,11 @@ def test_double_peak_report_add_nan_to_summary():
     pass
 
 
-def test_single_peak_report_add_data_to_summary():
+def test_single_peak_report():
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / "idata.nc")
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "test_data/test_single_peak_report/idata.nc"
+    )
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -506,9 +510,11 @@ def test_single_peak_report_add_data_to_summary():
 
 
 @pytest.mark.parametrize("idata", ["idata_double_normal.nc", "idata_double_skew_normal.nc"])
-def test_double_peak_report_add_data_to_summary(idata):
+def test_double_peak_report(idata):
     # load exemplary inference data object
-    idata = az.from_netcdf(Path(__file__).absolute().parent.parent / "example" / idata)
+    idata = az.from_netcdf(
+        Path(__file__).absolute().parent.parent / "test_data/test_double_peak_report" / idata
+    )
     # create empty DataFrame
     df_summary = pandas.DataFrame(columns=COLUMNS)
     # create instance of the UserInput class
@@ -606,8 +612,8 @@ def test_parse_files_for_model_selection():
         files = pl.parse_files_for_model_selection(signals)
     # if models for every unique identifier were supplied, the result should be empty
     signals["model_type"] = 7 * ["normal"]
-    files = pl.parse_files_for_model_selection(signals)
-    assert not files
+    with pytest.raises(pl.InputError):
+        files = pl.parse_files_for_model_selection(signals)
     # mixture of supplied model and supplying different acquisitions for model selection
     signals["acquisition_for_choosing_model_type"] = [np.nan, "B1", "C1", "D1", "E1", "F1", "G1"]
     signals["model_type"] = ["normal"] + 6 * [np.nan]
