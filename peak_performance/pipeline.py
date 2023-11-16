@@ -449,10 +449,10 @@ def prefiltering(
         # check proximity of any peak candidate to the estimated retention time
         retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
         # check signal to noise ratio
-        signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
+        signal_to_noise_condition = ui.timeseries[1][peak] / (noise_width_guess + 0.1) > ui.minimum_sn
         # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-        check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
-        check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
+        check_preceding_point = ui.timeseries[1][peak - 1] / (noise_width_guess + 0.1) > 2
+        check_succeeding_point = ui.timeseries[1][peak + 1] / (noise_width_guess + 0.1) > 2
         if (
             retention_time_condition
             and signal_to_noise_condition
