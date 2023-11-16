@@ -1,5 +1,5 @@
 """
-Peak Performance
+PeakPerformance
 Copyright (C) 2023 Forschungszentrum Jülich GmbH
 
 This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ import importlib
 import os
 import re
 import shutil
+import warnings
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple, Union
@@ -232,7 +233,7 @@ class UserInput:
                 self.retention_time_estimate = len(self.files) * [np.nan]
             elif not self.retention_time_estimate:
                 self.retention_time_estimate = len(self.files) * [np.nan]
-        if any(self.retention_time_estimate) < 0:
+        if np.any(np.array(self.retention_time_estimate) < 0):
             raise InputError("Retention time estimates below 0 are not valid.")
         # actually create the dictionary
         user_info = dict(zip(self.files, zip(self.peak_model, self.retention_time_estimate)))
@@ -448,10 +449,12 @@ def prefiltering(
         # check proximity of any peak candidate to the estimated retention time
         retention_time_condition = t_ret - est_width <= ui.timeseries[0][peak] <= t_ret + est_width
         # check signal to noise ratio
-        signal_to_noise_condition = ui.timeseries[1][peak] / noise_width_guess > ui.minimum_sn
+        signal_to_noise_condition = (
+            ui.timeseries[1][peak] / (noise_width_guess + 0.1) > ui.minimum_sn
+        )
         # check the neighbouring data points to prevent classification of a single elevated data point as a peak
-        check_preceding_point = ui.timeseries[1][peak - 1] / noise_width_guess > 2
-        check_succeeding_point = ui.timeseries[1][peak + 1] / noise_width_guess > 2
+        check_preceding_point = ui.timeseries[1][peak - 1] / (noise_width_guess + 0.1) > 2
+        check_succeeding_point = ui.timeseries[1][peak + 1] / (noise_width_guess + 0.1) > 2
         if (
             retention_time_condition
             and signal_to_noise_condition
@@ -881,6 +884,86 @@ def report_add_nan_to_summary(
     return df_summary
 
 
+def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
+    """
+    Function to read and check the input settings and data from Template.xlsx when running the data pipeline.
+
+    Parameters
+    ----------
+    path_raw_data
+        Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
+        The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
+
+    Returns
+    -------
+    pre_filtering
+        If True, potential peaks will be filtered based on retention time and signal to noise ratio before sampling.
+    plotting
+        If True, PeakPerformance will plot results.
+    peak_width_estimate
+        Rough estimate of the average peak width in minutes expected for the LC-MS method with which the data was obtained.
+    minimum_sn
+        Minimum signal to noise ratio for a signal to be recognized as a peak during pre-filtering.
+    df_signals
+        Read-out of the signals tab from Template.xlsx as a DataFrame.
+    unique_identifiers
+        List of unique identifiers from the signals tab of Template.xlsx.
+    """
+    # read data and user input from the settings tab of Template.xlsx
+    df_settings = pandas.read_excel(
+        Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter"
+    )
+    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
+    if not isinstance(pre_filtering, bool):
+        raise InputError("pre_filtering under settings in Template.xlsx must be a bool.")
+    plotting = eval(df_settings.loc["plotting", "setting"])
+    if not isinstance(plotting, bool):
+        raise InputError("plotting under settings in Template.xlsx must be a bool.")
+    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
+    if not isinstance(peak_width_estimate, float) and not isinstance(peak_width_estimate, int):
+        try:
+            peak_width_estimate = float(peak_width_estimate)
+        except:  # noqa: E722
+            raise InputError(
+                "peak_width_estimate under settings in Template.xlsx must be an int or float."
+            )
+    minimum_sn = df_settings.loc["minimum_sn", "setting"]
+    if not isinstance(minimum_sn, float) and not isinstance(minimum_sn, int):
+        try:
+            minimum_sn = float(minimum_sn)
+        except:  # noqa: E722
+            raise InputError("minimum_sn under settings in Template.xlsx must be an int or float.")
+
+    # read data and user input from the signals tab of Template.xlsx
+    df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
+    unique_identifiers = list(df_signals["unique_identifier"].replace("", np.nan).dropna())
+    unique_identifiers = [str(identifier) for identifier in unique_identifiers]
+    if not unique_identifiers:
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must not be empty."
+        )
+    if len(set(unique_identifiers)) != len(unique_identifiers):
+        raise InputError(
+            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
+        )
+    # test whether df_signals is filled out correctly
+    for x in range(len(df_signals)):
+        if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["model_type"][x]:
+            raise InputError(
+                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
+            )
+        if pre_filtering:
+            if (
+                not df_signals.isnull()["unique_identifier"][x]
+                and df_signals.isnull()["retention_time_estimate"][x]
+            ):
+                raise InputError(
+                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
+                )
+    df_signals.set_index("unique_identifier", inplace=True)
+    return pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers
+
+
 def pipeline_loop(
     path_raw_data: Union[str, os.PathLike],
     path_results: Union[str, os.PathLike],
@@ -890,7 +973,7 @@ def pipeline_loop(
     restart: bool = False,
 ):
     """
-    Function to run the complete Peak Performance pipeline.
+    Function to run the complete PeakPerformance pipeline.
 
     Parameters
     ----------
@@ -898,7 +981,7 @@ def pipeline_loop(
         Path to the raw data files. Files should be in the given raw_data_file_format, default is '.npy'.
         The `.npy` files are expected to be (2, ?)-shaped 2D NumPy arrays with time and intensity in the first dimension.
     path_results
-        Path to the directory for the results of a given Batch run of Peak Performance.
+        Path to the directory for the results of a given Batch run of PeakPerformance.
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     df_summary
@@ -908,22 +991,14 @@ def pipeline_loop(
         That way, already analyzed files won't be analyzed again.
     """
     # read data and user input from the settings tab of Template.xlsx
-    df_settings = pandas.read_excel(
-        Path(path_raw_data) / "Template.xlsx", sheet_name="settings", index_col="parameter"
-    )
-    pre_filtering = eval(df_settings.loc["pre_filtering", "setting"])
-    plotting = eval(df_settings.loc["plotting", "setting"])
-    peak_width_estimate = df_settings.loc["peak_width_estimate", "setting"]
-    minimum_sn = df_settings.loc["minimum_sn", "setting"]
-    # read data and user input from the signals tab of Template.xlsx
-    df_signals = pandas.read_excel(
-        Path(path_raw_data) / "Template.xlsx", sheet_name="signals", index_col="unique_identifier"
-    )
-    unique_identifiers = list(df_signals.index)
-    if len(set(unique_identifiers)) != len(unique_identifiers):
-        raise InputError(
-            "The list in column unique_identifier in the signals tab of Template.xlsx must contain only unique entries."
-        )
+    (
+        pre_filtering,
+        plotting,
+        peak_width_estimate,
+        minimum_sn,
+        df_signals,
+        unique_identifiers,
+    ) = pipeline_read_template(path_raw_data)
     peak_model_list = []
     retention_time_estimate_list = []
     # synchronize the lists of raw data files, peak models, and retention times
@@ -940,7 +1015,7 @@ def pipeline_loop(
     for file in raw_data_files:
         for identifier in unique_identifiers:
             if identifier in file:
-                peak_model_list.append(df_signals.loc[identifier, "model_type"])
+                peak_model_list.append(str(df_signals.loc[identifier, "model_type"]))
                 retention_time_estimate_list.append(
                     df_signals.loc[identifier, "retention_time_estimate"]
                 )
@@ -1025,7 +1100,10 @@ def pipeline_loop(
             continue
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
-            idata = sampling(pmodel, tune=4000)
+            if "double" in model:
+                idata = sampling(pmodel, tune=16000)
+            else:
+                idata = sampling(pmodel, tune=6000)
             # # save the inference data object as a netcdf file
             # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
@@ -1060,7 +1138,7 @@ def pipeline(
     raw_data_file_format: str,
 ):
     """
-    Function to run the complete Peak Performance pipeline.
+    Function to run the complete PeakPerformance pipeline.
 
     Parameters
     ----------
@@ -1092,7 +1170,7 @@ def pipeline_restart(
     path_results: Union[str, os.PathLike],
 ):
     """
-    Function to restart a broken Peak Performance pipeline.
+    Function to restart a broken PeakPerformance pipeline.
     Files which are in the results directory of the broken pipeline will not be analyzed again.
     WARNING: This only works once! If a pipeline fails more than once, copy all files (except the Excel report sheets)
     into one directory and specify this directory as the path_results argument.
@@ -1105,7 +1183,7 @@ def pipeline_restart(
     raw_data_file_format
         Data format (suffix) of the raw data, default is '.npy'.
     path_results
-        Path variable pointing to the directory of the broken Peak Performance batch
+        Path variable pointing to the directory of the broken PeakPerformance batch
 
     Returns
     ----------
@@ -1138,14 +1216,14 @@ def excel_template_prepare(
     path_raw_data
         Path to the folder containing raw data.
     path_peak_performance
-        Path to the folder containing Peak Performance.
+        Path to the folder containing PeakPerformance.
     raw_data_files
         List with names of all files of the specified data type in path_raw_data.
     unique_identifiers
         List with all unique combinations of targeted molecules.
         (i.e. experiment number or precursor ion m/z ratio and product ion m/z ratio range)
     """
-    # copy Template.xlsx from Peak Performance to the directory with the raw data
+    # copy Template.xlsx from PeakPerformance to the directory with the raw data
     try:
         shutil.copy(
             Path(path_peak_performance) / "Template.xlsx", Path(path_raw_data) / "Template.xlsx"
@@ -1174,7 +1252,7 @@ def excel_template_prepare(
 
 def prepare_model_selection(
     path_raw_data: Union[str, os.PathLike],
-    path_peak_performance: Union[str, os.PathLike],
+    path_template: Union[str, os.PathLike],
 ):
     """
     Function to prepare model selection by providing and mostly filling out an Excel template
@@ -1185,15 +1263,15 @@ def prepare_model_selection(
     ----------
     path_raw_data
         Path to the folder containing raw data.
-    path_peak_performance
-        Path to the folder containing Peak Performance.
+    path_template
+        Path to the folder containing Template.xlsx from PeakPerformance.
     """
     # detect raw data files
     raw_data_files = detect_raw_data(path_raw_data)
     # parse unique identifiers
     identifiers = parse_unique_identifiers(raw_data_files)
     # copy Template.xlsx into raw data directory and add data from the previous commmands
-    excel_template_prepare(path_raw_data, path_peak_performance, raw_data_files, identifiers)
+    excel_template_prepare(path_raw_data, path_template, raw_data_files, identifiers)
     return
 
 
@@ -1211,16 +1289,23 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
     files_for_selection
         Dict with file names as keys and unique identifiers as values.
     """
+    identifier_list = list(signals["unique_identifier"].replace("", np.nan).dropna())
     model_list = list(signals["model_type"].replace("", np.nan).dropna())
     acquisition_list = list(
         signals["acquisition_for_choosing_model_type"].replace("", np.nan).dropna()
     )
     # sanity checks
+    if not identifier_list:
+        raise InputError("In the signals tab of Template.xlsx, there are no unqiue_identifiers.")
     if not model_list and not acquisition_list:
         raise InputError(
             "In the signals tab of Template.xlsx, no model or acquisition(s) for model selection were provided."
         )
-
+    if len(identifier_list) == len(model_list):
+        raise InputError(
+            """In the signals tab of Template.xlsx, for each unique identifier a model type was provided.
+Thus, no model selection is performed."""
+        )
     # multiple scenarios have to be covered
     files_for_selection: Dict[str, str] = {}
     signals = signals.fillna("")
@@ -1330,7 +1415,7 @@ def selection_loop(
 ):
     """
     Function containing the loop over all filenames intended for the model selection.
-    Involves sampling every model featured by Peak Performance, computing the loglikelihood
+    Involves sampling every model featured by PeakPerformance, computing the loglikelihood
     and an information criterion, and comparing the results to ascertain the best model for every file.
 
     Parameters
@@ -1399,6 +1484,14 @@ def selection_loop(
         for model in idata_dict.keys():
             if not (idata_dict[model][0].loc[:, "r_hat"] > 1.05).any():
                 compare_dict[model] = idata_dict[model][1]
+        # compare_dict needs at least two entries for model comparison
+        # if not enough pass the r_hat test, accept all for now to avoid error
+        if len(compare_dict) < 2:
+            warnings.warn(
+                f"Only one or less models converged during model selection for {filename}."
+            )
+            for model in idata_dict.keys():
+                compare_dict[model] = idata_dict[model][1]
         # perform the actual model comparison
         result_df = models.model_comparison(compare_dict, ic)
         # double peak models are sometimes incorrectly preferred due to their increased complexity
@@ -1445,5 +1538,11 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
-    selected_models_to_template(path_raw_data, df_signals, model_dict)
+    try:
+        selected_models_to_template(path_raw_data, df_signals, model_dict)
+    except PermissionError:
+        warnings.warn(
+            """Since Template.xlsx was open during model selection, it could not be updated.
+Use the returned variables and pl.selected_models_to_template() to update it."""
+        )
     return comparison_results, model_dict
