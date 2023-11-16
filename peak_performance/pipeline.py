@@ -1304,7 +1304,7 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
     if len(identifier_list) == len(model_list):
         raise InputError(
             """In the signals tab of Template.xlsx, for each unique identifier a model type was provided.
-Thus, no model seleciton is performed."""
+Thus, no model selection is performed."""
         )
     # multiple scenarios have to be covered
     files_for_selection: Dict[str, str] = {}
