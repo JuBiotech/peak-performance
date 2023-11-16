@@ -20,6 +20,7 @@ import importlib
 import os
 import re
 import shutil
+import warnings
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence, Tuple, Union
@@ -1445,5 +1446,8 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
-    selected_models_to_template(path_raw_data, df_signals, model_dict)
+    try:
+        selected_models_to_template(path_raw_data, df_signals, model_dict)
+    except PermissionError:
+        warnings.warn("Since Template.xlsx was open during model selection, it could not be updated. Use the returned variables and pl.selected_models_to_template() to update it.")
     return comparison_results, model_dict
