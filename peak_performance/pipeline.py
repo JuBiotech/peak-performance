@@ -1212,16 +1212,24 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
     files_for_selection
         Dict with file names as keys and unique identifiers as values.
     """
+    identifier_list = list(signals["unique_identifier"].replace("", np.nan).dropna())
     model_list = list(signals["model_type"].replace("", np.nan).dropna())
     acquisition_list = list(
         signals["acquisition_for_choosing_model_type"].replace("", np.nan).dropna()
     )
     # sanity checks
+    if not identifier_list:
+        raise InputError(
+            "In the signals tab of Template.xlsx, there are no unqiue_identifiers."
+        )
     if not model_list and not acquisition_list:
         raise InputError(
             "In the signals tab of Template.xlsx, no model or acquisition(s) for model selection were provided."
         )
-
+    if len(identifier_list) == len(model_list):
+        raise InputError(
+            "In the signals tab of Template.xlsx, for each unique identifier a model type was provided. Thus, no model seleciton is performed."
+        )
     # multiple scenarios have to be covered
     files_for_selection: Dict[str, str] = {}
     signals = signals.fillna("")
