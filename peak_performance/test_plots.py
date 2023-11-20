@@ -20,10 +20,10 @@ def test_plot_raw_data():
         intensity=np.array([1, 10, 25, 10, 1]),
         path=path,
     )
-    assert Path(path / f"{identifier}_No_Peak.png").exists()
-    assert Path(path / f"{identifier}_No_Peak.svg").exists()
-    os.remove(path / f"{identifier}_No_Peak.png")
-    os.remove(path / f"{identifier}_No_Peak.svg")
+    assert Path(path / f"{identifier}_NoPeak.png").exists()
+    assert Path(path / f"{identifier}_NoPeak.svg").exists()
+    os.remove(path / f"{identifier}_NoPeak.png")
+    os.remove(path / f"{identifier}_NoPeak.svg")
     pass
 
 
