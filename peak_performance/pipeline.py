@@ -1070,7 +1070,12 @@ def pipeline_loop(
             if not prefilter:
                 # if no peak candidates were found, continue with the next signal
                 if plotting:
-                    plots.plot_raw_data(file, ui)
+                    plots.plot_raw_data(
+                        file[: -len(ui.raw_data_file_format)],
+                        ui.timeseries[0],
+                        ui.timeseries[1],
+                        ui.path,
+                    )
                 continue
         # select model based on information in UserInput
         model = ui.user_info[file][0]
@@ -1096,7 +1101,14 @@ def pipeline_loop(
         # if peak was discarded, continue with the next signal
         if discard:
             if plotting:
-                plots.plot_posterior(file, ui, idata, True)
+                plots.plot_posterior(
+                    file[: -len(ui.raw_data_file_format)],
+                    ui.timeseries[0],
+                    ui.timeseries[1],
+                    ui.path,
+                    idata,
+                    True,
+                )
             continue
         # if convergence was not yet reached, sample again with more tuning samples
         if resample:
@@ -1108,7 +1120,14 @@ def pipeline_loop(
             # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
-                plots.plot_posterior(f"{file}", ui, idata, True)
+                plots.plot_posterior(
+                    file[: -len(ui.raw_data_file_format)],
+                    ui.timeseries[0],
+                    ui.timeseries[1],
+                    ui.path,
+                    idata,
+                    True,
+                )
                 continue
             if resample:
                 # if signal was flagged for re-sampling a second time, discard it
@@ -1117,7 +1136,14 @@ def pipeline_loop(
                     file, idata, df_summary, ui, False, rejection_msg
                 )
                 if plotting:
-                    plots.plot_posterior(f"{file}", ui, idata, True)
+                    plots.plot_posterior(
+                        file[: -len(ui.raw_data_file_format)],
+                        ui.timeseries[0],
+                        ui.timeseries[1],
+                        ui.path,
+                        idata,
+                        True,
+                    )
                 continue
         # perform posterior predictive sampling
         idata = posterior_predictive_sampling(pmodel, idata)
@@ -1127,8 +1153,22 @@ def pipeline_loop(
         report_save_idata(idata, ui, file, raw_data_file_format)
         # plot data
         if plotting:
-            plots.plot_posterior_predictive(file, ui, idata, False)
-            plots.plot_posterior(file, ui, idata, False)
+            plots.plot_posterior_predictive(
+                file[: -len(ui.raw_data_file_format)],
+                ui.timeseries[0],
+                ui.timeseries[1],
+                ui.path,
+                idata,
+                False,
+            )
+            plots.plot_posterior(
+                file[: -len(ui.raw_data_file_format)],
+                ui.timeseries[0],
+                ui.timeseries[1],
+                ui.path,
+                idata,
+                False,
+            )
         # save condesed Excel file with area data
         report_area_sheet(path_results, df_summary)
 

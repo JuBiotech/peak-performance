@@ -16,7 +16,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
 from pathlib import Path
+from typing import Union
 
 import arviz as az
 import numpy as np
@@ -25,7 +27,9 @@ import pymc as pm
 from matplotlib import pyplot as plt
 
 
-def plot_raw_data(identifier: str, ui):
+def plot_raw_data(
+    identifier: str, time: np.ndarray, intensity: np.ndarray, path: Union[str, os.PathLike]
+):
     """
     Plot just the raw data in case no peak was found.
 
@@ -33,11 +37,15 @@ def plot_raw_data(identifier: str, ui):
     ----------
     identifier
         Unique identifier of this particular signal (e.g. filename).
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
+    path
+        Path to the folder containing the results of the current run.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    time = np.array(time)
+    intensity = np.array(intensity)
     # plot the data to be able to check if peak detection was correct or not
     fig, ax = plt.subplots()
     ax.scatter(time, intensity, marker="x", color="black", label="data")
@@ -47,10 +55,8 @@ def plot_raw_data(identifier: str, ui):
     plt.xticks(size=11.5)
     plt.yticks(size=11.5)
     fig.tight_layout()
-    fig.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.png")
-    fig.savefig(
-        Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_No_Peak.svg", format="svg"
-    )
+    fig.savefig(Path(path) / f"{identifier}_No_Peak.png")
+    fig.savefig(Path(path) / f"{identifier}_No_Peak.svg", format="svg")
     plt.close(fig)
 
     return
@@ -118,7 +124,14 @@ def plot_density(
     return
 
 
-def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, discarded: bool):
+def plot_posterior_predictive(
+    identifier: str,
+    time: np.ndarray,
+    intensity: np.ndarray,
+    path: Union[str, os.PathLike],
+    idata: az.InferenceData,
+    discarded: bool,
+):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
 
@@ -126,15 +139,19 @@ def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, disc
     ----------
     identifier
         Unique identifier of this particular signal (e.g. filename).
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
+    path
+        Path to the folder containing the results of the current run.
     idata
         Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    time = np.array(time)
+    intensity = np.array(intensity)
     fig, ax = plt.subplots()
     # plot the posterior predictive
     plot_density(
@@ -153,22 +170,15 @@ def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, disc
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
+        fig.savefig(Path(path) / f"{identifier}_predictive_posterior_NoPeak.png")
         fig.savefig(
-            Path(ui.path)
-            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.png"
-        )
-        fig.savefig(
-            Path(ui.path)
-            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior_NoPeak.svg",
+            Path(path) / f"{identifier}_predictive_posterior_NoPeak.svg",
             format="svg",
         )
     else:
+        fig.savefig(Path(path) / f"{identifier}_predictive_posterior.png")
         fig.savefig(
-            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.png"
-        )
-        fig.savefig(
-            Path(ui.path)
-            / f"{identifier[:-len(ui.raw_data_file_format)]}_predictive_posterior.svg",
+            Path(path) / f"{identifier}_predictive_posterior.svg",
             format="svg",
         )
     plt.close(fig)
@@ -176,23 +186,34 @@ def plot_posterior_predictive(identifier: str, ui, idata: az.InferenceData, disc
     return
 
 
-def plot_posterior(identifier: str, ui, idata: az.InferenceData, discarded: bool):
+def plot_posterior(
+    identifier: str,
+    time: np.ndarray,
+    intensity: np.ndarray,
+    path: Union[str, os.PathLike],
+    idata: az.InferenceData,
+    discarded: bool,
+):
     """
-    Save plot of posterior, estimated baseline and original data points.
+    Saves plot of posterior, estimated baseline, and original data points.
 
     Parameters
     ----------
     identifier
         Unique identifier of this particular signal (e.g. filename).
-    ui
-        Instance of the UserInput class.
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
+    path
+        Path to the folder containing the results of the current run.
     idata
         Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
     """
-    time = ui.timeseries[0]
-    intensity = ui.timeseries[1]
+    time = np.array(time)
+    intensity = np.array(intensity)
     az_summary: pandas.DataFrame = az.summary(idata)
 
     fig, ax = plt.subplots()
@@ -216,17 +237,15 @@ def plot_posterior(identifier: str, ui, idata: az.InferenceData, discarded: bool
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
+        fig.savefig(Path(path) / f"{identifier}_posterior_NoPeak.png")
         fig.savefig(
-            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.png"
-        )
-        fig.savefig(
-            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior_NoPeak.svg",
+            Path(path) / f"{identifier}_posterior_NoPeak.svg",
             format="svg",
         )
     else:
-        fig.savefig(Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.png")
+        fig.savefig(Path(path) / f"{identifier}_posterior.png")
         fig.savefig(
-            Path(ui.path) / f"{identifier[:-len(ui.raw_data_file_format)]}_posterior.svg",
+            Path(path) / f"{identifier}_posterior.svg",
             format="svg",
         )
     plt.close(fig)
@@ -234,30 +253,27 @@ def plot_posterior(identifier: str, ui, idata: az.InferenceData, discarded: bool
     return
 
 
-def plot_model_comparison(df_comp: pandas.DataFrame, identifier: str, ui):
+def plot_model_comparison(
+    df_comp: pandas.DataFrame, identifier: str, path: Union[str, os.PathLike]
+):
     """
-    Method to compute the element-wise loglikelihood of every posterior sample and add it to a given inference data object.
+    Function to plot the results of a model comparison.
 
     Parameters
     ----------
-    pmodel
-        PyMC model.
-    idata
-        Inference data object resulting from sampling.
-
-    Returns
-    -------
-    idata
-        Inference data object updated with element-wise loglikelihood of every posterior sample.
+    df_comp
+        DataFrame containing the ranking of the given models.
+    identifier
+        Unique identifier of this particular signal (e.g. filename).
+    path
+        Path to the folder containing the results of the current run.
     """
     axes = az.plot_compare(df_comp, insample_dev=False)
     fig = axes.figure
     plt.tight_layout()
+    fig.savefig(Path(path) / f"model_comparison_{identifier}.png")
     fig.savefig(
-        Path(ui.path) / f"model_comparison_{identifier[:-len(ui.raw_data_file_format)]}.png"
-    )
-    fig.savefig(
-        Path(ui.path) / f"model_comparison_{identifier[:-len(ui.raw_data_file_format)]}.svg",
+        Path(path) / f"model_comparison_{identifier}.svg",
         format="svg",
     )
     plt.close(fig)
