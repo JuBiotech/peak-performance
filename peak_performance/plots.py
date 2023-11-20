@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from pathlib import Path
-from typing import Union
+from typing import Sequence, Union
 
 import arviz as az
 import numpy as np
@@ -28,7 +28,11 @@ from matplotlib import pyplot as plt
 
 
 def plot_raw_data(
-    identifier: str, time: np.ndarray, intensity: np.ndarray, path: Union[str, os.PathLike], save_formats: Sequence[str] = ("png", "svg")
+    identifier: str,
+    time: np.ndarray,
+    intensity: np.ndarray,
+    path: Union[str, os.PathLike],
+    save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
     Plot just the raw data in case no peak was found.
@@ -59,7 +63,7 @@ def plot_raw_data(
     plt.yticks(size=11.5)
     fig.tight_layout()
     for format in save_formats:
-        fig.savefig(Path(path) / f"{identifier}_No_Peak.{format}", format=format)
+        fig.savefig(Path(path) / f"{identifier}_NoPeak.{format}", format=format)
     plt.close(fig)
 
     return
@@ -134,6 +138,7 @@ def plot_posterior_predictive(
     path: Union[str, os.PathLike],
     idata: az.InferenceData,
     discarded: bool,
+    save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
     Save plot of posterior_predictive with 95 % HDI and original data points.
@@ -152,6 +157,9 @@ def plot_posterior_predictive(
         Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
+    save_formats
+        Which file formats to save as.
+        Must be supported by `plt.savefig()`, e.g. ``("png", "svg", "pdf")``.
     """
     time = np.array(time)
     intensity = np.array(intensity)
@@ -173,17 +181,13 @@ def plot_posterior_predictive(
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        fig.savefig(Path(path) / f"{identifier}_predictive_posterior_NoPeak.png")
-        fig.savefig(
-            Path(path) / f"{identifier}_predictive_posterior_NoPeak.svg",
-            format="svg",
-        )
+        for format in save_formats:
+            fig.savefig(
+                Path(path) / f"{identifier}_predictive_posterior_NoPeak.{format}", format=format
+            )
     else:
-        fig.savefig(Path(path) / f"{identifier}_predictive_posterior.png")
-        fig.savefig(
-            Path(path) / f"{identifier}_predictive_posterior.svg",
-            format="svg",
-        )
+        for format in save_formats:
+            fig.savefig(Path(path) / f"{identifier}_predictive_posterior.{format}", format=format)
     plt.close(fig)
 
     return
@@ -196,6 +200,7 @@ def plot_posterior(
     path: Union[str, os.PathLike],
     idata: az.InferenceData,
     discarded: bool,
+    save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
     Saves plot of posterior, estimated baseline, and original data points.
@@ -214,6 +219,9 @@ def plot_posterior(
         Infernce data object.
     discarded
         Alters the name of the saved plot. If True, a "_NoPeak" is added to the name.
+    save_formats
+        Which file formats to save as.
+        Must be supported by `plt.savefig()`, e.g. ``("png", "svg", "pdf")``.
     """
     time = np.array(time)
     intensity = np.array(intensity)
@@ -240,24 +248,21 @@ def plot_posterior(
     fig.tight_layout()
     # if signal was discarded, add a "_NoPeak" to the file name
     if discarded:
-        fig.savefig(Path(path) / f"{identifier}_posterior_NoPeak.png")
-        fig.savefig(
-            Path(path) / f"{identifier}_posterior_NoPeak.svg",
-            format="svg",
-        )
+        for format in save_formats:
+            fig.savefig(Path(path) / f"{identifier}_posterior_NoPeak.{format}", format=format)
     else:
-        fig.savefig(Path(path) / f"{identifier}_posterior.png")
-        fig.savefig(
-            Path(path) / f"{identifier}_posterior.svg",
-            format="svg",
-        )
+        for format in save_formats:
+            fig.savefig(Path(path) / f"{identifier}_posterior.{format}", format=format)
     plt.close(fig)
 
     return
 
 
 def plot_model_comparison(
-    df_comp: pandas.DataFrame, identifier: str, path: Union[str, os.PathLike]
+    df_comp: pandas.DataFrame,
+    identifier: str,
+    path: Union[str, os.PathLike],
+    save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
     Function to plot the results of a model comparison.
@@ -270,15 +275,15 @@ def plot_model_comparison(
         Unique identifier of this particular signal (e.g. filename).
     path
         Path to the folder containing the results of the current run.
+    save_formats
+        Which file formats to save as.
+        Must be supported by `plt.savefig()`, e.g. ``("png", "svg", "pdf")``.
     """
     axes = az.plot_compare(df_comp, insample_dev=False)
     fig = axes.figure
     plt.tight_layout()
-    fig.savefig(Path(path) / f"model_comparison_{identifier}.png")
-    fig.savefig(
-        Path(path) / f"model_comparison_{identifier}.svg",
-        format="svg",
-    )
+    for format in save_formats:
+        fig.savefig(Path(path) / f"model_comparison_{identifier}.{format}", format=format)
     plt.close(fig)
 
     return
