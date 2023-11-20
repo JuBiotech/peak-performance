@@ -181,3 +181,16 @@ def test_pymc_sampling(model_type):
         assert summary.loc["mean[0]", "mean"] < summary.loc["mean[1]", "mean"]
         # assert summary.loc["area[0]", "mean"] < summary.loc["area[1]", "mean"]
     pass
+
+
+def test_model_comparison():
+    path = Path(__file__).absolute().parent.parent / "test_data/test_model_comparison"
+    idata_normal = az.from_netcdf(path / "idata_normal.nc")
+    idata_skew = az.from_netcdf(path / "idata_skew.nc")
+    compare_dict = {
+        "normal": idata_normal,
+        "skew_normal": idata_skew,
+    }
+    ranking = models.model_comparison(compare_dict)
+    assert ranking.index[0] == "skew_normal"
+    pass
