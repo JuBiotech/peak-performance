@@ -28,7 +28,7 @@ from matplotlib import pyplot as plt
 
 
 def plot_raw_data(
-    identifier: str, time: np.ndarray, intensity: np.ndarray, path: Union[str, os.PathLike]
+    identifier: str, time: np.ndarray, intensity: np.ndarray, path: Union[str, os.PathLike], save_formats: Sequence[str] = ("png", "svg")
 ):
     """
     Plot just the raw data in case no peak was found.
@@ -43,6 +43,9 @@ def plot_raw_data(
         NumPy array with the intensity values of the relevant timeframe.
     path
         Path to the folder containing the results of the current run.
+    save_formats
+        Which file formats to save as.
+        Must be supported by `plt.savefig()`, e.g. ``("png", "svg", "pdf")``.
     """
     time = np.array(time)
     intensity = np.array(intensity)
@@ -55,8 +58,8 @@ def plot_raw_data(
     plt.xticks(size=11.5)
     plt.yticks(size=11.5)
     fig.tight_layout()
-    fig.savefig(Path(path) / f"{identifier}_No_Peak.png")
-    fig.savefig(Path(path) / f"{identifier}_No_Peak.svg", format="svg")
+    for format in save_formats:
+        fig.savefig(Path(path) / f"{identifier}_No_Peak.{format}", format=format)
     plt.close(fig)
 
     return
