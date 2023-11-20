@@ -1,8 +1,8 @@
 # Installation
 It is highly recommended to follow these steps:
-1. Install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html).  
+1. Install [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html).
 If you plan to install mamba in step 2, it is important to use Miniconda, NOT Anaconda (due to compatibiltiy issues of the base environment with mamba).
-2. Install [Mamba](https://github.com/conda-forge/miniforge/releases).  
+2. Install [Mamba](https://github.com/conda-forge/miniforge/releases).
 Choose the latest installer at the top of the page, click on "show all assets", and download an installer denominated by "Mambaforge-version number-name of your OS.exe", so e.g. "Mambaforge-23.3.1-1-Windows-x86_64.exe" for a Windows 64 bit operating system. Then, execute the installer to install mamba and activate the option "Add Mambaforge to my PATH environment variable".
 3. Create a new Python environment (replace "name_of_environment" with your desired name) in the command line via
 ```
