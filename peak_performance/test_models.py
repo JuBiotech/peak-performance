@@ -161,9 +161,7 @@ class TestDistributions:
     "model_type", ["normal", "skew_normal", "double_normal", "double_skew_normal"]
 )
 def test_pymc_sampling(model_type):
-    timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
-    )
+    timeseries = np.load(Path(__file__).absolute().parent.parent / "A2t2R1Part1_132_85.9_86.1.npy")
 
     if model_type == models.ModelType.Normal:
         pmodel = models.define_model_normal(timeseries[0], timeseries[1])
@@ -180,4 +178,17 @@ def test_pymc_sampling(model_type):
         # test whether the ordered transformation and the subpeak dimension work as intended
         assert summary.loc["mean[0]", "mean"] < summary.loc["mean[1]", "mean"]
         # assert summary.loc["area[0]", "mean"] < summary.loc["area[1]", "mean"]
+    pass
+
+
+def test_model_comparison():
+    path = Path(__file__).absolute().parent.parent / "test_data/test_model_comparison"
+    idata_normal = az.from_netcdf(path / "idata_normal.nc")
+    idata_skew = az.from_netcdf(path / "idata_skew.nc")
+    compare_dict = {
+        "normal": idata_normal,
+        "skew_normal": idata_skew,
+    }
+    ranking = models.model_comparison(compare_dict)
+    assert ranking.index[0] == "skew_normal"
     pass
