@@ -1,11 +1,9 @@
 import os
-import shutil
 from pathlib import Path
 
 import arviz as az
 import numpy as np
 import pandas
-import pytest
 
 from peak_performance import plots
 
@@ -17,10 +15,10 @@ def test_plot_raw_data():
     identifier = "test_plot_raw_data"
     path = Path(__file__).absolute().parent.parent / "test_data"
     plots.plot_raw_data(
-        identifier = identifier,
-        time = np.array([1,2,3,4,5]),
-        intensity = np.array([1,10,25,10,1]),
-        path = path,
+        identifier=identifier,
+        time=np.array([1, 2, 3, 4, 5]),
+        intensity=np.array([1, 10, 25, 10, 1]),
+        path=path,
     )
     assert Path(path / f"{identifier}_No_Peak.png").exists()
     assert Path(path / f"{identifier}_No_Peak.svg").exists()
