@@ -161,7 +161,9 @@ class TestDistributions:
     "model_type", ["normal", "skew_normal", "double_normal", "double_skew_normal"]
 )
 def test_pymc_sampling(model_type):
-    timeseries = np.load(Path(__file__).absolute().parent.parent / "A2t2R1Part1_132_85.9_86.1.npy")
+    timeseries = np.load(
+        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
+    )
 
     if model_type == models.ModelType.Normal:
         pmodel = models.define_model_normal(timeseries[0], timeseries[1])
