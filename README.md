@@ -1,25 +1,6 @@
-# Installation
-It is highly recommended to follow these steps:
-1. Install the package manager [Mamba](https://github.com/conda-forge/miniforge/releases).
-Choose the latest installer at the top of the page, click on "show all assets", and download an installer denominated by "Mambaforge-version number-name of your OS.exe", so e.g. "Mambaforge-23.3.1-1-Windows-x86_64.exe" for a Windows 64 bit operating system. Then, execute the installer to install mamba and activate the option "Add Mambaforge to my PATH environment variable".
-(⚠ __WARNING__ ⚠: If you have already installed Miniconda, you can install Mamba on top of it but there are compatibility issues with Anaconda. The newest conda version should also work, just replace `mamba` with `conda` in step 2.)
-2. Create a new Python environment (replace "name_of_environment" with your desired name) in the command line via
-```
-mamba create -c conda-forge -n name_of_environment pymc nutpie arviz jupyter matplotlib openpyxl "python=3.10"
-```
-3. Install PeakPerformance:
-- __Recommended__: Clone the PeakPerformance repository, then open the command line, navigate to your local clone, activate a Python environment, and install PeakPerformance via
-```
-pip install -e .
-```
-- __Alternatively__: Download the latest Python wheel, then open the command line, navigate to the directory containing the wheel, activate the Python environment created above, and install PeakPerformance via
-```
-pip install name_of_wheel.whl
-```
-
 # How to use PeakPerformance
-Check out the example notebook(s) under `notebooks` and the complementary example data under `example`.
-Also, there are some introductory explanations in the next sections.
+For installation instructions, see `Installation.md`.  
+For instructions regarding the use of PeakPerformance, check out the example notebook(s) under `notebooks`, the complementary example data under `example`, and the following introductory explanations.
 
 ## Preparing raw data
 This step is crucial when using PeakPerformance. Raw data has to be supplied as time series meaning for each signal you want to analyze, save a NumPy array consisting of time in the first dimension and intensity in the second dimension (compare example data). Both time and intensity should also be NumPy arrays. If you e.g. have time and intensity of a singal as lists, you can use the following code to convert, format, and save them in the correct manner:
