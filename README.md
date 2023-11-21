@@ -1,5 +1,5 @@
 # How to use PeakPerformance
-For installation instructions, see `Installation.md`.  
+For installation instructions, see `Installation.md`.
 For instructions regarding the use of PeakPerformance, check out the example notebook(s) under `notebooks`, the complementary example data under `example`, and the following introductory explanations.
 
 ## Preparing raw data
