@@ -137,7 +137,7 @@ class UserInput:
     def acquisition(self, name):
         """Setting the value of the acquisition attribute."""
         if not isinstance(name, str):
-            raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
+            raise InputError(f"The acquisition parameter {name} is {type(name)} but needs to be a string.")
         if name is None:
             raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
@@ -159,7 +159,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The precursor parameter is {type(mz)} but needs to be an int or a float."
+                    f"The precursor parameter {mz} is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The precursor parameter is a None type.")
@@ -181,7 +181,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The product_mz parameter is {type(mz)} but needs to be an int or a float."
+                    f"The product_mz parameter {mz} is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The product_mz_start parameter is a None type.")
@@ -950,7 +950,7 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
     for x in range(len(df_signals)):
         if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["model_type"][x]:
             raise InputError(
-                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
+                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 2} has no model type."
             )
         if pre_filtering:
             if (
@@ -958,7 +958,7 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
                 and df_signals.isnull()["retention_time_estimate"][x]
             ):
                 raise InputError(
-                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
+                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 2} has no retention time estimate."
                 )
     df_signals.set_index("unique_identifier", inplace=True)
     return pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers
