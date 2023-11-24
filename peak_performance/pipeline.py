@@ -1446,6 +1446,7 @@ def selection_loop(
     files_for_selection: Mapping[str, str],
     raw_data_files: Union[List[str], Tuple[str]],
     ic: str,
+    signals: pandas.DataFrame,
 ):
     """
     Function containing the loop over all filenames intended for the model selection.
@@ -1480,39 +1481,38 @@ def selection_loop(
     for filename in files_for_selection.keys():
         # load time series
         timeseries = np.load(Path(path_raw_data) / (filename + "." + file_format))
+        idata_dict = {}
+        # get all implemented models, then remove those which were excluded
+        # from model selection by the user
+        model_list = [model for model in models.ModelType]
+        models_to_exclude = list(signals["models_to_exclude_from_selection"])
+        models_to_exclude = [str(model) for model in models_to_exclude]
+        model_list = [model for model in model_list if model.value not in models_to_exclude]
+        if models.ModelType.Normal in model_list:
+            pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
+            idata_normal = sampling(pmodel_normal, tune=6000)
+            idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
+            idata_normal_summary = az.summary(idata_normal)
+            idata_dict["normal"] = [idata_normal_summary, idata_normal]
+        if models.ModelType.SkewNormal in model_list:
+            pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
+            idata_skew = sampling(pmodel_skew, tune=6000)
+            idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
+            idata_skew_normal_summary = az.summary(idata_skew)
+            idata_dict["skew_normal"] = [idata_skew_normal_summary, idata_skew]
+        if models.ModelType.DoubleNormal in model_list:
+            pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
+            idata_double_normal = sampling(pmodel_double_normal, tune=6000)
+            idata_double_normal = models.compute_log_likelihood(pmodel_double_normal, idata_double_normal)
+            idata_double_normal_summary = az.summary(idata_double_normal)
+            idata_dict["double_normal"] = [idata_double_normal_summary, idata_double_normal]
+        if models.ModelType.DoubleSkewNormal in model_list:       
+            pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
+            idata_double_skew = sampling(pmodel_double_skew, tune=6000)
+            idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
+            idata_double_skew_normal_summary = az.summary(idata_double_skew)
+            idata_dict["double_skew_normal"] = [idata_double_skew_normal_summary, idata_double_skew]
 
-        # create pmodel for every model type
-        pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
-        pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
-        pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
-        pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
-
-        # sample every model
-        idata_normal = sampling(pmodel_normal, tune=6000)
-        idata_skew = sampling(pmodel_skew, tune=6000)
-        idata_double_normal = sampling(pmodel_double_normal, tune=6000)
-        idata_double_skew = sampling(pmodel_double_skew, tune=6000)
-
-        # compute loglikelihood for every model
-        idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
-        idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
-        idata_double_normal = models.compute_log_likelihood(
-            pmodel_double_normal, idata_double_normal
-        )
-        idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
-
-        # gather results in a DataFrame
-        idata_normal_summary = az.summary(idata_normal)
-        idata_skew_normal_summary = az.summary(idata_skew)
-        idata_double_normal_summary = az.summary(idata_double_normal)
-        idata_double_skew_normal_summary = az.summary(idata_double_skew)
-
-        idata_dict = {
-            "normal": [idata_normal_summary, idata_normal],
-            "skew_normal": [idata_skew_normal_summary, idata_skew],
-            "double_normal": [idata_double_normal_summary, idata_double_normal],
-            "double_skew_normal": [idata_double_skew_normal_summary, idata_double_skew],
-        }
         # add model to compare_dict for model selection only if convergence criterion was met (r_hat <= 1.05)
         compare_dict = {}
         for model in idata_dict.keys():
@@ -1567,7 +1567,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # loop over all files_for_selection
     comparison_results = pandas.DataFrame()
     result_df, model_dict = selection_loop(
-        path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
+        path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic, signals=df_signals
     )
     comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
