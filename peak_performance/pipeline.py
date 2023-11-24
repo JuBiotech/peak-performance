@@ -649,9 +649,9 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str = ".npy"):
+def report_save_idata(idata, ui: UserInput, filename: str):
     """
-    Saves inference data object within a zip file.
+    Saves inference data object as a .nc file.
 
     Parameters
     ----------
@@ -661,10 +661,8 @@ def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format:
         Instance of the UserInput class.
     filename
         Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
-    raw_data_file_format
-        Data format (suffix) of the raw data, default is '.npy'.
     """
-    fp = Path(ui.path) / f"{filename[:-len(raw_data_file_format)]}.nc"
+    fp = Path(ui.path) / f"{filename}.nc"
     idata.to_netcdf(str(fp.absolute()))
     return
 
@@ -1150,7 +1148,7 @@ def pipeline_loop(
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file, raw_data_file_format)
+        report_save_idata(idata, ui, file[: -len(ui.raw_data_file_format)])
         # plot data
         if plotting:
             plots.plot_posterior_predictive(
