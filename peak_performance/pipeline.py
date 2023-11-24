@@ -137,7 +137,9 @@ class UserInput:
     def acquisition(self, name):
         """Setting the value of the acquisition attribute."""
         if not isinstance(name, str):
-            raise InputError(f"The acquisition parameter {name} is {type(name)} but needs to be a string.")
+            raise InputError(
+                f"The acquisition parameter {name} is {type(name)} but needs to be a string."
+            )
         if name is None:
             raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
@@ -1503,11 +1505,15 @@ def selection_loop(
         if models.ModelType.DoubleNormal in model_list:
             pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
             idata_double_normal = sampling(pmodel_double_normal, tune=6000)
-            idata_double_normal = models.compute_log_likelihood(pmodel_double_normal, idata_double_normal)
+            idata_double_normal = models.compute_log_likelihood(
+                pmodel_double_normal, idata_double_normal
+            )
             idata_double_normal_summary = az.summary(idata_double_normal)
             idata_dict["double_normal"] = [idata_double_normal_summary, idata_double_normal]
-        if models.ModelType.DoubleSkewNormal in model_list:       
-            pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
+        if models.ModelType.DoubleSkewNormal in model_list:
+            pmodel_double_skew = models.define_model_double_skew_normal(
+                timeseries[0], timeseries[1]
+            )
             idata_double_skew = sampling(pmodel_double_skew, tune=6000)
             idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
             idata_double_skew_normal_summary = az.summary(idata_double_skew)
@@ -1567,7 +1573,11 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # loop over all files_for_selection
     comparison_results = pandas.DataFrame()
     result_df, model_dict = selection_loop(
-        path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic, signals=df_signals
+        path_raw_data,
+        files_for_selection=files_for_selection,
+        raw_data_files=raw_data_files,
+        ic=ic,
+        signals=df_signals,
     )
     comparison_results = pandas.concat([comparison_results, result_df])
     # update signals tab of Template.xlsx
