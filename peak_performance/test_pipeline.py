@@ -642,3 +642,18 @@ def test_model_selection_check():
     selected_model = pl.model_selection_check(result_df, "loo", 25)
     assert selected_model == "double_normal"
     pass
+
+
+def test_model_selection():
+    """
+    Test the model_selection function from the pipeline modul.
+    The function contains the model selection pipeline.
+    """
+    path = Path(__file__).absolute().parent.parent / "test_data/test_model_selection"
+    result, model_dict = pl.model_selection(path)
+    # make sure that the excluded model was really excluded
+    assert "double_normal" not in result.index
+    assert "normal" in result.index
+    assert "skew_normal" in result.index
+    assert model_dict
+    pass
