@@ -1487,8 +1487,11 @@ def selection_loop(
         # get all implemented models, then remove those which were excluded
         # from model selection by the user
         model_list = [model for model in models.ModelType]
-        models_to_exclude = list(signals["models_to_exclude_from_selection"])
-        models_to_exclude = [str(model) for model in models_to_exclude]
+        models_to_exclude = signals.loc[
+            files_for_selection[filename], "models_to_exclude_from_selection"
+        ]
+        models_to_exclude = models_to_exclude.split(",")
+        models_to_exclude = [str(x.strip()) for x in models_to_exclude]
         model_list = [model for model in model_list if model.value not in models_to_exclude]
         if models.ModelType.Normal in model_list:
             pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
@@ -1571,6 +1574,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # get raw_data_files to get automatic access to file format in seleciton_loop
     raw_data_files = detect_raw_data(path_raw_data)
     # loop over all files_for_selection
+    df_signals.set_index("unique_identifier", inplace=True)
     comparison_results = pandas.DataFrame()
     result_df, model_dict = selection_loop(
         path_raw_data,
@@ -1580,7 +1584,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
         signals=df_signals,
     )
     comparison_results = pandas.concat([comparison_results, result_df])
-    # update signals tab of Template.xlsx
+    # update signals tab of Template.xlsx; read again to reset index
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
     try:
         selected_models_to_template(path_raw_data, df_signals, model_dict)
