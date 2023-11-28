@@ -1486,13 +1486,13 @@ def selection_loop(
         idata_dict = {}
         # get all implemented models, then remove those which were excluded
         # from model selection by the user
-        model_list = [model for model in models.ModelType]
-        models_to_exclude = signals.loc[
-            files_for_selection[filename], "models_to_exclude_from_selection"
-        ]
-        models_to_exclude = models_to_exclude.split(",")
-        models_to_exclude = [str(x.strip()) for x in models_to_exclude]
-        model_list = [model for model in model_list if model.value not in models_to_exclude]
+        models_to_exclude = str(
+            signals.loc[files_for_selection[filename], "models_to_exclude_from_selection"]
+        )
+        model_list = set(models.ModelType)
+        if models_to_exclude:
+            exclude_models = {mex.strip() for mex in models_to_exclude.split(",")}
+            model_list = model_list - exclude_models  # type: ignore[operator]
         if models.ModelType.Normal in model_list:
             pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
             idata_normal = sampling(pmodel_normal, tune=6000)
