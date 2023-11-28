@@ -137,7 +137,9 @@ class UserInput:
     def acquisition(self, name):
         """Setting the value of the acquisition attribute."""
         if not isinstance(name, str):
-            raise InputError(f"The acquisition parameter is {type(name)} but needs to be a string.")
+            raise InputError(
+                f"The acquisition parameter {name} is {type(name)} but needs to be a string."
+            )
         if name is None:
             raise InputError("The acquisition parameter is a None type.")
         self._acquisition = name
@@ -159,7 +161,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The precursor parameter is {type(mz)} but needs to be an int or a float."
+                    f"The precursor parameter {mz} is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The precursor parameter is a None type.")
@@ -181,7 +183,7 @@ class UserInput:
                 mz = float(mz)
             except ValueError as ex:
                 raise InputError(
-                    f"The product_mz parameter is {type(mz)} but needs to be an int or a float."
+                    f"The product_mz parameter {mz} is {type(mz)} but needs to be an int or a float."
                 ) from ex
         if mz is None:
             raise InputError("The product_mz_start parameter is a None type.")
@@ -649,9 +651,9 @@ def posterior_predictive_sampling(pmodel, idata):
     return idata
 
 
-def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format: str = ".npy"):
+def report_save_idata(idata, ui: UserInput, filename: str):
     """
-    Saves inference data object within a zip file.
+    Saves inference data object as a .nc file.
 
     Parameters
     ----------
@@ -661,10 +663,8 @@ def report_save_idata(idata, ui: UserInput, filename: str, raw_data_file_format:
         Instance of the UserInput class.
     filename
         Name of a raw date file containing a NumPy array with a time series (time as first, intensity as second element of the array).
-    raw_data_file_format
-        Data format (suffix) of the raw data, default is '.npy'.
     """
-    fp = Path(ui.path) / f"{filename[:-len(raw_data_file_format)]}.nc"
+    fp = Path(ui.path) / f"{filename}.nc"
     idata.to_netcdf(str(fp.absolute()))
     return
 
@@ -950,7 +950,7 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
     for x in range(len(df_signals)):
         if not df_signals.isnull()["unique_identifier"][x] and df_signals.isnull()["model_type"][x]:
             raise InputError(
-                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 1} has no model type."
+                f"In the signals tab of Template.xlsx, the unique identifier in row {x + 2} has no model type."
             )
         if pre_filtering:
             if (
@@ -958,7 +958,7 @@ def pipeline_read_template(path_raw_data: Union[str, os.PathLike]):
                 and df_signals.isnull()["retention_time_estimate"][x]
             ):
                 raise InputError(
-                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 1} has no retention time estimate."
+                    f"In the signals tab of Template.xlsx, the unique_identifier in row {x + 2} has no retention time estimate."
                 )
     df_signals.set_index("unique_identifier", inplace=True)
     return pre_filtering, plotting, peak_width_estimate, minimum_sn, df_signals, unique_identifiers
@@ -1094,8 +1094,6 @@ def pipeline_loop(
 
         # sample the chosen model
         idata = sampling(pmodel)
-        # # save the inference data object as a netcdf file
-        # report_save_idata(idata, ui, file, raw_data_file_format)
         # apply post-sampling filter
         resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
         # if peak was discarded, continue with the next signal
@@ -1116,8 +1114,6 @@ def pipeline_loop(
                 idata = sampling(pmodel, tune=16000)
             else:
                 idata = sampling(pmodel, tune=6000)
-            # # save the inference data object as a netcdf file
-            # report_save_idata(idata, ui, file, raw_data_file_format)
             resample, discard, df_summary = postfiltering(file, idata, ui, df_summary)
             if discard:
                 plots.plot_posterior(
@@ -1150,7 +1146,7 @@ def pipeline_loop(
         # add inference data to df_summary and save it as an Excel file
         df_summary = report_add_data_to_summary(file, idata, df_summary, ui, True)
         # save the inference data object as a netcdf file
-        report_save_idata(idata, ui, file, raw_data_file_format)
+        report_save_idata(idata, ui, file[: -len(ui.raw_data_file_format)])
         # plot data
         if plotting:
             plots.plot_posterior_predictive(
@@ -1452,6 +1448,7 @@ def selection_loop(
     files_for_selection: Mapping[str, str],
     raw_data_files: Union[List[str], Tuple[str]],
     ic: str,
+    signals: pandas.DataFrame,
 ):
     """
     Function containing the loop over all filenames intended for the model selection.
@@ -1486,39 +1483,45 @@ def selection_loop(
     for filename in files_for_selection.keys():
         # load time series
         timeseries = np.load(Path(path_raw_data) / (filename + "." + file_format))
-
-        # create pmodel for every model type
-        pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
-        pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
-        pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
-        pmodel_double_skew = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
-
-        # sample every model
-        idata_normal = sampling(pmodel_normal, tune=6000)
-        idata_skew = sampling(pmodel_skew, tune=6000)
-        idata_double_normal = sampling(pmodel_double_normal, tune=6000)
-        idata_double_skew = sampling(pmodel_double_skew, tune=6000)
-
-        # compute loglikelihood for every model
-        idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
-        idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
-        idata_double_normal = models.compute_log_likelihood(
-            pmodel_double_normal, idata_double_normal
+        idata_dict = {}
+        # get all implemented models, then remove those which were excluded
+        # from model selection by the user
+        models_to_exclude = str(
+            signals.loc[files_for_selection[filename], "models_to_exclude_from_selection"]
         )
-        idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
+        model_list = set(models.ModelType)
+        if models_to_exclude:
+            exclude_models = {mex.strip() for mex in models_to_exclude.split(",")}
+            model_list = model_list - exclude_models  # type: ignore[operator]
+        if models.ModelType.Normal in model_list:
+            pmodel_normal = models.define_model_normal(timeseries[0], timeseries[1])
+            idata_normal = sampling(pmodel_normal, tune=6000)
+            idata_normal = models.compute_log_likelihood(pmodel_normal, idata_normal)
+            idata_normal_summary = az.summary(idata_normal)
+            idata_dict["normal"] = [idata_normal_summary, idata_normal]
+        if models.ModelType.SkewNormal in model_list:
+            pmodel_skew = models.define_model_skew(timeseries[0], timeseries[1])
+            idata_skew = sampling(pmodel_skew, tune=6000)
+            idata_skew = models.compute_log_likelihood(pmodel_skew, idata_skew)
+            idata_skew_normal_summary = az.summary(idata_skew)
+            idata_dict["skew_normal"] = [idata_skew_normal_summary, idata_skew]
+        if models.ModelType.DoubleNormal in model_list:
+            pmodel_double_normal = models.define_model_double_normal(timeseries[0], timeseries[1])
+            idata_double_normal = sampling(pmodel_double_normal, tune=6000)
+            idata_double_normal = models.compute_log_likelihood(
+                pmodel_double_normal, idata_double_normal
+            )
+            idata_double_normal_summary = az.summary(idata_double_normal)
+            idata_dict["double_normal"] = [idata_double_normal_summary, idata_double_normal]
+        if models.ModelType.DoubleSkewNormal in model_list:
+            pmodel_double_skew = models.define_model_double_skew_normal(
+                timeseries[0], timeseries[1]
+            )
+            idata_double_skew = sampling(pmodel_double_skew, tune=6000)
+            idata_double_skew = models.compute_log_likelihood(pmodel_double_skew, idata_double_skew)
+            idata_double_skew_normal_summary = az.summary(idata_double_skew)
+            idata_dict["double_skew_normal"] = [idata_double_skew_normal_summary, idata_double_skew]
 
-        # gather results in a DataFrame
-        idata_normal_summary = az.summary(idata_normal)
-        idata_skew_normal_summary = az.summary(idata_skew)
-        idata_double_normal_summary = az.summary(idata_double_normal)
-        idata_double_skew_normal_summary = az.summary(idata_double_skew)
-
-        idata_dict = {
-            "normal": [idata_normal_summary, idata_normal],
-            "skew_normal": [idata_skew_normal_summary, idata_skew],
-            "double_normal": [idata_double_normal_summary, idata_double_normal],
-            "double_skew_normal": [idata_double_skew_normal_summary, idata_double_skew],
-        }
         # add model to compare_dict for model selection only if convergence criterion was met (r_hat <= 1.05)
         compare_dict = {}
         for model in idata_dict.keys():
@@ -1571,12 +1574,17 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
     # get raw_data_files to get automatic access to file format in seleciton_loop
     raw_data_files = detect_raw_data(path_raw_data)
     # loop over all files_for_selection
+    df_signals.set_index("unique_identifier", inplace=True)
     comparison_results = pandas.DataFrame()
     result_df, model_dict = selection_loop(
-        path_raw_data, files_for_selection=files_for_selection, raw_data_files=raw_data_files, ic=ic
+        path_raw_data,
+        files_for_selection=files_for_selection,
+        raw_data_files=raw_data_files,
+        ic=ic,
+        signals=df_signals,
     )
     comparison_results = pandas.concat([comparison_results, result_df])
-    # update signals tab of Template.xlsx
+    # update signals tab of Template.xlsx; read again to reset index
     df_signals = pandas.read_excel(Path(path_raw_data) / "Template.xlsx", sheet_name="signals")
     try:
         selected_models_to_template(path_raw_data, df_signals, model_dict)
