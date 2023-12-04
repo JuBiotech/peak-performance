@@ -1,6 +1,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/bletl)](https://pypi.org/project/peak-performance/)
 [![pipeline](https://github.com/jubiotech/bletl/workflows/pipeline/badge.svg)](https://github.com/JuBiotech/peak-performance/actions)
 [![coverage](https://codecov.io/gh/jubiotech/bletl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuBiotech/peak-performance)
+[![DOI](https://doi.org/10.5281/zenodo.10255543.svg)](https://doi.org/10.5281/zenodo.10255543)
 
 # How to use PeakPerformance
 For installation instructions, see `Installation.md`.
@@ -33,4 +34,5 @@ If you encounter bugs while using PeakPerformance, please bring them to our atte
 When contributing code, create a local clone of PeakPerformance, create a new branch, and open a pull request (PR).
 
 # How to cite
-Will be updated once the paper has been released and a zenodo DOI has been created.
+Head over to Zenodo to [generate a BibTeX citation](https://doi.org/10.5281/zenodo.10255543) for the latest release.
+A publication has just been submitted to a scientific journal. Once published, this section will be updated.
