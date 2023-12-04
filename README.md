@@ -1,6 +1,6 @@
-[![PyPI version](https://img.shields.io/pypi/v/bletl)](https://pypi.org/project/peak-performance/)
-[![pipeline](https://github.com/jubiotech/bletl/workflows/pipeline/badge.svg)](https://github.com/JuBiotech/peak-performance/actions)
-[![coverage](https://codecov.io/gh/jubiotech/bletl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuBiotech/peak-performance)
+[![PyPI version](https://img.shields.io/pypi/v/peak-performance)](https://pypi.org/project/peak-performance/)
+[![pipeline](https://github.com/jubiotech/peak-performance/workflows/pipeline/badge.svg)](https://github.com/JuBiotech/peak-performance/actions)
+[![coverage](https://codecov.io/gh/jubiotech/peak-performance/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuBiotech/peak-performance)
 [![DOI](https://zenodo.org/badge/713469041.svg)](https://zenodo.org/doi/10.5281/zenodo.10255543)
 
 # How to use PeakPerformance
