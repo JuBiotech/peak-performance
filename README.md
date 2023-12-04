@@ -27,7 +27,7 @@ Since model selection is a computationally demanding and time consuming process,
 If an error occured in the middle of a batch run, then you can use the `pipeline_restart` function in the `pipeline` module to create a new batch which will analyze only those samples, which have not been analyzed previously.
 
 ### The model parameters don't converge and/or the fit does not describe the raw data well.
-Check the separate file `How to adapt PeakPerformance to you data`.
+Check the separate file `How to adapt PeakPerformance to your data`.
 
 # How to contribute
 If you encounter bugs while using PeakPerformance, please bring them to our attention by opening an issue. When doing so, describe the problem in detail and add screenshots/code snippets and whatever other helpful material you can provide.
