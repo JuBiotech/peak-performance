@@ -20,6 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -e .[test]
+        pip install twine wheel
     - name: Run tests
       run: |
         pytest -v --cov-report xml --cov=peak_performance --cov-report term-missing peak_performance
