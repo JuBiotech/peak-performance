@@ -1,0 +1,36 @@
+name: release-pipeline
+
+on:
+  release:
+    types:
+      - created
+
+
+jobs:
+  release-job:
+    runs-on: ubuntu-latest
+    env:
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    - name: Build package
+      run: |
+        pip install twine wheel
+        python setup.py bdist_wheel
+    - name: Check version number match
+      run: |
+        echo "GITHUB_REF: ${GITHUB_REF}"
+        # Make sure the package version is the same as the tag
+        grep -Rq "^Version: ${GITHUB_REF:11}$" peak_performance.egg-info/PKG-INFO
+    - name: Publish to PyPI
+      run: |
+        twine check dist/*
+        twine upload --repository pypi --username __token__ --password ${PYPI_TOKEN} dist/*
+    - name: Test installation
+      run: |
+        sleep 120
+        pip install peak_performance==${GITHUB_REF:11}
