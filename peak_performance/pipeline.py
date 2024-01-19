@@ -1409,7 +1409,7 @@ def selected_models_to_template(
 
 
 def model_selection_check(
-    result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 25
+    result_df: pandas.DataFrame, ic: str, elpd_threshold: Union[str, float] = 35
 ) -> str:
     """
     During model seleciton, double peak models are sometimes incorrectly preferred due to their increased complexity.
@@ -1435,10 +1435,11 @@ def model_selection_check(
     selected_model = str(result_df.index[0])
     if "double" in selected_model:
         df_single_peak_models = result_df[~result_df.index.str.contains("double")]
-        elpd_single = max(list(df_single_peak_models[f"elpd_{ic}"]))
-        elpd_double = max(list(result_df[f"elpd_{ic}"]))
-        if not elpd_double > elpd_single + elpd_threshold:
-            selected_model = str(df_single_peak_models.index[0])
+        if len(df_single_peak_models) > 0:
+            elpd_single = max(list(df_single_peak_models[f"elpd_{ic}"]))
+            elpd_double = max(list(result_df[f"elpd_{ic}"]))
+            if not elpd_double > elpd_single + elpd_threshold:
+                selected_model = str(df_single_peak_models.index[0])
     return selected_model
 
 
