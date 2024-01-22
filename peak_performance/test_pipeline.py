@@ -636,8 +636,15 @@ def test_model_selection_check():
     assert selected_model == "normal"
     # case 2: double peak exceeds elpd score difference threshold and is thusly accepted
     result_df = pandas.DataFrame(
-        {"elpd_loo": [50, 30, 10, -5], "ic": ["loo", "loo", "loo", "loo"]},
+        {"elpd_loo": [50, 30, 20, -5], "ic": ["loo", "loo", "loo", "loo"]},
         index=["double_normal", "double_skew_normal", "normal", "skew_normal"],
+    )
+    selected_model = pl.model_selection_check(result_df, "loo", 25)
+    assert selected_model == "double_normal"
+    # case 3: single peak models were excluded
+    result_df = pandas.DataFrame(
+        {"elpd_loo": [50, 30], "ic": ["loo", "loo"]},
+        index=["double_normal", "double_skew_normal"],
     )
     selected_model = pl.model_selection_check(result_df, "loo", 25)
     assert selected_model == "double_normal"
