@@ -158,21 +158,20 @@ class TestDistributions:
 
 
 @pytest.mark.parametrize(
-    "model_type", ["normal", "skew_normal", "double_normal", "double_skew_normal"]
+    "model_type,define_func",
+    [
+        ("normal", models.define_model_normal),
+        ("skew_normal", models.define_model_skew),
+        ("double_normal", models.define_model_double_normal),
+        ("double_skew_normal", models.define_model_double_skew_normal),
+    ],
 )
-def test_pymc_sampling(model_type):
+def test_pymc_sampling(model_type, define_func):
     timeseries = np.load(
         Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
     )
 
-    if model_type == models.ModelType.Normal:
-        pmodel = models.define_model_normal(timeseries[0], timeseries[1])
-    elif model_type == models.ModelType.SkewNormal:
-        pmodel = models.define_model_skew(timeseries[0], timeseries[1])
-    elif model_type == models.ModelType.DoubleNormal:
-        pmodel = models.define_model_double_normal(timeseries[0], timeseries[1])
-    elif model_type == models.ModelType.DoubleSkewNormal:
-        pmodel = models.define_model_double_skew_normal(timeseries[0], timeseries[1])
+    pmodel = define_func(timeseries[0], timeseries[1])
     with pmodel:
         idata = pm.sample(cores=2, chains=2, tune=3, draws=5)
     if model_type in [models.ModelType.DoubleNormal, models.ModelType.DoubleSkewNormal]:
