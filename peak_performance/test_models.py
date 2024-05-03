@@ -3,6 +3,7 @@ from pathlib import Path
 import arviz as az
 import numpy as np
 import pymc as pm
+import pytensor.tensor as pt
 import pytest
 import scipy.integrate
 import scipy.stats as st
@@ -23,6 +24,43 @@ def test_initial_guesses():
     assert expected_baseline_fit.slope == slope
     assert expected_baseline_fit.intercept == intercept
     assert expected_noise_width == noise_width
+    pass
+
+
+def test_zsn_sorting():
+    """This tests a workaround that we rely on for multi-peak models."""
+    coords = {
+        "thing": ["left", "right"],
+    }
+    with pm.Model(coords=coords) as pmodel:
+        hyper = pm.Normal("hyper", mu=0, sigma=3)
+        diff = pm.ZeroSumNormal(
+            "diff",
+            sigma=1,
+            shape=2,
+        )
+        # Create a sorted deterministic without using transforms
+        diff_sorted = pm.Deterministic("diff_sorted", pt.sort(diff), dims="thing")
+        pos = pm.Deterministic(
+            "pos",
+            hyper + diff_sorted,
+            dims="thing",
+        )
+        # Observe the two things in incorrect order to provoke the model 😈
+        dat = pm.Data("dat", [0.2, -0.3], dims="thing")
+        pm.Normal("L", pos, observed=dat, dims="thing")
+
+    # Check draws from the prior
+    drawn = pm.draw(diff_sorted, draws=69)
+    np.testing.assert_array_less(drawn[:, 0], drawn[:, 1])
+
+    # And check MCMC draws too
+    with pmodel:
+        idata = pm.sample(
+            chains=1, tune=10, draws=69, step=pm.Metropolis(), compute_convergence_checks=False
+        )
+    sampled = idata.posterior["diff_sorted"].stack(sample=("chain", "draw")).values.T
+    np.testing.assert_array_less(sampled[:, 0], sampled[:, 1])
     pass
 
 
