@@ -193,7 +193,7 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
 def double_model_mean_prior(time):
     """
-    Function creating prior probability distributions for double peaks using a ZeroSumNormal distribution.
+    Function creating prior probability distributions for multi-peaks using a ZeroSumNormal distribution.
 
     Parameters
     ----------
@@ -203,23 +203,31 @@ def double_model_mean_prior(time):
     Returns
     -------
     mean
-        Normally distributed prior for the ordered means of the double peak model.
+        Normally distributed prior for the ordered means of the multi-peak model.
     diff
-        Difference between meanmean and mean.
+        Difference between the group mean and peak-wise mean.
     meanmean
-        Normally distributed prior for the mean of the double peak means.
+        Normally distributed prior for the group mean of the peak means.
     """
+    pmodel = pm.modelcontext(None)
     meanmean = pm.Normal("meanmean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6)
-    diff = pm.ZeroSumNormal(
-        "diff",
-        sigma=1,
-        shape=(2,),  # currently no dims due to bug with ordered transformation
+    diff_unsorted = pm.ZeroSumNormal(
+        "diff_unsorted",
+        sigma=2,
+        # Support arbitrary number of subpeaks
+        shape=len(pmodel.coords["subpeak"]),
+        # NOTE: As of PyMC v5.14, the OrderedTransform and ZeroSumTransform are incompatible.
+        # See https://github.com/pymc-devs/pymc/issues/6975.
+        # As a workaround we'll call pt.sort a few lines below.
     )
+    diff = pm.Deterministic("diff", pt.sort(diff_unsorted), dims="subpeak")
     mean = pm.Normal(
         "mean",
-        mu=meanmean + diff,
-        sigma=1,
-        transform=pm.distributions.transforms.ordered,
+        meanmean + diff,
+        # Introduce a small jitter to the subpeak means to decouple them
+        # from the strictly asymmetric ZeroSumNormal entries.
+        # This reduces the chances of unwanted bimodality.
+        sigma=0.01,
         dims=("subpeak",),
     )
     return mean, diff, meanmean
