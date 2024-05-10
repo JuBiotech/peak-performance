@@ -211,18 +211,23 @@ def double_model_mean_prior(time):
     """
     pmodel = pm.modelcontext(None)
     meanmean = pm.Normal("meanmean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6)
-    diff = pm.ZeroSumNormal(
-        "diff",
-        sigma=1,
+    diff_unsorted = pm.ZeroSumNormal(
+        "diff_unsorted",
+        sigma=2,
         # Support arbitrary number of subpeaks
         shape=len(pmodel.coords["subpeak"]),
-        # NOTE: As of PyMC v5.13, the OrderedTransform and ZeroSumTransform are incompatible.
+        # NOTE: As of PyMC v5.14, the OrderedTransform and ZeroSumTransform are incompatible.
         # See https://github.com/pymc-devs/pymc/issues/6975.
         # As a workaround we'll call pt.sort a few lines below.
     )
-    mean = pm.Deterministic(
+    diff = pm.Deterministic("diff", pt.sort(diff_unsorted), dims="subpeak")
+    mean = pm.Normal(
         "mean",
-        meanmean + pt.sort(diff),
+        meanmean + diff,
+        # Introduce a small jitter to the subpeak means to decouple them
+        # from the strictly asymmetric ZeroSumNormal entries.
+        # This reduces the chances of unwanted bimodality.
+        sigma=0.01,
         dims=("subpeak",),
     )
     return mean, diff, meanmean
