@@ -489,6 +489,7 @@ def sampling(pmodel, **sample_kwargs):
     idata
         Inference data object.
     """
+    sample_kwargs.setdefault("chains", 4)
     sample_kwargs.setdefault("tune", 2000)
     sample_kwargs.setdefault("draws", 2000)
     # check if nutpie is available; if so, use it to enhance performance
