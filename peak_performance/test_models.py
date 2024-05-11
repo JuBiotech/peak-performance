@@ -10,6 +10,8 @@ import scipy.stats as st
 
 from peak_performance import models
 
+_DP_ROOT = Path(__file__).absolute().parent.parent
+
 
 def test_initial_guesses():
     # define time and intensity for example with known result
@@ -204,10 +206,7 @@ class TestDistributions:
         ("double_skew_normal", models.define_model_double_skew_normal),
     ],
 )
-def test_pymc_sampling(model_type, define_func):
-    timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
-    )
+    timeseries = np.load(_DP_ROOT / "example" / "A2t2R1Part1_132_85.9_86.1.npy")
 
     pmodel = define_func(timeseries[0], timeseries[1])
     with pmodel:
@@ -221,7 +220,7 @@ def test_pymc_sampling(model_type, define_func):
 
 
 def test_model_comparison():
-    path = Path(__file__).absolute().parent.parent / "test_data/test_model_comparison"
+    path = _DP_ROOT / "test_data/test_model_comparison"
     idata_normal = az.from_netcdf(path / "idata_normal.nc")
     idata_skew = az.from_netcdf(path / "idata_skew.nc")
     compare_dict = {
