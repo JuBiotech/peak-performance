@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 import arviz as az
 import numpy as np
@@ -31,7 +31,7 @@ def plot_raw_data(
     identifier: str,
     time: np.ndarray,
     intensity: np.ndarray,
-    path: Union[str, os.PathLike],
+    path: Optional[Union[str, os.PathLike]],
     save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
@@ -62,9 +62,10 @@ def plot_raw_data(
     plt.xticks(size=11.5)
     plt.yticks(size=11.5)
     fig.tight_layout()
-    for format in save_formats:
-        fig.savefig(Path(path) / f"{identifier}_NoPeak.{format}", format=format)
-    plt.close(fig)
+    if path is not None:
+        for format in save_formats:
+            fig.savefig(Path(path) / f"{identifier}_NoPeak.{format}", format=format)
+        plt.close(fig)
 
     return
 
@@ -74,7 +75,6 @@ def plot_density(
 ):
     """
     Method to plot the original data points alongside the posterior predictive plot (percentiles marked with a black, dashed line).
-    Serves as a more accurate comparison between data and model than comparing data and posterior distribution.
 
     Parameters
     ----------
@@ -135,7 +135,7 @@ def plot_posterior_predictive(
     identifier: str,
     time: np.ndarray,
     intensity: np.ndarray,
-    path: Union[str, os.PathLike],
+    path: Optional[Union[str, os.PathLike]],
     idata: az.InferenceData,
     discarded: bool,
     save_formats: Sequence[str] = ("png", "svg"),
@@ -179,16 +179,19 @@ def plot_posterior_predictive(
     plt.yticks(size=11.5)
     plt.legend()
     fig.tight_layout()
-    # if signal was discarded, add a "_NoPeak" to the file name
-    if discarded:
-        for format in save_formats:
-            fig.savefig(
-                Path(path) / f"{identifier}_predictive_posterior_NoPeak.{format}", format=format
-            )
-    else:
-        for format in save_formats:
-            fig.savefig(Path(path) / f"{identifier}_predictive_posterior.{format}", format=format)
-    plt.close(fig)
+    if path is not None:
+        # if signal was discarded, add a "_NoPeak" to the file name
+        if discarded:
+            for format in save_formats:
+                fig.savefig(
+                    Path(path) / f"{identifier}_predictive_posterior_NoPeak.{format}", format=format
+                )
+        else:
+            for format in save_formats:
+                fig.savefig(
+                    Path(path) / f"{identifier}_predictive_posterior.{format}", format=format
+                )
+        plt.close(fig)
 
     return
 
@@ -197,7 +200,7 @@ def plot_posterior(
     identifier: str,
     time: np.ndarray,
     intensity: np.ndarray,
-    path: Union[str, os.PathLike],
+    path: Optional[Union[str, os.PathLike]],
     idata: az.InferenceData,
     discarded: bool,
     save_formats: Sequence[str] = ("png", "svg"),
@@ -246,14 +249,15 @@ def plot_posterior(
     plt.xticks(size=11.5)
     plt.yticks(size=11.5)
     fig.tight_layout()
-    # if signal was discarded, add a "_NoPeak" to the file name
-    if discarded:
-        for format in save_formats:
-            fig.savefig(Path(path) / f"{identifier}_posterior_NoPeak.{format}", format=format)
-    else:
-        for format in save_formats:
-            fig.savefig(Path(path) / f"{identifier}_posterior.{format}", format=format)
-    plt.close(fig)
+    if path is not None:
+        # if signal was discarded, add a "_NoPeak" to the file name
+        if discarded:
+            for format in save_formats:
+                fig.savefig(Path(path) / f"{identifier}_posterior_NoPeak.{format}", format=format)
+        else:
+            for format in save_formats:
+                fig.savefig(Path(path) / f"{identifier}_posterior.{format}", format=format)
+        plt.close(fig)
 
     return
 
@@ -261,7 +265,7 @@ def plot_posterior(
 def plot_model_comparison(
     df_comp: pandas.DataFrame,
     identifier: str,
-    path: Union[str, os.PathLike],
+    path: Optional[Union[str, os.PathLike]],
     save_formats: Sequence[str] = ("png", "svg"),
 ):
     """
@@ -282,8 +286,9 @@ def plot_model_comparison(
     axes = az.plot_compare(df_comp, insample_dev=False)
     fig = axes.figure
     plt.tight_layout()
-    for format in save_formats:
-        fig.savefig(Path(path) / f"model_comparison_{identifier}.{format}", format=format)
-    plt.close(fig)
+    if path is not None:
+        for format in save_formats:
+            fig.savefig(Path(path) / f"model_comparison_{identifier}.{format}", format=format)
+        plt.close(fig)
 
     return
