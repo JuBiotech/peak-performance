@@ -10,6 +10,25 @@ import scipy.stats as st
 
 from peak_performance import models
 
+_DP_ROOT = Path(__file__).absolute().parent.parent
+_REQUIRED_VARIABLES = {
+    "baseline_slope",
+    "baseline_intercept",
+    "baseline",
+    "std",
+    "height",
+    "area",
+    "sn",
+    "mean",
+    "y",
+    "noise",
+}
+_REQUIRED_DATA = {
+    "slope_guess",
+    "intercept_guess",
+    "noise_width_guess",
+}
+
 
 def test_initial_guesses():
     # define time and intensity for example with known result
@@ -30,28 +49,28 @@ def test_initial_guesses():
 def test_zsn_sorting():
     """This tests a workaround that we rely on for multi-peak models."""
     coords = {
-        "thing": ["left", "right"],
+        "thing": ["left", "center", "right"],
     }
     with pm.Model(coords=coords) as pmodel:
         hyper = pm.Normal("hyper", mu=0, sigma=3)
-        diff = pm.ZeroSumNormal(
-            "diff",
+        offset_unsorted = pm.ZeroSumNormal(
+            "offset_unsorted",
             sigma=1,
-            shape=2,
+            shape=3,
         )
         # Create a sorted deterministic without using transforms
-        diff_sorted = pm.Deterministic("diff_sorted", pt.sort(diff), dims="thing")
+        offset = pm.Deterministic("offset", pt.sort(offset_unsorted), dims="thing")
         pos = pm.Deterministic(
             "pos",
-            hyper + diff_sorted,
+            hyper + offset,
             dims="thing",
         )
         # Observe the two things in incorrect order to provoke the model 😈
-        dat = pm.Data("dat", [0.2, -0.3], dims="thing")
+        dat = pm.Data("dat", [0.2, 0.05, -0.3], dims="thing")
         pm.Normal("L", pos, observed=dat, dims="thing")
 
     # Check draws from the prior
-    drawn = pm.draw(diff_sorted, draws=69)
+    drawn = pm.draw(offset, draws=69)
     np.testing.assert_array_less(drawn[:, 0], drawn[:, 1])
 
     # And check MCMC draws too
@@ -59,8 +78,15 @@ def test_zsn_sorting():
         idata = pm.sample(
             chains=1, tune=10, draws=69, step=pm.Metropolis(), compute_convergence_checks=False
         )
-    sampled = idata.posterior["diff_sorted"].stack(sample=("chain", "draw")).values.T
-    np.testing.assert_array_less(sampled[:, 0], sampled[:, 1])
+    for vname in ["offset", "pos"]:
+        np.testing.assert_array_less(
+            idata.posterior[vname].sel(thing="left"),
+            idata.posterior[vname].sel(thing="center"),
+        )
+        np.testing.assert_array_less(
+            idata.posterior[vname].sel(thing="center"),
+            idata.posterior[vname].sel(thing="right"),
+        )
     pass
 
 
@@ -196,32 +222,52 @@ class TestDistributions:
 
 
 @pytest.mark.parametrize(
-    "model_type,define_func",
+    "define_func",
     [
-        ("normal", models.define_model_normal),
-        ("skew_normal", models.define_model_skew),
-        ("double_normal", models.define_model_double_normal),
-        ("double_skew_normal", models.define_model_double_skew_normal),
+        models.define_model_normal,
+        models.define_model_skew,
     ],
 )
-def test_pymc_sampling(model_type, define_func):
-    timeseries = np.load(
-        Path(__file__).absolute().parent.parent / "example" / "A2t2R1Part1_132_85.9_86.1.npy"
-    )
+def test_singlepeak_sampling(define_func):
+    timeseries = np.load(_DP_ROOT / "example" / "A2t2R1Part1_132_85.9_86.1.npy")
 
     pmodel = define_func(timeseries[0], timeseries[1])
     with pmodel:
         idata = pm.sample(cores=2, chains=2, tune=3, draws=5)
-    if model_type in [models.ModelType.DoubleNormal, models.ModelType.DoubleSkewNormal]:
-        summary = az.summary(idata)
-        # test whether the ordered transformation and the subpeak dimension work as intended
-        assert summary.loc["mean[0]", "mean"] < summary.loc["mean[1]", "mean"]
-        # assert summary.loc["area[0]", "mean"] < summary.loc["area[1]", "mean"]
+    assert set(idata.posterior.keys()) >= _REQUIRED_VARIABLES
+    assert set(idata.constant_data.keys()) >= _REQUIRED_DATA
+    pass
+
+
+@pytest.mark.parametrize(
+    "define_func",
+    [
+        models.define_model_double_normal,
+        models.define_model_double_skew_normal,
+    ],
+)
+def test_doublepeak_sampling(define_func):
+    timeseries = np.load(_DP_ROOT / "example" / "A2t2R1Part1_132_85.9_86.1.npy")
+
+    pmodel = define_func(timeseries[0], timeseries[1])
+    with pmodel:
+        idata = pm.sample(cores=2, chains=2, tune=3, draws=5)
+    assert set(idata.posterior.keys()) >= _REQUIRED_VARIABLES
+    assert set(idata.constant_data.keys()) >= _REQUIRED_DATA
+    # Confirm the order of peaks is as intended
+    np.testing.assert_array_less(
+        idata.posterior["offset"].sel(subpeak=0),
+        idata.posterior["offset"].sel(subpeak=1),
+    )
+    np.testing.assert_array_less(
+        idata.posterior["mean"].sel(subpeak=0),
+        idata.posterior["mean"].sel(subpeak=1),
+    )
     pass
 
 
 def test_model_comparison():
-    path = Path(__file__).absolute().parent.parent / "test_data/test_model_comparison"
+    path = _DP_ROOT / "test_data/test_model_comparison"
     idata_normal = az.from_netcdf(path / "idata_normal.nc")
     idata_skew = az.from_netcdf(path / "idata_skew.nc")
     compare_dict = {

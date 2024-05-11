@@ -193,7 +193,7 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
 
 def double_model_mean_prior(time):
     """
-    Function creating prior probability distributions for multi-peaks using a ZeroSumNormal distribution.
+    Function creating prior probability distributions for the mean retention times of a dual-peak.
 
     Parameters
     ----------
@@ -209,10 +209,47 @@ def double_model_mean_prior(time):
     meanmean
         Normally distributed prior for the group mean of the peak means.
     """
+    tmin = np.min(time)
+    tdelta = np.ptp(time)
+    meanmean = pm.Normal("meanmean", mu=tmin + tdelta / 2, sigma=tdelta / 6)
+    separation = pm.Gamma(
+        "separation",
+        mu=tdelta / 6,
+        sigma=tdelta / 12,
+    )
+    offset = pm.Deterministic("offset", pt.stack([-separation / 2, separation / 2]), dims="subpeak")
+    mean = pm.Deterministic(
+        "mean",
+        meanmean + offset,
+        dims=("subpeak",),
+    )
+    return mean, offset, meanmean
+
+
+def multi_peak_means_prior(time):
+    """
+    Function creating prior probability distributions for multi-peaks using a ZeroSumNormal distribution.
+
+    The number of peaks is determined from the `"subpeak"` model coordinates.
+
+    Parameters
+    ----------
+    time
+        NumPy array with the time values of the relevant timeframe.
+
+    Returns
+    -------
+    mean
+        Normally distributed prior for the ordered means of the multi-peak model.
+    offset
+        Time offset between the group mean and peak-wise mean.
+    meanmean
+        Normally distributed prior for the group mean of the peak means.
+    """
     pmodel = pm.modelcontext(None)
     meanmean = pm.Normal("meanmean", mu=np.min(time) + np.ptp(time) / 2, sigma=np.ptp(time) / 6)
-    diff_unsorted = pm.ZeroSumNormal(
-        "diff_unsorted",
+    offset_unsorted = pm.ZeroSumNormal(
+        "offset_unsorted",
         sigma=2,
         # Support arbitrary number of subpeaks
         shape=len(pmodel.coords["subpeak"]),
@@ -220,17 +257,16 @@ def double_model_mean_prior(time):
         # See https://github.com/pymc-devs/pymc/issues/6975.
         # As a workaround we'll call pt.sort a few lines below.
     )
-    diff = pm.Deterministic("diff", pt.sort(diff_unsorted), dims="subpeak")
-    mean = pm.Normal(
+    offset = pm.Deterministic("offset", pt.sort(offset_unsorted), dims="subpeak")
+    mean = pm.Deterministic(
         "mean",
-        meanmean + diff,
+        meanmean + offset,
         # Introduce a small jitter to the subpeak means to decouple them
         # from the strictly asymmetric ZeroSumNormal entries.
         # This reduces the chances of unwanted bimodality.
-        sigma=0.01,
         dims=("subpeak",),
     )
-    return mean, diff, meanmean
+    return mean, offset, meanmean
 
 
 def double_normal_peak_shape(baseline, time: np.ndarray, mean, std, *, height):
@@ -298,7 +334,8 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
         noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
-        std = pm.HalfNormal("std", sigma=[np.ptp(time) / 3, np.ptp(time) / 3], dims=("subpeak",))
+        # NOTE: We expect dobule-peaks to be narrower w.r.t. the time frame, compare to single peaks.
+        std = pm.HalfNormal("std", sigma=[np.ptp(time) / 6, np.ptp(time) / 6], dims=("subpeak",))
         height = pm.HalfNormal(
             "height", sigma=[0.95 * np.max(intensity), 0.95 * np.max(intensity)], dims=("subpeak",)
         )
