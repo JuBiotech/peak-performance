@@ -1,0 +1,9 @@
+arviz
+matplotlib
+numpy
+pandas
+pymc>=5.9.1
+pytensor
+scipy
+openpyxl
+numpy<1.26.0

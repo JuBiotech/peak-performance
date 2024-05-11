@@ -19,8 +19,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install -e .[test]
-        pip install twine wheel
+        pip install -e .
+        pip install -r requirements-dev.txt
     - name: Run tests
       run: |
         pytest -v --cov-report xml --cov=peak_performance --cov-report term-missing peak_performance
