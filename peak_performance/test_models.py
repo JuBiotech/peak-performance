@@ -30,19 +30,31 @@ _REQUIRED_DATA = {
 }
 
 
+def test_noise_guessing():
+    expected = 0.7
+    intensities = [
+        *np.random.normal(10, expected, size=200),
+        *np.random.normal(0, 6, size=600),
+        *np.random.normal(40, expected, size=200),
+    ]
+    actual = models.guess_noise(intensities)
+    assert 0.6 < actual < 0.8
+    pass
+
+
 def test_initial_guesses():
     # define time and intensity for example with known result
     time = 2 + 0.1 * np.arange(17)
     intensity = [1, 5, 3] + 11 * [1000] + [7, 9, 11]
     # define expected results
-    expected_noise_width = np.ptp([1, 5, 3, 7, 9, 11])
     expected_baseline_fit = st.linregress([2, 2.1, 2.2, 3.4, 3.5, 3.6], [1, 5, 3, 7, 9, 11])
     # get the values from the initial guesses function
     slope, intercept, noise_width = models.initial_guesses(time, intensity)
     # compare the outcome with the expected values
     assert expected_baseline_fit.slope == slope
     assert expected_baseline_fit.intercept == intercept
-    assert expected_noise_width == noise_width
+    # With this example the noise is clipped to at least 10
+    assert noise_width == 10
     pass
 
 

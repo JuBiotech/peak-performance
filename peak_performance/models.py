@@ -36,6 +36,15 @@ class ModelType(str, Enum):
     DoubleSkewNormal = "double_skew_normal"
 
 
+def guess_noise(intensity):
+    n = len(intensity)
+    ifrom = int(np.ceil(0.15 * n))
+    ito = int(np.floor(0.85 * n))
+    start_ints = intensity[:ifrom]
+    end_ints = intensity[ito:]
+    return np.std([*(start_ints - np.mean(start_ints)), *(end_ints - np.mean(end_ints))])
+
+
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     """
     Provide initial guesses for priors.
@@ -79,11 +88,15 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     # use the indeces in noise_index to get the time and intensity of all noise data points
     noise_time = [time[n] for n in noise_index]
     noise_intensity = [intensity[n] for n in noise_index]
-    # calculate the width of the noise
-    noise_width_guess = max(noise_intensity) - min(noise_intensity)
 
     # use scipy to fit a linear regression through the noise as a prior for the eventual baseline
     baseline_fit = st.linregress(noise_time, noise_intensity)
+
+    # calculate the width of the noise
+    noise_width_guess = guess_noise(intensity)
+
+    # clip the noise to at least 10
+    noise_width_guess = np.clip(noise_width_guess, 10, np.inf)
 
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
@@ -166,7 +179,7 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
-        pm.ConstantData("noise_width_guess", noise_width_guess)
+        noise_guess = pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
@@ -174,7 +187,7 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
         )
         baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        noise = pm.LogNormal("noise", pt.log(noise_guess))
         # define priors for parameters of a normally distributed posterior
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
@@ -325,7 +338,7 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
-        pm.ConstantData("noise_width_guess", noise_width_guess)
+        noise_guess = pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors
         baseline_intercept = pm.Normal(
@@ -333,7 +346,7 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         )
         baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        noise = pm.LogNormal("noise", pt.log(noise_guess))
         # NOTE: We expect dobule-peaks to be narrower w.r.t. the time frame, compare to single peaks.
         std = pm.HalfNormal("std", sigma=[np.ptp(time) / 6, np.ptp(time) / 6], dims=("subpeak",))
         height = pm.HalfNormal(
@@ -534,7 +547,7 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
-        pm.ConstantData("noise_width_guess", noise_width_guess)
+        noise_guess = pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
@@ -542,7 +555,7 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
         )
         baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        noise = pm.LogNormal("noise", pt.log(noise_guess))
         mean = pm.Normal("mean", np.mean(time[[0, -1]]), np.ptp(time) / 2)
         std = pm.HalfNormal("std", np.ptp(time) / 3)
         alpha = pm.Normal("alpha", 0, 3.5)
@@ -650,7 +663,7 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         # add guesses to the pmodel as ConstantData
         pm.ConstantData("intercept_guess", intercept_guess)
         pm.ConstantData("slope_guess", slope_guess)
-        pm.ConstantData("noise_width_guess", noise_width_guess)
+        noise_guess = pm.ConstantData("noise_width_guess", noise_width_guess)
 
         # priors plus error handling in case of mathematically impermissible values
         baseline_intercept = pm.Normal(
@@ -658,7 +671,7 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         )
         baseline_slope = pm.Normal("baseline_slope", **baseline_slope_prior_params(slope_guess))
         baseline = pm.Deterministic("baseline", baseline_intercept + baseline_slope * time)
-        noise = pm.LogNormal("noise", np.clip(np.log(noise_width_guess), np.log(10), np.inf), 1)
+        noise = pm.LogNormal("noise", pt.log(noise_guess))
         # use univariate ordered normal distribution for the mean values
         # use a zero sum normal distribution to describe the distance of the mean values
         # from the mean of the mean values ("meanmean")
