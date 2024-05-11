@@ -1,0 +1,6 @@
+sphinx
+myst-nb
+numpydoc
+nbsphinx
+sphinx-book-theme
+sphinxcontrib.mermaid
