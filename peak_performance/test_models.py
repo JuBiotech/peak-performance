@@ -27,10 +27,10 @@ def test_initial_guesses():
 
 
 class TestDistributions:
-    def test_normal_posterior(self):
+    def test_normal_peak_shape(self):
         x = np.linspace(-5, 10, 10000)
         expected = st.norm.pdf(x, 3, 2)
-        actual_pt = models.normal_posterior(0, x, 3, 2, height=np.max(expected))
+        actual_pt = models.normal_peak_shape(0, x, 3, 2, height=np.max(expected))
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -38,11 +38,11 @@ class TestDistributions:
         np.testing.assert_allclose(expected, actual, atol=0.0000001)
         pass
 
-    def test_double_normal_posterior(self):
+    def test_double_normal_peak_shape(self):
         x = np.linspace(5, 12, 10000)
         y1 = st.norm.pdf(x, loc=7.5, scale=0.6)
         y2 = st.norm.pdf(x, loc=9, scale=0.4) * 2
-        y_double_pt = models.double_normal_posterior(
+        y_double_pt = models.double_normal_peak_shape(
             0, x, (7.5, 9), (0.6, 0.4), height=(np.max(y1), np.max(y2))
         )
         y_double = y_double_pt.eval().astype(float)
@@ -105,11 +105,11 @@ class TestDistributions:
         np.testing.assert_allclose(expected_mode_skew, actual_mode, atol=5e-3)
         pass
 
-    def test_skew_normal_posterior(self):
+    def test_skew_normal_peak_shape(self):
         x = np.linspace(-1, 5.5, 10000)
         # test first with positive alpha
         expected = st.skewnorm.pdf(x, 3, loc=1.2, scale=1.1)
-        actual_pt = models.skew_normal_posterior(0, x, 1.2, 1.1, 3, area=1)
+        actual_pt = models.skew_normal_peak_shape(0, x, 1.2, 1.1, 3, area=1)
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -118,7 +118,7 @@ class TestDistributions:
 
         # test again with negative alpha
         expected = st.skewnorm.pdf(x, -3, loc=1.2, scale=1.1)
-        actual_pt = models.skew_normal_posterior(0, x, 1.2, 1.1, -3, area=1)
+        actual_pt = models.skew_normal_peak_shape(0, x, 1.2, 1.1, -3, area=1)
         # cast arrays to float data type in order to avoid error of np.testing.assert_allclose() due to using np.isfinite under the hood
         actual = actual_pt.eval().astype(float)
         expected = expected.astype(float)
@@ -133,8 +133,8 @@ class TestDistributions:
         height = np.max(y)
         area = scipy.integrate.quad(lambda x: st.norm.pdf(x, loc=1, scale=1), -10, 10)[0]
         x = np.linspace(-10, 10, 10000)
-        y_actual_pt = models.normal_posterior(0, x, 1, 1, height=height)
-        y_skew_actual_pt = models.skew_normal_posterior(0, x, 1, 1, 0, area=area)
+        y_actual_pt = models.normal_peak_shape(0, x, 1, 1, height=height)
+        y_skew_actual_pt = models.skew_normal_peak_shape(0, x, 1, 1, 0, area=area)
         y_actual = y_actual_pt.eval().astype(float)
         y_skew_actual = y_skew_actual_pt.eval().astype(float)
         # many values are extremely close to zero so rtol was increased.
@@ -142,7 +142,7 @@ class TestDistributions:
         np.testing.assert_allclose(y_skew_actual, y_actual, atol=1e-20, rtol=0.9)
         pass
 
-    def test_double_skew_normal_posterior(self):
+    def test_double_skew_normal_peak_shape(self):
         x1 = np.arange(4, 6, 0.1)
         x2 = np.arange(6, 8, 0.1)
         alpha = 5
@@ -150,7 +150,7 @@ class TestDistributions:
         y2 = st.skewnorm.pdf(x2, alpha, loc=6.3, scale=0.2)
         time = np.array(list(x1) + list(x2))
         intensity = np.array(list(y1) + list(y2))
-        y_double_pt = models.double_skew_normal_posterior(
+        y_double_pt = models.double_skew_normal_peak_shape(
             0, time, (5, 6.3), (0.2, 0.2), (5, 5), area=(1, 1)
         )
         y_double = y_double_pt.eval().astype(float)

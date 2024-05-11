@@ -118,9 +118,9 @@ def baseline_slope_prior_params(slope_guess: Union[float, int]) -> Mapping[str, 
     }
 
 
-def normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
+def normal_peak_shape(baseline, time: np.ndarray, mean, std, *, height):
     """
-    Model a peak shaped like the PDF of a normal distribution.
+    Model a peak shaped like a normal distribution.
 
     Parameters
     ----------
@@ -182,7 +182,7 @@ def define_model_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
         pm.Deterministic("area", height / (1 / (std * np.sqrt(2 * np.pi))))
         pm.Deterministic("sn", height / noise)
         # posterior
-        y = normal_posterior(baseline, time, mean, std, height=height)
+        y = normal_peak_shape(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -225,9 +225,9 @@ def double_model_mean_prior(time):
     return mean, diff, meanmean
 
 
-def double_normal_posterior(baseline, time: np.ndarray, mean, std, *, height):
+def double_normal_peak_shape(baseline, time: np.ndarray, mean, std, *, height):
     """
-    Define a univariate ordered normal distribution as the posterior.
+    Model a peak shaped like a univariate ordered normal distribution.
 
     Parameters
     ----------
@@ -302,7 +302,7 @@ def define_model_double_normal(time: np.ndarray, intensity: np.ndarray) -> pm.Mo
         mean, diff, meanmean = double_model_mean_prior(time)
 
         # posterior
-        y = double_normal_posterior(baseline, time, mean, std, height=height)
+        y = double_normal_peak_shape(baseline, time, mean, std, height=height)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -430,9 +430,9 @@ def height_calculation(area, loc, scale, alpha, mode_skew):
     )
 
 
-def skew_normal_posterior(baseline, time, mean, std, alpha, *, area):
+def skew_normal_peak_shape(baseline, time, mean, std, alpha, *, area):
     """
-    Define a skew normally distributed posterior.
+    Model a peak shaped like a skew normal distribution.
 
     Parameters
     ----------
@@ -528,7 +528,7 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
             height_formula,
         )
         pm.Deterministic("sn", height / noise)
-        y = skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
+        y = skew_normal_peak_shape(baseline, time, mean, std, alpha, area=area)
         y = pm.Deterministic("y", y)
 
         # likelihood
@@ -537,9 +537,9 @@ def define_model_skew(time: np.ndarray, intensity: np.ndarray) -> pm.Model:
     return pmodel
 
 
-def double_skew_normal_posterior(baseline, time: np.ndarray, mean, std, alpha, *, area):
+def double_skew_normal_peak_shape(baseline, time: np.ndarray, mean, std, alpha, *, area):
     """
-    Define a univariate ordered skew normal distribution as the posterior.
+    Model a peak shaped like the a univariate ordered skew normal distribution.
 
     Parameters
     ----------
@@ -656,7 +656,7 @@ def define_model_double_skew_normal(time: np.ndarray, intensity: np.ndarray) -> 
         pm.Deterministic("sn", height / noise, dims=("subpeak",))
 
         # posterior
-        y = double_skew_normal_posterior(baseline, time, mean, std, alpha, area=area)
+        y = double_skew_normal_peak_shape(baseline, time, mean, std, alpha, area=area)
         y = pm.Deterministic("y", y)
 
         # likelihood
