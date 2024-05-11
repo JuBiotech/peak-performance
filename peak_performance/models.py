@@ -36,6 +36,15 @@ class ModelType(str, Enum):
     DoubleSkewNormal = "double_skew_normal"
 
 
+def guess_noise(intensity):
+    n = len(intensity)
+    ifrom = int(np.ceil(0.15 * n))
+    ito = int(np.floor(0.85 * n))
+    start_ints = intensity[:ifrom]
+    end_ints = intensity[ito:]
+    return np.std([*(start_ints - np.mean(start_ints)), *(end_ints - np.mean(end_ints))])
+
+
 def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     """
     Provide initial guesses for priors.
@@ -79,11 +88,12 @@ def initial_guesses(time: np.ndarray, intensity: np.ndarray):
     # use the indeces in noise_index to get the time and intensity of all noise data points
     noise_time = [time[n] for n in noise_index]
     noise_intensity = [intensity[n] for n in noise_index]
-    # calculate the width of the noise
-    noise_width_guess = max(noise_intensity) - min(noise_intensity)
 
     # use scipy to fit a linear regression through the noise as a prior for the eventual baseline
     baseline_fit = st.linregress(noise_time, noise_intensity)
+
+    # calculate the width of the noise
+    noise_width_guess = guess_noise(intensity)
 
     return baseline_fit.slope, baseline_fit.intercept, noise_width_guess
 
