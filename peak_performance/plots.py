@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from pathlib import Path
-from typing import Sequence, Union, Optional
+from typing import Optional, Sequence, Union
 
 import arviz as az
 import numpy as np
@@ -188,7 +188,9 @@ def plot_posterior_predictive(
                 )
         else:
             for format in save_formats:
-                fig.savefig(Path(path) / f"{identifier}_predictive_posterior.{format}", format=format)
+                fig.savefig(
+                    Path(path) / f"{identifier}_predictive_posterior.{format}", format=format
+                )
         plt.close(fig)
 
     return
