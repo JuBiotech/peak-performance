@@ -37,6 +37,17 @@ class ModelType(str, Enum):
 
 
 def guess_noise(intensity):
+    """
+    Function for providing a guess for the noise width of a given signal
+    based on the first and last 15 % of data points in a time series.
+
+    Parameters
+    ----------
+    time
+        NumPy array with the time values of the relevant timeframe.
+    intensity
+        NumPy array with the intensity values of the relevant timeframe.
+    """
     n = len(intensity)
     ifrom = int(np.ceil(0.15 * n))
     ito = int(np.floor(0.85 * n))

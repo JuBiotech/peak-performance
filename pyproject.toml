@@ -12,6 +12,7 @@ authors = [
 description = "A Python toolbox to fit chromatography peaks with uncertainty."
 readme = "README.md"
 requires-python = ">=3.9"
+dynamic = ["dependencies"]
 keywords = ["hplc", "mass-spectrometry", "uncertainty quantification"]
 license = {text = "AGPLv3"}
 classifiers = [
@@ -20,27 +21,14 @@ classifiers = [
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Intended Audience :: Science/Research",
 ]
-dependencies = [
-    "arviz",
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "pymc>=5.9.1",
-    "pytensor",
-    "scipy",
-    "openpyxl",
-    "numpy<1.26.0",
-]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+
 
 [tool.setuptools.packages.find]
 include = ["peak_performance*"]
-
-[project.optional-dependencies]
-test = [
-  "pytest",
-  "pytest-cov",
-  "twine",
-]
 
 [project.urls]
 homepage = "https://jugit.fz-juelich.de/IBG-1/micropro/peak-performance"

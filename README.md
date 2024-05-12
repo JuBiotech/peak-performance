@@ -1,6 +1,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/peak-performance)](https://pypi.org/project/peak-performance/)
 [![pipeline](https://github.com/jubiotech/peak-performance/workflows/pipeline/badge.svg)](https://github.com/JuBiotech/peak-performance/actions)
 [![coverage](https://codecov.io/gh/jubiotech/peak-performance/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuBiotech/peak-performance)
+[![documentation](https://readthedocs.org/projects/peak-performance/badge/?version=latest)](https://peak-performance.readthedocs.io/en/latest)
 [![DOI](https://zenodo.org/badge/713469041.svg)](https://zenodo.org/doi/10.5281/zenodo.10255543)
 
 # How to use PeakPerformance
@@ -9,13 +10,15 @@ For instructions regarding the use of PeakPerformance, check out the example not
 
 ## Preparing raw data
 This step is crucial when using PeakPerformance. Raw data has to be supplied as time series meaning for each signal you want to analyze, save a NumPy array consisting of time in the first dimension and intensity in the second dimension (compare example data). Both time and intensity should also be NumPy arrays. If you e.g. have time and intensity of a singal as lists, you can use the following code to convert, format, and save them in the correct manner:
-```
+
+```python
 import numpy as np
 from pathlib import Path
 
 time_series = np.array([np.array(time), np.array(intensity)])
 np.save(Path(r"example_path/time_series.npy"), time_series)
 ```
+
 The naming convention of raw data files is `<acquisition name>_<precursor ion m/z or experiment number>_<product ion m/z start>_<product ion m/z end>.npy`. There should be no underscores within the named sections such as `acquisition name`. Essentially, the raw data names include the acquisition and mass trace, thus yielding a recognizable and unique name for each isotopomer/fragment/metabolite/sample.
 
 ## Model selection

@@ -603,3 +603,5 @@ FodyWeavers.xsd
 *.svg
 idata_summary_*.xlsx
 idata_*
+*Sandbox*.ipynb
+!/docs/source/notebooks/*.png
