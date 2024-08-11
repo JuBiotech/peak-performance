@@ -31,8 +31,10 @@ affiliations:
  - name: Computational Systems Biotechnology, RWTH Aachen University, Aachen, Germany
    index: 2
 
-date: 9th of August 2024
-bibliography: literature.bib
+date: 12th of August 2024
+bibliography:
+  - literature.bib
+---
 
 # Summary
 
@@ -139,7 +141,7 @@ The initial guesses $noise_{guess}$, $a_{guess}$, and $b_{guess}$ are calculated
 Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
 Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
 
-![](/Fig1_model_single_peak.png)
+![](./Fig1_model_single_peak.png)
 __Figure 1:__ The intensity functions of normal (**a**) and skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $R$, and $S$ standard deviations.
 
 The mean value $\mu$ has a normally distributed prior with the center of the selected time frame $min(t) + \frac{\Delta t}{2}$ as its mean and $\frac{\Delta t}{2}$ as the standard deviation where $\Delta t$ corresponds to the length of the time frame.
@@ -155,7 +157,7 @@ Instead of the peak height, the peak area was utilized to scale the distribution
 
 The double peak models (Figure 2) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
 
-![](/Fig2_model_double_peak.png)
+![](./Fig2_model_double_peak.png)
 __Figure 2:__ The intensity functions of double normal (**a**) and double skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $S_{i}$, $P_{i}$, and $V_{i}$ standard deviations.
 
 All variables pertaining to the actual peak were represented as vectors with two entries labeled with 0 and 1 by adding a named dimension to that effect.
@@ -207,7 +209,7 @@ The provided data analysis pipeline was designed in a user-friendly way and requ
 As portrayed in an example notebook in the code repository, only a few simple Python commands need to be executed.
 Instead of relying on these convenience functions, experienced users can also directly access the core functions of $\texttt{PeakPerformance}$ for a more flexible application which is demonstrated in yet another example notebook.
 
-![](/Fig3_PP-standalone.png)
+![](./Fig3_PP-standalone.png)
 __Figure 3:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
 
 Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension.
@@ -274,7 +276,7 @@ Regarding data visualization with the matplotlib package [@matplotlib, @matplotl
 The posterior plot presents the fit of the intensity function alongside the raw data points.
 The first row of Figure 4 presents two such examples where the single peak diagram shows the histidine (His) fragment with a m/z ratio of 110 Da and the double peak diagram the leucine (Leu) and isoleucine (Ile) fragments with a m/z ratio of 86 Da.
 
-![](/Fig4_peak_results.png)
+![](./Fig4_peak_results.png)
 __Figure 4:__ Results plots for a single His peak and a double Leu and Ile peak depicting the peak fit (first row) and the posterior predictive checks (second row) alongside the raw data. The numerical results are listed in table 2.
 
 The posterior predictive plots in the second row of Figure 4, then, exhibit the posterior predictive checks alongside the raw data.
@@ -283,7 +285,7 @@ Accordingly, this plot enables users to judge whether the selected model can acc
 To complete the example, Table 2 shows the results of the fit in the form of mean, standard deviation, and HDI of each parameter's marginal posterior.
 
 __Table 2:__ Depiction of the results for the most important peak parameters of a single peak fit with the skew normal model and a double peak fit with the double normal model. Mean, area, and height have been highlighted in bold print as they constitute the most relevant parameters for further data evaluation purposes. The results correspond to the fits exhibited in Figure 4.
-![](/summary_joint.png)
+![](./summary_joint.png)
 
 
 In this case, the fits were successful and convergence was reached for all parameters.
@@ -296,7 +298,7 @@ This plot enables users to judge the quality of a fit and identify instances of 
 As can be seen in the left plot, some predicted intensity values in the lowest quantile of the single peak example show a minimal lack-of-fit.
 Importantly, such a deviation can be observed, judged and is quantifiable which intrinsically represents a large improvement over the status quo.
 
-![](/Fig5_ppc.png)
+![](./Fig5_ppc.png)
 __Figure 5:__ Cumulative posterior predictive plots created with the ArviZ package and pertaining to the example data of the single His peak (left) and the double Leu and Ile peak (right).
 
 ## Validation
@@ -311,7 +313,7 @@ Additionally, the normal-shaped peak model was paired with skew normally distrib
 In both cases, $\sigma$ was not reproduced well, especially by the normal-shaped model.
 Nevertheless, the peak area and height were still identified correctly with the skew normal model and merely slightly underestimated by the normal model.
 
-![](/Fig6_PP-validation.png)
+![](./Fig6_PP-validation.png)
 __Figure 6:__ Validation of results from $\texttt{PeakPerformance}$. **a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with $\texttt{PeakPerformance}$ version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
 
 In the second stage, marginal cases in the form of slightly skewed peaks were investigated to observe whether their estimation with a normal- or skew normal-shaped intensity function would result in significant differences in terms of peak area and height.
