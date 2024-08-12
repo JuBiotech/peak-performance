@@ -167,7 +167,7 @@ All variables pertaining to the actual peak were represented as vectors with two
 Aside from that, their priors remained unaltered except for the peak mean $\mu$.
 
 To provide a flexible solution to find double peak means across the whole time frame, the implementation of additional parameters proved indispensable.
-More precisely, the mean of both peaks or group mean was introduced as hyperprior \eqref{eq:PP mean of means} with a broad normal prior which enabled it to vary across the time frame as needed.
+More precisely, the mean of both peaks or group mean was introduced as a hyperprior (eq. 6) with a broad normal prior which enabled it to vary across the time frame as needed.
 
 $$\tag{6}\mu_{\mu} \sim Normal\biggl(min(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)$$
 
