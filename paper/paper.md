@@ -140,7 +140,7 @@ $$\tag{5}
     \end{cases}
 $$
 
-The initial guesses $noise_{guess}$, $a_{guess}$, and $b_{guess}$ are calculated from raw time and intensity by the  $\texttt{initial_guesses()}$ function from the $\texttt{models}$ submodule.
+The initial guesses $noise_{guess}$, $a_{guess}$, and $b_{guess}$ are calculated from raw time and intensity by the  $\texttt{initial\_guesses()}$ function from the $\texttt{models}$ submodule.
 Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
 Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
 
