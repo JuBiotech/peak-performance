@@ -52,7 +52,7 @@ In biotechnological research and industrial applications, chromatographic techni
 Over the course of a regular lab-scale bioreactor fermentation, dozens to hundreds of samples and subsequently – depending on the number of analytes per sample – hundreds to thousands of chromatographic peaks may accrue.
 This is exacerbated by the spread of microbioreactors causing a further increase in the amount of samples per time [@RN149; @RN148].
 While the recognition and integration of peaks by vendor software is – in theory – automated, it typically requires visual inspection and occasional manual re-integration by the user due to a large number of false positives, false negatives or incorrectly determined baselines, ultimately downgrading it to a semi-automated process.
-Since this is a time-consuming, not to mention tedious, procedure and introduces the problem of comparability between purely manual and algorithm-based integration as well as user-specific differences, we instead propose a peak fitting solution based on Bayesian inference.  
+Since this is a time-consuming, not to mention tedious, procedure and introduces the problem of comparability between purely manual and algorithm-based integration as well as user-specific differences, we instead propose a peak fitting solution based on Bayesian inference.
 The advantage of this approach is the complete integration of all relevant parameters – i.e. baseline, peak area and height, mean, signal-to-noise ratio etc. – into one single model through which all parameters are estimated simultaneously.
 Furthermore, Bayesian inference comes with uncertainty quantification for all peak model parameters, and thus does not merely yield a point estimate as would commonly be the case.
 It also grants access to novel metrics for avoiding false positives and negatives by rejecting signals where a) a convergence criterion of the peak fitting procedure was not fulfilled or b) the uncertainty of the estimated parameters exceeded a user-defined threshold.
@@ -71,7 +71,7 @@ Since the inference data is stored alongside graphs and report sheets, users may
 
 ## Validation of $\texttt{PeakPerformance}$
 Several stages of validation were employed to prove the suitability of $\texttt{PeakPerformance}$ for chromatographic peak data analysis.
-The goals were to showcase the efficacy of $\texttt{PeakPerformance}$ utilizing noisy synthetic data, to investigate cases where a peak could reasonably be fit with either of the single peak models, and finally to use experimental data to compare results obtained with $\texttt{PeakPerformance}$ to those from the commercial vendor software Sciex MultiQuant.  
+The goals were to showcase the efficacy of $\texttt{PeakPerformance}$ utilizing noisy synthetic data, to investigate cases where a peak could reasonably be fit with either of the single peak models, and finally to use experimental data to compare results obtained with $\texttt{PeakPerformance}$ to those from the commercial vendor software Sciex MultiQuant.
 
 For the first test, 500 random data sets were generated with the NumPy random module by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
 Subsequently, normally distributed random noise ($\mathcal{N}(0, 0.6)$ or $\mathcal{N}(0, 1.2)$ for data sets with the tag "higher noise") was added to each data point.
@@ -90,7 +90,7 @@ __Table 1:__ Normal distributions from which parameters were drawn randomly to c
 In marginal cases when the shape of a single peak had a slight skew, the automated model selection would at times settle on a normal or a skew normal model.
 Therefore, it was relevant to investigate whether this choice would lead to a significant discrepancy in estimated peak parameters.
 Accordingly, for the second test synthetic data sets were generated with the NumPy random module according to Table 1 and noise was added as described before.
-The residual parameters were held constant, i.e. the mean was fixed to 6, the area to 8, and the skewness parameter $\alpha$ to 1.  
+The residual parameters were held constant, i.e. the mean was fixed to 6, the area to 8, and the skewness parameter $\alpha$ to 1.
 
 For the third and final test, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) with human supervision, i.e. the results were visually inspected and corrected if necessary.
 The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as part of double peaks, and 19 noise signals.
@@ -101,7 +101,7 @@ Generally, priors are derived from a given time series and given a weakly inform
 While defining priors in a data-dependent manner is generally to be avoided, it is clearly not tenable to define legitimate priors for all kinds of different peaks with heights and areas varying by multiple orders of magnitude and retention times, i.e. mean values, scattered across the whole run time of the LC-MS/MS method.
 In order to flexibly build models for all these peaks in an automated manner and embedded in a standardized data pipeline, some parameter priors had to be based on the raw data.
 If specific distributions or their parameters had to be restricted to certain value ranges, error handling was incorporated.
-For example, when only positive values were acceptable or when 0 was not a permissive value, a lower bound was defined using NumPy's clip function.  
+For example, when only positive values were acceptable or when 0 was not a permissive value, a lower bound was defined using NumPy's clip function.
 
 Regarding shared model elements across all intensity functions, one such component of all models presented hereafter is the likelihood function
 
@@ -114,7 +114,7 @@ In turn, the noise parameter is defined as
 $$\tag{2}\mathrm{noise} \sim \mathrm{LogNormal}(\log_{10} \mathrm{max}(10, \mathrm{noise}_{\mathrm{guess}}), 1)$$
 
 The log-normal distribution where the logarithm of the random variable follows a normal distribution was chosen partly to exclude negative values from the solution space and also due to its shape attributing a higher fraction of the probability mass to lower values provided the standard deviation is defined sufficiently high.
-This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.  
+This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.
 
 The intensity function itself is defined as the sum of a linear baseline function and a peak intensity function, the latter of which is composed of a given distribution's probability density function (PDF) scaled up to the peak size by the area or height parameter.
 The linear baseline
@@ -127,7 +127,7 @@ Hence, the determined values for slope ($a_{\mathrm{guess}}$) and intercept ($b_
 Here, the exact definition of the standard deviations was less important than simply obtaining an uninformative prior which, while based on the rough fit for the baseline, possesses a sufficient degree of independence from it, thus allowing deviations by the Bayesian parameter estimation.
 
 $$\tag{4}
-    a \sim 
+    a \sim
     \begin{cases}
         \mathcal{N}(a_{\mathrm{guess}}, \frac{|a_{\mathrm{guess}}|}{5}) & \mathrm{if}\ \frac{|a_{guess}|}{5}\geq0.5\\
         \mathcal{N}(a_{\mathrm{guess}}, 0.5) & \mathrm{otherwise}\\
@@ -135,7 +135,7 @@ $$\tag{4}
 $$
 
 $$\tag{5}
-    b \sim 
+    b \sim
     \begin{cases}
         \mathcal{N}(b_{\mathrm{guess}}, \frac{|b_{\mathrm{guess}}|}{6}) & \mathrm{if}\ \frac{|b_{guess}|}{6}\geq0.05\\
         \mathcal{N}(b_{\mathrm{guess}}, 0.05) & \mathrm{otherwise}\\
@@ -157,7 +157,7 @@ The final parameter is the peak height used for scaling up the distribution to m
 Here, a rather uninformative half-normal distribution with a scale amounting to 95 \% of the highest intensity value in the time frame was selected.
 
 The second featured single peak model is based on the skew normal distribution (Figure 1b) which has an additional skewness parameter $\alpha$ enabling a one-sided distortion of the peak or resulting in identity to the normal-shaped peak model when $\alpha=0$.
-Hence, the prior of $\alpha$ is constituted by a normal distribution centered on 0 with a standard deviation of 3.5 to allow for a sufficiently large range of possible values for $\alpha$ and thus a realistic skew. 
+Hence, the prior of $\alpha$ is constituted by a normal distribution centered on 0 with a standard deviation of 3.5 to allow for a sufficiently large range of possible values for $\alpha$ and thus a realistic skew.
 Instead of the peak height, the peak area was utilized to scale the distribution, albeit with an identical prior.
 
 The double peak models (Figure 2) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
@@ -363,7 +363,7 @@ Beyond the comparability of the resulting peak area ratio means portrayed in Fig
 Of these, 31~\% were false positives and 69~\% were manually re-integrated.
 These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
 In contrast, however, the $\texttt{PeakPerformance}$ pipeline was only started once and merely two single peaks and one double peak were fit again with a different model and/or increased sample size after the original pipeline batch run had finished.
-Among the 192 signals of the test data set, there were 7 noisy, low intensity signals without a clear peak which were recognized as a peak only by either one or the other software and were hence omitted from this comparison. 
+Among the 192 signals of the test data set, there were 7 noisy, low intensity signals without a clear peak which were recognized as a peak only by either one or the other software and were hence omitted from this comparison.
 By showing not only the mean area ratio of all peaks but also the ones for the single and double peak subgroups, it is evident that the variance is significantly higher for double peaks.
 In case of this data set, two low quality double peaks in particular inflated the variance significantly which may not be representative for other data sets.
 It has to be stated, too, that the prevalence of manual re-integration of double peaks in MQ might have introduced a user-specific bias, thereby increasing the final variance.
@@ -383,7 +383,7 @@ In future releases of $\texttt{PeakPerformance}$, we intend to implement an even
 ### Author contributions
 $\texttt{PeakPerformance}$ was conceptualized by JN and MO.
 Software implementation was conducted by JN with code review by MO.
-The original draft was written by JN with review and editing by MO, SN, EvL, and WW. 
+The original draft was written by JN with review and editing by MO, SN, EvL, and WW.
 The work was supervised by SN and funding was acquired by SN, EvL, and WW.
 
 ### Acknowledgements
