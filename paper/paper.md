@@ -73,7 +73,7 @@ Since the inference data is stored alongside graphs and report sheets, users may
 Several stages of validation were employed to prove the suitability of $\texttt{PeakPerformance}$ for chromatographic peak data analysis.
 The goals were to showcase the efficacy of $\texttt{PeakPerformance}$ utilizing noisy synthetic data, to investigate cases where a peak could reasonably be fit with either of the single peak models, and finally to use experimental data to compare results obtained with $\texttt{PeakPerformance}$ to those from the commercial vendor software Sciex MultiQuant.
 
-For the first test, 500 random data sets were generated with the NumPy random module by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
+For the first test, 500 random data sets were generated with the NumPy random module [@harris2020array] by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
 Subsequently, normally distributed random noise ($\mathcal{N}(0, 0.6)$ or $\mathcal{N}(0, 1.2)$ for data sets with the tag "higher noise") was added to each data point.
 The amount of data points per time was chosen based on an LC-MS/MS method routinely utilized by the authors and accordingly set to one data point per 1.8 s.
 
