@@ -39,6 +39,14 @@ extensions = [
     "sphinx_book_theme",
     "sphinxcontrib.mermaid",
 ]
+myst_enable_extensions = [
+    "amsmath",  # needed for LaTeX math environments
+    "dollarmath",  # needed for $ and $$ math
+    "html_image",
+    "replacements",
+    "strikethrough",
+    "tasklist",
+]
 nb_execution_mode = "off"
 
 # Add any paths that contain templates here, relative to this directory.

@@ -1,4 +1,4 @@
-# Validation of $\texttt{PeakPerformance}$
+# Validation of `PeakPerformance`
 
 ## Materials and Methods
 Several stages of validation were employed to prove the suitability of $\texttt{PeakPerformance}$ for chromatographic peak data analysis.
@@ -10,11 +10,11 @@ The amount of data points per time was chosen based on an LC-MS/MS method routin
 
 __Table 1:__ Normal distributions from which parameters were drawn randomly to create synthetic data sets for the validation of $\texttt{PeakPerformance}$.
 
-| **parameter**      | **model (1st test)**    | **model (2nd test)**  |
+| **parameter**      | **model (1st test)**    | **model (2nd test)**    |
 | ------------------ | ----------------------- | ----------------------- |
 | area               | $\mathcal{N}(8, 0.5)$   | -                       |
 | standard deviation | $\mathcal{N}(0.5, 0.1)$ | $\mathcal{N}(0.5, 0.1)$ |
-| skewness           | $\mathcal{N}(0, 2)$    | -                       |
+| skewness           | $\mathcal{N}(0, 2)$     | -                       |
 | baseline intercept | $\mathcal{N}(25, 1)$    | $\mathcal{N}(25, 1)$    |
 | baseline slope     | $\mathcal{N}(0, 1)$     | $\mathcal{N}(0, 1)$     |
 
