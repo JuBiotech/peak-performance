@@ -31,7 +31,9 @@ The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as
 In the first stage of validation, peak fitting with normal and skew normal peak models was tested regarding the ability to reproduce the ground truth of randomly generated noisy synthetic data sets.
 The arithmetic means portrayed in [Figure 1a](#fig_v1) were calculated based on a measure of similarity
 
-$$\tag{12}F_{y / \hat{y}} = \frac{y}{\hat{y}}$$
+$$
+F_{y / \hat{y}} = \frac{y}{\hat{y}}
+$$ (eqn:F_yy)
 
 where $y$ represents the estimated parameter value and $\hat{y}$ its pertaining ground truth.
 As they exhibit values close to 1, this demonstrates a near identity between estimation and ground truth.
@@ -51,13 +53,17 @@ Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak 
 With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model ([Fig. 1b](#fig_v1)).
 The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
 
-$$\tag{13}F_{n / \mathrm{sn}} = \frac{A_{\mathcal{N}}}{A_{\mathrm{skew \ normal}}}$$
+$$
+F_{n / \mathrm{sn}} = \frac{A_{\mathcal{N}}}{A_{\mathrm{skew \ normal}}}
+$$ (eqn:F_nsn)
 
 where $A_{\mathrm{normal}}$ and $A_{\mathrm{skew \ normal}}$ are the estimated areas with normal and skew normal models, respectively.
 
 In the third stage, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) and the fraction of the obtained areas was determined as
 
-$$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
+$$
+F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}
+$$ (eqn:F_mqpp)
 
 where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
 Beyond the comparability of the resulting peak area ratio means portrayed in [Figure 1c](#fig_v1), it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
