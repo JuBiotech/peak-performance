@@ -4,11 +4,12 @@
 Several stages of validation were employed to prove the suitability of `PeakPerformance` for chromatographic peak data analysis.
 The goals were to showcase the efficacy of `PeakPerformance` utilizing noisy synthetic data, to investigate cases where a peak could reasonably be fit with either of the single peak models, and finally to use experimental data to compare results obtained with `PeakPerformance` to those from the commercial vendor software Sciex MultiQuant.
 
-For the first test, 500 random data sets were generated with the NumPy random module {cite}`harris2020array` by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
+For the first test, 500 random data sets were generated with the NumPy random module {cite}`harris2020array` by drawing from the normal distributions detailed in [Table 1](#tab_v1) except for the mean parameter which was held constant at a value of 6.
 Subsequently, normally distributed random noise ($\mathcal{N}(0, 0.6)$ or $\mathcal{N}(0, 1.2)$ for data sets with the tag "higher noise") was added to each data point.
 The amount of data points per time was chosen based on an LC-MS/MS method routinely utilized by the authors and accordingly set to one data point per 1.8 s.
 
-__Table 1:__ Normal distributions from which parameters were drawn randomly to create synthetic data sets for the validation of `PeakPerformance`.
+(tab_v1)=
+:::{table} __Table 1:__ Normal distributions from which parameters were drawn randomly to create synthetic data sets for the validation of `PeakPerformance`.
 
 | **parameter**      | **model (1st test)**    | **model (2nd test)**    |
 | ------------------ | ----------------------- | ----------------------- |
@@ -17,10 +18,11 @@ __Table 1:__ Normal distributions from which parameters were drawn randomly to c
 | skewness           | $\mathcal{N}(0, 2)$     | -                       |
 | baseline intercept | $\mathcal{N}(25, 1)$    | $\mathcal{N}(25, 1)$    |
 | baseline slope     | $\mathcal{N}(0, 1)$     | $\mathcal{N}(0, 1)$     |
+:::
 
 In marginal cases when the shape of a single peak had a slight skew, the automated model selection would at times settle on a normal or a skew normal model.
 Therefore, it was relevant to investigate whether this choice would lead to a significant discrepancy in estimated peak parameters.
-Accordingly, for the second test synthetic data sets were generated with the NumPy random module according to Table 1 and noise was added as described before.
+Accordingly, for the second test synthetic data sets were generated with the NumPy random module according to [Table 1](#tab_v1) and noise was added as described before.
 The residual parameters were held constant, i.e. the mean was fixed to 6, the area to 8, and the skewness parameter $\alpha$ to 1.
 
 For the third and final test, experimental peak data was analyzed with both `PeakPerformance` (version 0.7.0) and Sciex MultiQuant (version 3.0.3) with human supervision, i.e. the results were visually inspected and corrected if necessary.

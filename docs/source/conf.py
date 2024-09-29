@@ -42,6 +42,7 @@ extensions = [
 ]
 myst_enable_extensions = [
     "amsmath",  # needed for LaTeX math environments
+    "colon_fence",
     "dollarmath",  # needed for $ and $$ math
     "html_image",
     "replacements",
