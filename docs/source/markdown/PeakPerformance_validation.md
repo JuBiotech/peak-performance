@@ -29,7 +29,7 @@ The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as
 
 ## Results and Discussion
 In the first stage of validation, peak fitting with normal and skew normal peak models was tested regarding the ability to reproduce the ground truth of randomly generated noisy synthetic data sets.
-The arithmetic means portrayed in Figure 1a were calculated based on a measure of similarity
+The arithmetic means portrayed in [Figure 1a](#fig_v1) were calculated based on a measure of similarity
 
 $$\tag{12}F_{y / \hat{y}} = \frac{y}{\hat{y}}$$
 
@@ -39,12 +39,16 @@ Additionally, the normal-shaped peak model was paired with skew normally distrib
 In both cases, $\sigma$ was not reproduced well, especially by the normal-shaped model.
 Nevertheless, the peak area and height were still identified correctly with the skew normal model and merely slightly underestimated by the normal model.
 
-![](./Fig6_PP-validation.png)
-__Figure 1:__ Validation of results from $\texttt{PeakPerformance}$. **a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with $\texttt{PeakPerformance}$ version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
+```{figure-md} fig_v1
+![Validation of results from PeakPerformance.](./Fig6_PP-validation.png)
+
+__Figure 1:__ Validation of results from `PeakPerformance`.
+**a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with `PeakPerformance` version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
+```
 
 In the second stage, marginal cases in the form of slightly skewed peaks were investigated to observe whether their estimation with a normal- or skew normal-shaped intensity function would result in significant differences in terms of peak area and height.
 Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak shapes not visibly discernible as clearly normal or skew normal.
-With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 1b).
+With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model ([Fig. 1b](#fig_v1)).
 The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
 
 $$\tag{13}F_{n / \mathrm{sn}} = \frac{A_{\mathcal{N}}}{A_{\mathrm{skew \ normal}}}$$
@@ -56,7 +60,7 @@ In the third stage, experimental peak data was analyzed with both $\texttt{PeakP
 $$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
 
 where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
-Beyond the comparability of the resulting peak area ratio means portrayed in Figure 1c, it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
+Beyond the comparability of the resulting peak area ratio means portrayed in [Figure 1c](#fig_v1), it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
 Of these, 31 % were false positives and 69 % were manually re-integrated.
 These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
 In contrast, however, the $\texttt{PeakPerformance}$ pipeline was only started once and merely two single peaks and one double peak were fit again with a different model and/or increased sample size after the original pipeline batch run had finished.

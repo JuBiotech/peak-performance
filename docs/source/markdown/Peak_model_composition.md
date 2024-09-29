@@ -48,10 +48,13 @@ $$
 
 The initial guesses $\mathrm{noise}_{\mathrm{guess}}$, $a_{\mathrm{guess}}$, and $b_{\mathrm{guess}}$ are calculated from raw time and intensity by the  $\texttt{initial\_guesses()}$ function from the $\texttt{models}$ submodule.
 Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
-Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
+Starting with single peak models, the normal-shaped model ([Figure 1a](fig_c1)) requires only three additional parameters for defining its intensity function.
 
+```{figure-md} fig_c1
 ![](./Fig1_model_single_peak.png)
+
 __Figure 1:__ The intensity functions of normal (**a**) and skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $R$, and $S$ standard deviations.
+```
 
 The mean value $\mu$ has a normally distributed prior with the center of the selected time frame $\mathrm{min}(t) + \frac{\Delta t}{2}$ as its mean and $\frac{\Delta t}{2}$ as the standard deviation where $\Delta t$ corresponds to the length of the time frame.
 Accordingly, the resulting prior is rather compressed and weakly informative.
@@ -60,11 +63,11 @@ As a half normal distribution only features a standard deviation, this was set t
 The final parameter is the peak height used for scaling up the distribution to match the size of the peak.
 Here, a rather uninformative half-normal distribution with a scale amounting to 95 % of the highest intensity value in the time frame was selected.
 
-The second featured single peak model is based on the skew normal distribution (Figure 1b) which has an additional skewness parameter $\alpha$ enabling a one-sided distortion of the peak or resulting in identity to the normal-shaped peak model when $\alpha=0$.
+The second featured single peak model is based on the skew normal distribution ([Figure 1b](fig_c1)) which has an additional skewness parameter $\alpha$ enabling a one-sided distortion of the peak or resulting in identity to the normal-shaped peak model when $\alpha=0$.
 Hence, the prior of $\alpha$ is constituted by a normal distribution centered on 0 with a standard deviation of 3.5 to allow for a sufficiently large range of possible values for $\alpha$ and thus a realistic skew.
 Instead of the peak height, the peak area was utilized to scale the distribution, albeit with an identical prior.
 
-The double peak models (Figure 2) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
+The double peak models ([Figure 2](fig_c2)) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
 
 All variables pertaining to the actual peak were represented as vectors with two entries labeled with 0 and 1 by adding a named dimension to that effect.
 Aside from that, their priors remained unaltered except for the peak mean $\mu$.
@@ -86,12 +89,15 @@ The priors for the mean parameters of each subpeak were then defined in dependen
 
 $$\tag{9}\mu = \mu_{\mu} + \delta$$
 
+```{figure-md} fig_c2
 ![](./Fig2_model_double_peak.png)
+
 __Figure 2:__ The intensity functions of double normal (**a**) and double skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $S_{i}$, $P_{i}$, and $V_{i}$ standard deviations.
+```
 
 While all aforementioned parameters are necessary for the models, not all are of equal relevance for the user.
 A user's primary interest for consecutive data analysis generally lies in obtaining mean values, peak areas and perhaps - usually to a much lesser degree - peak heights.
-Since only one of the latter two parameters is strictly required for scaling purposes, different models as shown in Figures 1 and 2 will feature either one or the other.
+Since only one of the latter two parameters is strictly required for scaling purposes, different models as shown in [Figure 1](fig_c1) and [Figure 2](fig_c2) will feature either one or the other.
 Nonetheless, both peak area and peak height should be supplied to the user, hence the missing one was included as a deterministic model variable and thus equally accessible by the user.
 In case of the normal and double normal models, the peak height $h$ was used for scaling and the area $A$ was calculated by
 

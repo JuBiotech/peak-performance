@@ -5,12 +5,15 @@ bibliography:
 
 # PeakPerformance workflow
 $\texttt{PeakPerformance}$ accommodates the use of a pre-manufactured data pipeline for standard applications as well as the creation of custom data pipelines using only its core functions.
-The provided data analysis pipeline was designed in a user-friendly way and requires minimal programming knowledge (Fig. 1).
+The provided data analysis pipeline was designed in a user-friendly way and requires minimal programming knowledge ([Fig. 1](#fig_w1)).
 As portrayed in an example notebook in the code repository, only a few simple Python commands need to be executed.
 Instead of relying on these convenience functions, experienced users can also directly access the core functions of $\texttt{PeakPerformance}$ for a more flexible application which is demonstrated in yet another example notebook.
 
+```{figure-md} fig_w1
 ![](./Fig3_PP-standalone.png)
-__Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
+
+__Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured in `PeakPerformance`.
+```
 
 Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension.
 For each peak, such a file has to be provided according to the naming convention specified in $\texttt{PeakPerformance}$'s documentation and gathered in one directory.
