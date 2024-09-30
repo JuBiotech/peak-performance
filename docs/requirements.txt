@@ -3,4 +3,5 @@ myst-nb
 numpydoc
 nbsphinx
 sphinx-book-theme
+sphinxcontrib.bibtex
 sphinxcontrib.mermaid

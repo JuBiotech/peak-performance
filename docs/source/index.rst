@@ -34,6 +34,12 @@ The documentation features various notebooks that demonstrate the usage and inve
 .. toctree::
    :maxdepth: 1
 
+   markdown/Installation
+   markdown/Peak_model_composition
+   markdown/PeakPerformance_validation
+   markdown/PeakPerformance_workflow
+   markdown/Diagnostic_plots
+   markdown/How_to_adapt_PeakPerformance_to_your_data
    notebooks/Ex1_Simple_Pipeline.ipynb
    notebooks/Ex2_Custom_Use_of_PeakPerformance.ipynb
    notebooks/Ex3_Pipeline_with_larger_example_dataset.ipynb

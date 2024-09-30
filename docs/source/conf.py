@@ -37,9 +37,22 @@ extensions = [
     "numpydoc",
     "myst_nb",
     "sphinx_book_theme",
+    "sphinxcontrib.bibtex",
     "sphinxcontrib.mermaid",
 ]
+myst_enable_extensions = [
+    "amsmath",  # needed for LaTeX math environments
+    "colon_fence",
+    "dollarmath",  # needed for $ and $$ math
+    "html_image",
+    "replacements",
+    "strikethrough",
+    "tasklist",
+]
 nb_execution_mode = "off"
+bibtex_bibfiles = ["literature.bib"]
+bibtex_default_style = "plain"
+bibtex_reference_style = "label"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
