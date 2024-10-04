@@ -5,7 +5,9 @@
 [![DOI](https://zenodo.org/badge/713469041.svg)](https://zenodo.org/doi/10.5281/zenodo.10255543)
 
 # About PeakPerformance
-PeakPerformance employs Bayesian modelling for chromatographic peak data fitting. This has the innate advantage of providing uncertainty quantification while jointly estimating all peak parameters united in a single peak model. As Markoc Chain Monte Carlo (MCMC) methods are utilized to infer the posterior probability distribution, convergence checks and the aformentioned uncertainty quantification are applied as novel quality metrics for a robust peak recognition.
+PeakPerformance employs Bayesian modeling for chromatographic peak data fitting.
+This has the innate advantage of providing uncertainty quantification while jointly estimating all peak parameters united in a single peak model.
+As Markov Chain Monte Carlo (MCMC) methods are utilized to infer the posterior probability distribution, convergence checks and the aformentioned uncertainty quantification are applied as novel quality metrics for a robust peak recognition.
 
 # First steps
 Be sure to check out our thorough [documentation](https://peak-performance.readthedocs.io/en/latest). It contains not only information on how to install PeakPerformance and prepare raw data for its application but also detailed treatises about the implemented model structures, validation with both synthetic and experimental data against a commercially available vendor software, exemplary usage of diagnostic plots and investigation of various effects.
