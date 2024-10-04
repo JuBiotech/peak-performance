@@ -35,6 +35,7 @@ The documentation features various notebooks that demonstrate the usage and inve
    :maxdepth: 1
 
    markdown/Installation
+   markdown/Preparing_raw_data
    markdown/Peak_model_composition
    markdown/PeakPerformance_validation
    markdown/PeakPerformance_workflow
