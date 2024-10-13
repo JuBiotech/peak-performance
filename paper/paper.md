@@ -68,26 +68,6 @@ Bayesian inference is conducted utilizing the PyMC package [@RN150] with the ext
 Both model selection and analysis of inference data objects are realized with the ArviZ package [@RN147].
 Since the inference data is stored alongside graphs and report sheets, users may employ the ArviZ package or others for further analysis of the results if necessary.
 
-## Validation of $\texttt{PeakPerformance}$
-Several stages of validation were employed to prove the suitability of $\texttt{PeakPerformance}$ for chromatographic peak data analysis.
-For the first and second tests, 500 random data sets were generated with the NumPy random module [@harris2020array] by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
-Additionally, in case of the second test, the area was set to 8 and the skewness parameter $\alpha$ to 1.
-Subsequently, normally distributed random noise ($\mathcal{N}(0, 0.6)$ or $\mathcal{N}(0, 1.2)$ for data sets with the tag "higher noise") was added to each data point.
-The amount of data points per time was chosen based on an LC-MS/MS method routinely utilized by the authors and accordingly set to one data point per 1.8 s.
-
-__Table 1:__ Normal distributions from which parameters were drawn randomly to create synthetic data sets for the validation of $\texttt{PeakPerformance}$.
-
-| **parameter**      | **model (1st test)**    | **model (2nd test)**  |
-| ------------------ | ----------------------- | ----------------------- |
-| area               | $\mathcal{N}(8, 0.5)$   | -                       |
-| standard deviation | $\mathcal{N}(0.5, 0.1)$ | $\mathcal{N}(0.5, 0.1)$ |
-| skewness           | $\mathcal{N}(0, 2)$    | -                       |
-| baseline intercept | $\mathcal{N}(25, 1)$    | $\mathcal{N}(25, 1)$    |
-| baseline slope     | $\mathcal{N}(0, 1)$     | $\mathcal{N}(0, 1)$     |
-
-For the third and final test, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) with human supervision, i.e. the results were visually inspected and corrected if necessary.
-The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as part of double peaks, and 19 noise signals.
-
 
 # Results and Discussion
 
@@ -138,45 +118,9 @@ __Table 2:__ Depiction of the results for the most important peak parameters of 
 ![](./summary_joint.svg){width="100%"}
 
 In this case, the fits were successful and convergence was reached for all parameters.
-Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.
+Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.\\
+In the documentation, there is a study featuring simulated and experimental data to validate $\texttt{PeakPerformance}$'s results against a commercially available vendor software for peak integration showing that comparable results are indeed obtained.
 
-
-## Validation
-In the first stage of validation, peak fitting with normal and skew normal peak models was tested regarding the ability to reproduce the ground truth of randomly generated noisy synthetic data sets.
-The arithmetic means portrayed in Figure 3a were calculated based on a measure of similarity
-
-$$\tag{12}F_{y / \hat{y}} = \frac{y}{\hat{y}}$$
-
-where $y$ represents the estimated parameter value and $\hat{y}$ its pertaining ground truth.
-As they exhibit values close to 1, this demonstrates a near identity between estimation and ground truth.
-Additionally, the normal-shaped peak model was paired with skew normally distributed noisy data and vice versa.
-In both cases, $\sigma$ was not reproduced well, especially by the normal-shaped model.
-Nevertheless, the peak area and height were still identified correctly with the skew normal model and merely slightly underestimated by the normal model.
-
-![](./Fig6_PP-validation.png)
-__Figure 3:__ Validation of results from $\texttt{PeakPerformance}$. **a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with $\texttt{PeakPerformance}$ version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
-
-In the second stage, marginal cases in the form of slightly skewed peaks were investigated to observe whether their estimation with a normal- or skew normal-shaped intensity function would result in significant differences in terms of peak area and height.
-Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak shapes not visibly discernible as clearly normal or skew normal.
-With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 3b).
-The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
-
-$$\tag{13}F_{n / \mathrm{sn}} = \frac{A_{\mathcal{N}}}{A_{\mathrm{skew \ normal}}}$$
-
-where $A_{normal}$ and $A_{skew \ normal}$ are the estimated areas with normal and skew normal models, respectively.
-
-In the third stage, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) and the fraction of the obtained areas was determined as
-
-$$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
-
-where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
-Beyond the comparability of the resulting peak area ratio means portrayed in Figure 3c, it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
-Of these, 31 % were false positives and 69 % were manually re-integrated.
-These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
-In contrast, however, the $\texttt{PeakPerformance}$ pipeline was only started once and merely two single peaks and one double peak were fit again with a different model and/or increased sample size after the original pipeline batch run had finished.
-Among the 192 signals of the test data set, there were 7 noisy, low intensity signals without a clear peak which were recognized as a peak only by either one or the other software and were hence omitted from this comparison.
-By showing not only the mean area ratio of all peaks but also the ones for the single and double peak subgroups, it is evident that the variance is significantly higher for double peaks.
-It could be demonstrated that $\texttt{PeakPerformance}$ yields comparable peak area results to a commercially available vendor software.
 
 # Conclusions
 $\texttt{PeakPerformance}$ is a tool for automated LC-MS/MS peak data analysis employing Bayesian inference.
