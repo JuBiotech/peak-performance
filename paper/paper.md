@@ -189,7 +189,7 @@ Since only one of the latter two parameters is strictly required for scaling pur
 Nonetheless, both peak area and peak height should be supplied to the user, hence the missing one was included as a deterministic model variable and thus still part of the model.
 In case of the normal and double normal models, the peak height $h$ was used for scaling and the area $A$ was calculated by
 
-$$\tag{10}A = \frac{h}{\frac{1}{\sigma\sqrt{2\pi}}}.$$
+$$\tag{10}A = \frac{h}{\frac{1}{\sigma\sqrt{2\pi}}}$$
 
 For skew normal and double skew normal models, the scaling parameter was the peak area.
 Since the mode and mean of a skewed distribution are – in contrast to normal distributions – distinct, the calculation of the height was nontrivial and ultimately a numerical approximation was added to the skewed models.
