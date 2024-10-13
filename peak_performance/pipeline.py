@@ -1187,7 +1187,7 @@ def pipeline(
         Data format (suffix) of the raw data, default is '.npy'.
 
     Returns
-    ----------
+    -------
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
@@ -1224,7 +1224,7 @@ def pipeline_restart(
         Path variable pointing to the directory of the broken PeakPerformance batch
 
     Returns
-    ----------
+    -------
     path_results_new
         Path variable pointing to the newly created folder for the restarted batch.
     """
@@ -1323,7 +1323,7 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
         DataFrame containing the signals tab of Template.xlsx.
 
     Returns
-    ----------
+    -------
     files_for_selection
         Dict with file names as keys and unique identifiers as values.
     """
@@ -1430,7 +1430,7 @@ def model_selection_check(
         to be accepted.
 
     Returns
-    ----------
+    -------
     selected_model
         Name of the selected model type.
     """
@@ -1473,7 +1473,7 @@ def selection_loop(
         "waic": widely applicable information criterion)
 
     Returns
-    ----------
+    -------
     result_df
         DataFrame containing the ranking and scores of the model selection.
     model_dict
@@ -1565,7 +1565,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
         "waic": widely applicable information criterion)
 
     Returns
-    ----------
+    -------
     comparison_results
         DataFrame containing all rankings from model selection.
     model_dict
