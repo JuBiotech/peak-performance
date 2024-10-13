@@ -287,7 +287,7 @@ Accordingly, this plot enables users to judge whether the selected model can acc
 To complete the example, Table 2 shows the results of the fit in the form of mean, standard deviation, and HDI of each parameter's marginal posterior.
 
 __Table 2:__ Depiction of the results for the most important peak parameters of a single peak fit with the skew normal model and a double peak fit with the double normal model. Mean, area, and height have been highlighted in bold print as they constitute the most relevant parameters for further data evaluation purposes. The results correspond to the fits exhibited in Figure 4.
-![](./summary_joint.png)
+![](./summary_joint.svg)
 
 In this case, the fits were successful and convergence was reached for all parameters.
 Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 \% HDI.
