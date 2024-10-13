@@ -127,16 +127,16 @@ Here, the exact definition of the standard deviations was less important than si
 $$\tag{4}
     a \sim 
     \begin{cases}
-        \mathrm{Normal}(a_{\mathrm{guess}}, \frac{|a_{\mathrm{guess}}|}{5}) & if\ \frac{|a_{guess}|}{5}\geq0.5\\
-        \mathrm{Normal}(a_{\mathrm{guess}}, 0.5) & otherwise\\
+        \mathrm{Normal}(a_{\mathrm{guess}}, \frac{|a_{\mathrm{guess}}|}{5}) & \mathrm{if}\ \frac{|a_{guess}|}{5}\geq0.5\\
+        \mathrm{Normal}(a_{\mathrm{guess}}, 0.5) & \mathrm{otherwise}\\
     \end{cases}
 $$
 
 $$\tag{5}
     b \sim 
     \begin{cases}
-        \mathrm{Normal}(b_{\mathrm{guess}}, \frac{|b_{\mathrm{guess}}|}{6}) & if\ \frac{|b_{guess}|}{6}\geq0.05\\
-        \mathrm{Normal}(b_{\mathrm{guess}}, 0.05) & otherwise\\
+        \mathrm{Normal}(b_{\mathrm{guess}}, \frac{|b_{\mathrm{guess}}|}{6}) & \mathrm{if}\ \frac{|b_{guess}|}{6}\geq0.05\\
+        \mathrm{Normal}(b_{\mathrm{guess}}, 0.05) & \mathrm{otherwise}\\
     \end{cases}
 $$
 
@@ -160,9 +160,6 @@ Instead of the peak height, the peak area was utilized to scale the distribution
 
 The double peak models (Figure 2) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
 
-![](./Fig2_model_double_peak.png)
-__Figure 2:__ The intensity functions of double normal (**a**) and double skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $S_{i}$, $P_{i}$, and $V_{i}$ standard deviations.
-
 All variables pertaining to the actual peak were represented as vectors with two entries labeled with 0 and 1 by adding a named dimension to that effect.
 Aside from that, their priors remained unaltered except for the peak mean $\mu$.
 
@@ -182,6 +179,9 @@ $$\tag{8}\delta = \begin{bmatrix} - \frac{\mathrm{separation}}{2}\\\frac{\mathrm
 The priors for the mean parameters of each subpeak were then defined in dependence of $\mu_{\mu}$ and $\delta$ as
 
 $$\tag{9}\mu = \mu_{\mu} + \delta$$
+
+![](./Fig2_model_double_peak.png)
+__Figure 2:__ The intensity functions of double normal (**a**) and double skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $S_{i}$, $P_{i}$, and $V_{i}$ standard deviations.
 
 While all aforementioned parameters are necessary for the models, not all are of equal relevance for the user.
 A user's primary interest for consecutive data analysis generally lies in obtaining mean values, peak areas and perhaps - usually to a much lesser degree - peak heights.
