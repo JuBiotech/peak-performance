@@ -102,41 +102,35 @@ If specific distributions or their parameters had to be restricted to certain va
 For example, when only positive values were acceptable or when 0 was not a permissive value, a lower bound was defined using NumPy's clip function.  
 
 Regarding shared model elements across all intensity functions, one such component of all models presented hereafter is the likelihood function
-$$\begin{equation}\tag{1}
-    L \sim Normal(y, noise)
-\end{equation}$$
+$$\tag{1}L \sim Normal(y, noise)$$
 with $y$ as the predicted intensity and $noise$ as the free parameter describing the standard deviation of measurement noise.
 This definition encodes the assumption that observed intensities are the result of normally distributed noise around the true intensity values of a peak.
 In turn, the noise parameter is defined as 
-$$\begin{equation}\tag{2}
-    noise \sim LogNormal(\log_{10} max(10, noise_{guess}), 1)
-\end{equation}$$
+$$\tag{2}noise \sim LogNormal(\log_{10} max(10, noise_{guess}), 1)$$
 The log-normal distribution where the logarithm of the random variable follows a normal distribution was chosen partly to exclude negative values from the solution space and also due to its shape attributing a higher fraction of the probability density to lower values provided the standard deviation is defined sufficiently high.
 This prior is defined in a raw data-dependent manner as the $noise_{guess}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.  
 
 The intensity function itself is defined as the sum of a linear baseline function and a peak intensity function, the latter of which is composed of a given distribution's probability density function (PDF) scaled up to the peak size by the area or height parameter.
 The linear baseline
-$$\begin{equation}\tag{3}
-    y_{baseline}(t) = at+b
-\end{equation}$$
+$$\tag{3}y_{baseline}(t) = at+b$$
 features the slope and intersect parameters $a$ and $b$, respectively, both of which were given a normally distributed prior.
 The data-dependent guesses for these priors are obtained by constructing a line through the means of the first and last three data points of a given intensity data set which oftentimes already resulted in a good fit.
 Hence, the determined values for slope ($a_{guess}$) and intercept ($b_{guess}$) are used as the means for their pertaining priors and the standard deviations are defined as fractions of them with minima set to 0.5 and 0.05, respectively.
 Here, the exact definition of the standard deviations was less important than simply obtaining an uninformative prior which, while based on the rough fit for the baseline, possesses a sufficient degree of independence from it, thus allowing deviations by the Bayesian parameter estimation.
-$$\begin{equation}\tag{4}
+$$\tag{4}
     a \sim 
     \begin{cases}
         Normal(a_{guess}, \frac{|a_{guess}|}{5})   &  if\ \frac{|a_{guess}|}{5}\geq0.5\\
         Normal(a_{guess}, 0.5)                   & otherwise\\
     \end{cases}
-\end{equation}$$
-$$\begin{equation}\tag{5}
+$$
+$$\tag{5}
     b \sim 
     \begin{cases}
         Normal(b_{guess}, \frac{|b_{guess}|}{6})   & if\ \frac{|b_{guess}|}{6}\geq0.05\\
         Normal(b_{guess}, 0.05)                   & otherwise\\
     \end{cases}
-\end{equation}$$
+$$
 The initial guesses $noise_{guess}$, $a_{guess}$, and $b_{guess}$ are calculated from raw time and intensity by the  $\texttt{initial_guesses()}$ function from the $\texttt{models}$ submodule.
 Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
 Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
@@ -165,40 +159,28 @@ Aside from that, their priors remained unaltered except for the peak mean $\mu$.
 
 To provide a flexible solution to find double peak means across the whole time frame, the implementation of additional parameters proved indispensable.
 More precisely, the mean of both peaks or group mean was introduced as hyperprior \eqref{eq:PP mean of means} with a broad normal prior which enabled it to vary across the time frame as needed.
-$$\begin{equation}\tag{6}
-    \mu_{\mu} \sim Normal\biggl(min(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)
-\end{equation}$$
+$$\tag{6}\mu_{\mu} \sim Normal\biggl(min(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)$$
 
 By defining a separation parameter representing the distance between the sub-peaks of a double peak
-$$\begin{equation}\tag{7}
-    separation \sim Gamma\biggl(\frac{\Delta t}{6}, \frac{\Delta t}{12}\biggr)
-\end{equation}$$
+$$\tag{7}separation \sim Gamma\biggl(\frac{\Delta t}{6}, \frac{\Delta t}{12}\biggr)$$
 the offset of each peak's mean parameter from the group mean is calculated as
-$$\begin{equation}\tag{8}
-    \delta = \begin{bmatrix} - \frac{separation}{2}\\\frac{separation}{2}\end{bmatrix}.
-\end{equation}$$
+$$\tag{8}\delta = \begin{bmatrix} - \frac{separation}{2}\\\frac{separation}{2}\end{bmatrix}.$$
 The priors for the mean parameters of each subpeak were then defined in dependence of $\mu_{\mu}$ and $\delta$ as
-$$\begin{equation}\tag{9}
-    \mu = \mu_{\mu} + \delta
-\end{equation}$$
+$$\tag{9}\mu = \mu_{\mu} + \delta$$
 
 While all aforementioned parameters are necessary for the models, not all are of equal relevance for the user.
 A user's primary interest for consecutive data analysis generally lies in obtaining mean values, peak areas and perhaps - usually to a much lesser degree - peak heights.
 Since only one of the latter two parameters is strictly required for scaling purposes, different models as shown in Figures 1 and 2 will feature either one or the other.
 Nonetheless, both peak area and peak height should be supplied to the user, hence the missing one was included as a deterministic model variable and thus still part of the model.
 In case of the normal and double normal models, the peak height $h$ was used for scaling and the area $A$ was calculated by
-$$\begin{equation}\tag{10}
-    A = \frac{h}{\frac{1}{\sigma\sqrt{2\pi}}}.
-\end{equation}$$
+$$\tag{10}A = \frac{h}{\frac{1}{\sigma\sqrt{2\pi}}}.$$
 For skew normal and double skew normal models, the scaling parameter was the peak area.
 Since the mode and mean of a skewed distribution are – in contrast to normal distributions – distinct, the calculation of the height was nontrivial and ultimately a numerical approximation was added to the skewed models.
 
 Beyond these key peak parameters, all PyMC models created by $\texttt{PeakPerformance}$ contain additional constant data variables, and deterministic model variables.
 For example, the time series, i.e. the analyzed raw data, as well as the initial guesses for noise, baseline slope, and baseline intercept are kept as constant data variables to facilitate debugging and reproducibility.
 Examples for deterministic model variables in addition to peak area or height are the predicted intensity values and the signal-to-noise ratio defined here as
-$$\begin{equation}\tag{11}
-    sn = \frac{h}{noise}.
-\end{equation}$$
+$$\tag{11}sn = \frac{h}{noise}.$$
 
 
 # Results and Discussion
@@ -304,9 +286,7 @@ __Figure 5:__ Cumulative posterior predictive plots created with the ArviZ packa
 ## Validation
 In the first stage of validation, peak fitting with normal and skew normal peak models was tested regarding the ability to reproduce the ground truth of randomly generated noisy synthetic data sets.
 The arithmetic means portrayed in Figure 6a were calculated based on a measure of similarity
-$$\begin{equation}\tag{12}
-    F_{y / \hat{y}} = \frac{y}{\hat{y}}
-\end{equation}$$
+$$\tag{12}F_{y / \hat{y}} = \frac{y}{\hat{y}}$$
 where $y$ represents the estimated parameter value and $\hat{y}$ its pertaining ground truth.
 As they exhibit values close to 1, this demonstrates a near identity between estimation and ground truth.
 Additionally, the normal-shaped peak model was paired with skew normally distributed noisy data and vice versa.
@@ -320,15 +300,11 @@ In the second stage, marginal cases in the form of slightly skewed peaks were in
 Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak shapes not visibly discernible as clearly normal or skew normal.
 With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 6b).
 The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
-$$\begin{equation}\tag{13}
-    F_{n / sn} = \frac{A_{normal}}{A_{skew \ normal}}
-\end{equation}$$
+$$\tag{13}F_{n / sn} = \frac{A_{normal}}{A_{skew \ normal}}$$
 where $A_{normal}$ and $A_{skew \ normal}$ are the estimated areas with normal and skew normal models, respectively.
 
 In the third stage, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) and the fraction of the obtained areas was determined as
-$$\begin{equation}\tag{14}
-    F_{MQ / PP} = \frac{A_{MultiQuant}}{A_{PeakPerformance}}
-\end{equation}$$
+$$\tag{14}F_{MQ / PP} = \frac{A_{MultiQuant}}{A_{PeakPerformance}}$$
 where $A_{MultiQuant}$ denominates the area yielded by MultiQuant and $A_{PeakPerformance}$ the area from $\texttt{PeakPerformance}$.
 Beyond the comparability of the resulting peak area ratio means portrayed in Figure 6c, it is relevant to state that 103 signals from MultiQuant (54~\% of total signals) were manually modified.
 Of these, 31~\% were false positives and 69~\% were manually re-integrated.
