@@ -95,124 +95,16 @@ The residual parameters were held constant, i.e. the mean was fixed to 6, the ar
 For the third and final test, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) with human supervision, i.e. the results were visually inspected and corrected if necessary.
 The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as part of double peaks, and 19 noise signals.
 
-## Composition and assumptions of peak models
-Peak models in $\texttt{PeakPerformance}$ require the definition of prior probability distributions (priors) for their parameters as well as the choice of an intensity function and a likelihood function.
-Generally, priors are derived from a given time series and given a weakly informative parametrization, such that the resulting inferences of parameters like the peak height are primarily based on the data.
-While defining priors in a data-dependent manner is generally to be avoided, it is clearly not tenable to define legitimate priors for all kinds of different peaks with heights and areas varying by multiple orders of magnitude and retention times, i.e. mean values, scattered across the whole run time of the LC-MS/MS method.
-In order to flexibly build models for all these peaks in an automated manner and embedded in a standardized data pipeline, some parameter priors had to be based on the raw data.
-If specific distributions or their parameters had to be restricted to certain value ranges, error handling was incorporated.
-For example, when only positive values were acceptable or when 0 was not a permissive value, a lower bound was defined using NumPy's clip function.
-
-Regarding shared model elements across all intensity functions, one such component of all models presented hereafter is the likelihood function
-
-$$\tag{1}L \sim \mathcal{N}(y, \mathrm{noise})$$
-
-with $y$ as the predicted intensity and $\mathrm{noise}$ as the free parameter describing the standard deviation of measurement noise.
-This definition encodes the assumption that observed intensities are the result of normally distributed noise around the true intensity values of a peak.
-In turn, the noise parameter is defined as
-
-$$\tag{2}\mathrm{noise} \sim \mathrm{LogNormal}(\log_{10} \mathrm{max}(10, \mathrm{noise}_{\mathrm{guess}}), 1)$$
-
-The log-normal distribution where the logarithm of the random variable follows a normal distribution was chosen partly to exclude negative values from the solution space and also due to its shape attributing a higher fraction of the probability mass to lower values provided the standard deviation is defined sufficiently high.
-This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 % of intensity values included in a given time frame and their respective mean values.
-
-The intensity function itself is defined as the sum of a linear baseline function and a peak intensity function, the latter of which is composed of a given distribution's probability density function (PDF) scaled up to the peak size by the area or height parameter.
-The linear baseline
-
-$$\tag{3}y_{\mathrm{baseline}}(t) = at+b$$
-
-features the slope and intersect parameters $a$ and $b$, respectively, both of which were assigned a normally distributed prior.
-The data-dependent guesses for these priors are obtained by constructing a line through the means of the first and last three data points of a given intensity data set which oftentimes already resulted in a good fit.
-Hence, the determined values for slope ($a_{\mathrm{guess}}$) and intercept ($b_{\mathrm{guess}}$) are used as the means for their pertaining priors and the standard deviations are defined as fractions of them with minima set to 0.5 and 0.05, respectively.
-Here, the exact definition of the standard deviations was less important than simply obtaining an uninformative prior which, while based on the rough fit for the baseline, possesses a sufficient degree of independence from it, thus allowing deviations by the Bayesian parameter estimation.
-
-$$\tag{4}
-    a \sim
-    \begin{cases}
-        \mathcal{N}(a_{\mathrm{guess}}, \frac{|a_{\mathrm{guess}}|}{5}) & \mathrm{if}\ \frac{|a_{guess}|}{5}\geq0.5\\
-        \mathcal{N}(a_{\mathrm{guess}}, 0.5) & \mathrm{otherwise}\\
-    \end{cases}
-$$
-
-$$\tag{5}
-    b \sim
-    \begin{cases}
-        \mathcal{N}(b_{\mathrm{guess}}, \frac{|b_{\mathrm{guess}}|}{6}) & \mathrm{if}\ \frac{|b_{guess}|}{6}\geq0.05\\
-        \mathcal{N}(b_{\mathrm{guess}}, 0.05) & \mathrm{otherwise}\\
-    \end{cases}
-$$
-
-The initial guesses $\mathrm{noise}_{\mathrm{guess}}$, $a_{\mathrm{guess}}$, and $b_{\mathrm{guess}}$ are calculated from raw time and intensity by the  $\texttt{initial\_guesses()}$ function from the $\texttt{models}$ submodule.
-Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
-Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
-
-![](./Fig1_model_single_peak.png)
-__Figure 1:__ The intensity functions of normal (**a**) and skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $R$, and $S$ standard deviations.
-
-The mean value $\mu$ has a normally distributed prior with the center of the selected time frame $\mathrm{min}(t) + \frac{\Delta t}{2}$ as its mean and $\frac{\Delta t}{2}$ as the standard deviation where $\Delta t$ corresponds to the length of the time frame.
-Accordingly, the resulting prior is rather compressed and weakly informative.
-The prior for the standard deviation of the normal-shaped peak model was defined with a half-normal distribution, once again to avoid values equaling or below 0.
-As a half normal distribution only features a standard deviation, this was set to $\frac{\Delta t}{3}$.
-The final parameter is the peak height used for scaling up the distribution to match the size of the peak.
-Here, a rather uninformative half-normal distribution with a scale amounting to 95 % of the highest intensity value in the time frame was selected.
-
-The second featured single peak model is based on the skew normal distribution (Figure 1b) which has an additional skewness parameter $\alpha$ enabling a one-sided distortion of the peak or resulting in identity to the normal-shaped peak model when $\alpha=0$.
-Hence, the prior of $\alpha$ is constituted by a normal distribution centered on 0 with a standard deviation of 3.5 to allow for a sufficiently large range of possible values for $\alpha$ and thus a realistic skew.
-Instead of the peak height, the peak area was utilized to scale the distribution, albeit with an identical prior.
-
-The double peak models (Figure 2) featured many of the same variables as their single peak counterparts so only the differences will be highlighted here.
-
-All variables pertaining to the actual peak were represented as vectors with two entries labeled with 0 and 1 by adding a named dimension to that effect.
-Aside from that, their priors remained unaltered except for the peak mean $\mu$.
-
-To provide a flexible solution to find double peak means across the whole time frame, the implementation of additional parameters proved indispensable.
-More precisely, the mean of both peaks or group mean was introduced as a hyperprior (eq. 6) with a broad normal prior which enabled it to vary across the time frame as needed.
-
-$$\tag{6}\mu_{\mu} \sim \mathcal{N}\biggl(\mathrm{min}(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)$$
-
-By defining a separation parameter representing the distance between the sub-peaks of a double peak
-
-$$\tag{7}\mathrm{separation} \sim \mathrm{Gamma}\biggl(\frac{\Delta t}{6}, \frac{\Delta t}{12}\biggr)$$
-
-the offset of each peak's mean parameter from the group mean is calculated as
-
-$$\tag{8}\delta = \begin{bmatrix} - \frac{\mathrm{separation}}{2}\\\frac{\mathrm{separation}}{2}\end{bmatrix}$$
-
-The priors for the mean parameters of each subpeak were then defined in dependence of $\mu_{\mu}$ and $\delta$ as
-
-$$\tag{9}\mu = \mu_{\mu} + \delta$$
-
-![](./Fig2_model_double_peak.png)
-__Figure 2:__ The intensity functions of double normal (**a**) and double skew normal peak models (**b**) as well as the prior probability distributions of their parameters are shown in the style of a Kruschke diagram [@RN162]. Connections with $\sim$ imply stochastic and with $=$ deterministic relationships. In case of variables with multiple occurrences in one formula, the prior was only connected to one such instance to preserve visual clarity. The variables $M_{i}$ and $O_{i}$ describe mean values and $T_{i}$, $S_{i}$, $P_{i}$, and $V_{i}$ standard deviations.
-
-While all aforementioned parameters are necessary for the models, not all are of equal relevance for the user.
-A user's primary interest for consecutive data analysis generally lies in obtaining mean values, peak areas and perhaps - usually to a much lesser degree - peak heights.
-Since only one of the latter two parameters is strictly required for scaling purposes, different models as shown in Figures 1 and 2 will feature either one or the other.
-Nonetheless, both peak area and peak height should be supplied to the user, hence the missing one was included as a deterministic model variable and thus equally accessible by the user.
-In case of the normal and double normal models, the peak height $h$ was used for scaling and the area $A$ was calculated by
-
-$$\tag{10}A = \frac{h}{\frac{1}{\sigma\sqrt{2\pi}}}$$
-
-For skew normal and double skew normal models, the scaling parameter was the peak area.
-Since the mode and mean of a skewed distribution are – in contrast to normal distributions – distinct, the calculation of the height was nontrivial and ultimately a numerical approximation was added to the skewed models.
-
-Beyond these key peak parameters, all PyMC models created by $\texttt{PeakPerformance}$ contain additional constant data variables, and deterministic model variables.
-For example, the time series, i.e. the analyzed raw data, as well as the initial guesses for noise, baseline slope, and baseline intercept are kept as constant data variables to facilitate debugging and reproducibility.
-Examples for deterministic model variables in addition to peak area or height are the predicted intensity values and the signal-to-noise ratio defined here as
-
-$$\mathrm{sn} = \frac{h}{\mathrm{noise}}$$
-
 
 # Results and Discussion
 
 ## PeakPerformance workflow
-$\texttt{PeakPerformance}$ accommodates the use of a pre-manufactured data pipeline for standard applications as well as the creation of custom data pipelines using only its core functions.
-The provided data analysis pipeline was designed in a user-friendly way and requires minimal programming knowledge (Fig. 3).
+$\texttt{PeakPerformance}$ accommodates the use of a pre-manufactured data pipeline for standard applications (Fig. 1) as well as the creation of custom data pipelines using only its core functions.
+The provided data analysis pipeline was designed in a user-friendly way and requires minimal programming knowledge.
 As portrayed in an example notebook in the code repository, only a few simple Python commands need to be executed.
-Instead of relying on these convenience functions, experienced users can also directly access the core functions of $\texttt{PeakPerformance}$ for a more flexible application which is demonstrated in yet another example notebook.
 
 ![](./Fig3_PP-standalone.png)
-__Figure 3:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
+__Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
 
 Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension.
 For each peak, such a file has to be provided according to the naming convention specified in $\texttt{PeakPerformance}$'s documentation and gathered in one directory.
@@ -223,7 +115,6 @@ This guarantees that there is a sufficient number of data points at the beginnin
 The provided data pipeline starts by defining a path to this raw data directory and one to a local clone of the $\texttt{PeakPerformance}$ code repository.
 Using the $\texttt{prepare\_model\_selection()}$ method, an Excel template file ("Template.xlsx") for inputting user information is prepared and stored in the raw data directory.
 It is the user's task, then, to select the settings for the pipeline within the file itself.
-Accordingly, the file contains detailed explanations of all parameters and the parsing functions of the software feature clear error messages in case mandatory entries are missing or filled out incorrectly.
 
 Since targeted LC-MS/MS analyses essentially cycle through a list of mass traces for every sample, a model type has to be assigned to each mass trace.
 Preferably, this is done by the user which is of course only possible when the model choice is self-evident.
@@ -233,15 +124,10 @@ For this purpose, the user must provide the name of an acquisition, i.e. sample,
 If e.g. a standard mixture containing all targets was measured, this would be considered a prime candidate.
 An additional feature lets the user exclude specific model types to save computation time and improve the accuracy of model selection by for example excluding double peak models when a single peak was observed.
 Upon provision of the required information, the automated model selection can be started using the $\texttt{model\_selection()}$ function from the pipeline module and will be performed successively for each mass trace.
-Essentially, every type of model which has not been excluded by the user needs to be instantiated, sampled, and the log-likelihood needs to be calculated.
-Subsequently, the results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
-This function returns a DataFrame showing the results of the models in order of their placement on the ranking which is decided by the expected log pointwise predictive density.
+The results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
 The best model for each mass trace is then written to the Excel template file.
 
 After a model was chosen either manually or automatically for each mass trace, the peak analysis pipeline can be started with the function $\texttt{pipeline()}$ from the $\texttt{pipeline}$ module.
-The first step consists of parsing the information from the Excel sheet.
-Since the pipeline, just like model selection, acts successively, a time series is read from its data file next and the information contained in the name of the file according to the naming convention is parsed.
-All this information is combined in an instance of $\texttt{PeakPerformance}$'s $\texttt{UserInput}$ class acting as a centralized source of data for the program.
 Depending on whether the "pre-filtering" option was selected, an optional filtering step will be executed to reject signals where clearly no peak is present before sampling, thus saving computation time.
 This filtering step uses the $\texttt{find\_peaks()}$ function from the SciPy package [@scipy] which simply checks for data points directly neighboured by points with lower intensity values.
 If no data points within a certain range around the expected retention time of an analyte fulfill this most basic requirement of a peak, the signal is rejected.
@@ -262,31 +148,26 @@ If a signal was accepted as a peak, the final simulation step is a posterior pre
 
 
 ## Peak fitting results and diagnostic plots
-After completing a cycle of the data pipeline or prematurely exiting it through one of the filters, the results need to be communicated and made available to the user.
-This is done in multiple ways:
-The most complete report is found in an Excel file called "peak_data_summary.xlsx".
+The most complete report created after completing a cycle of the data pipeline is found in an Excel file called "peak_data_summary.xlsx".
 Here, each analyzed time series has multiple rows (one per peak parameter) with the columns containing estimation results in the form of mean and standard deviation (sd) of the marginal posterior distribution, highest density interval (HDI), and the $\hat{R}$ statistic among other metrics.
-Additional columns provide information on the acquisition and mass trace in question.
-Finally, there are columns stating whether the signal was recognized as a peak, if applicable the reason for the rejection of the signal, the utilized model for the simulation, and in case of a double peak a column specifying the peak number ("1st" or "2nd").
+Additionally, there are columns stating whether the signal was recognized as a peak, if applicable the reason for the rejection of the signal, the utilized model for the simulation, and in case of a double peak a column specifying the peak number ("1st" or "2nd").
 Accordingly, when a signal is rejected, it will nonetheless be added to the Excel report file and the exact reason for its rejection is detailed.
-The second Excel file created is denominated as "area_summary.xlsx" and is a more handy version of "peak_data_summary.xlsx" with a reduced degree of detail.
-As implied by the name, from the peak parameters only the peak area remains and the columns are trimmed down to the essentials.
-Since subsequent data analyses will most likely rely on the peak area, first and foremost, this sheet should facilitate the further usage of the data.
+The second Excel file created is denominated as "area_summary.xlsx" and is a more handy version of "peak_data_summary.xlsx" with a reduced degree of detail since subsequent data analyses will most likely rely on the peak area.
 The most valuable result, however, are the inference data objects saved to disk for each signal for which a peak function was successfully fitted.
 Conveniently, the inference data objects saved as $\texttt{*.nc}$ files contain all data and metadata related to the Bayesian parameter estimation, enabling the user to perform diagnostics or create custom visualizations not already provided by $\texttt{PeakPerformance}$.
 Regarding data visualization with the matplotlib package [@matplotlib; @matplotlibzenodo], $\texttt{PeakPerformance}$'s $\texttt{plots}$ module offers the generation of two diagram types for each successfully fitted peak.
 The posterior plot presents the fit of the intensity function alongside the raw data points.
-The first row of Figure 4 presents two such examples where the single peak diagram shows the histidine (His) fragment with a m/z ratio of 110 Da and the double peak diagram the leucine (Leu) and isoleucine (Ile) fragments with a m/z ratio of 86 Da.
+The first row of Figure 2 presents two such examples where the single peak diagram shows the histidine (His) fragment with a m/z ratio of 110 Da and the double peak diagram the leucine (Leu) and isoleucine (Ile) fragments with a m/z ratio of 86 Da.
 
 ![](./Fig4_peak_results.png)
-__Figure 4:__ Results plots for a single His peak and a double Leu and Ile peak depicting the peak fit (first row) and the posterior predictive checks (second row) alongside the raw data. The numerical results are listed in table 2.
+__Figure 2:__ Results plots for a single His peak and a double Leu and Ile peak depicting the peak fit (first row) and the posterior predictive checks (second row) alongside the raw data. The numerical results are listed in table 2.
 
 The posterior predictive plots in the second row of Figure 4 are provided for visual posterior predictive checks, namely the comparison of observed and predicted data distribution.
 Since a posterior predictive check is based on drawing samples from the likelihood function, the result represents the theoretical range of values encompassed by the model.
 Accordingly, this plot enables users to judge whether the selected model can accurately explain the data.
 To complete the example, Table 2 shows the results of the fit in the form of mean, standard deviation, and HDI of each parameter's marginal posterior.
 
-__Table 2:__ Depiction of the results for the most important peak parameters of a single peak fit with the skew normal model and a double peak fit with the double normal model. Mean, area, and height have been highlighted in bold print as they constitute the most relevant parameters for further data evaluation purposes. The results correspond to the fits exhibited in Figure 4.
+__Table 2:__ Depiction of the results for the most important peak parameters of a single peak fit with the skew normal model and a double peak fit with the double normal model. Mean, area, and height have been highlighted in bold print as they constitute the most relevant parameters for further data evaluation purposes. The results correspond to the fits exhibited in Figure 2.
 
 ![](./summary_joint.svg){width="100%"}
 
@@ -295,17 +176,17 @@ Most notably and for the first time, the measurement noise was taken into accoun
 
 Another important feature of $\texttt{PeakPerformance}$ is constituted by the easy access to diagnostic metrics for extensive quality control.
 Using the data stored in an inference data object of a fit, the user can utilize the ArviZ package to generate various diagnostic plots.
-One particularly useful one is the cumulative posterior predictive plot portrayed in Figure 5.
+One particularly useful one is the cumulative posterior predictive plot portrayed in Figure 3.
 This plot enables users to judge the quality of a fit and identify instances of lack-of-fit.
 As can be seen in the left plot, some predicted intensity values in the lowest quantile of the single peak example show a minimal lack-of-fit.
 Importantly, such a deviation can be observed, judged and is quantifiable which intrinsically represents a large improvement over the status quo.
 
 ![](./Fig5_ppc.png)
-__Figure 5:__ Cumulative posterior predictive plots created with the ArviZ package and pertaining to the example data of the single His peak (left) and the double Leu and Ile peak (right). The empirical cumulative density function (black) is in good agreement with the median posterior predictive (orange) and lies within the predicted variance (blue band), visualizing that the model provides an adequate prediction irrespective of the intensity value.
+__Figure 3:__ Cumulative posterior predictive plots created with the ArviZ package and pertaining to the example data of the single His peak (left) and the double Leu and Ile peak (right). The empirical cumulative density function (black) is in good agreement with the median posterior predictive (orange) and lies within the predicted variance (blue band), visualizing that the model provides an adequate prediction irrespective of the intensity value.
 
 ## Validation
 In the first stage of validation, peak fitting with normal and skew normal peak models was tested regarding the ability to reproduce the ground truth of randomly generated noisy synthetic data sets.
-The arithmetic means portrayed in Figure 6a were calculated based on a measure of similarity
+The arithmetic means portrayed in Figure 4a were calculated based on a measure of similarity
 
 $$\tag{12}F_{y / \hat{y}} = \frac{y}{\hat{y}}$$
 
@@ -316,11 +197,11 @@ In both cases, $\sigma$ was not reproduced well, especially by the normal-shaped
 Nevertheless, the peak area and height were still identified correctly with the skew normal model and merely slightly underestimated by the normal model.
 
 ![](./Fig6_PP-validation.png)
-__Figure 6:__ Validation of results from $\texttt{PeakPerformance}$. **a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with $\texttt{PeakPerformance}$ version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
+__Figure 4:__ Validation of results from $\texttt{PeakPerformance}$. **a)** Noisy synthetic data was randomly generated from one of the implemented distributions and the program's ability to infer the ground truth was observed. Portrayed are the fractions of estimated parameter to ground truth. **b)** The influence of model choice between normal and skew normal model in marginal cases with little to no skew was tested and the ratios between results from both models are plotted. **c)** Lastly, experimental data was analyzed with $\texttt{PeakPerformance}$ version 0.7.0 and compared to results achieved with the commercial software Sciex MultiQuant version 3.0.3.
 
 In the second stage, marginal cases in the form of slightly skewed peaks were investigated to observe whether their estimation with a normal- or skew normal-shaped intensity function would result in significant differences in terms of peak area and height.
 Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak shapes not visibly discernible as clearly normal or skew normal.
-With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 6b).
+With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 4b).
 The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
 
 $$\tag{13}F_{n / \mathrm{sn}} = \frac{A_{\mathcal{N}}}{A_{\mathrm{skew \ normal}}}$$
@@ -332,7 +213,7 @@ In the third stage, experimental peak data was analyzed with both $\texttt{PeakP
 $$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
 
 where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
-Beyond the comparability of the resulting peak area ratio means portrayed in Figure 6c, it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
+Beyond the comparability of the resulting peak area ratio means portrayed in Figure 4c, it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
 Of these, 31 % were false positives and 69 % were manually re-integrated.
 These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
 In contrast, however, the $\texttt{PeakPerformance}$ pipeline was only started once and merely two single peaks and one double peak were fit again with a different model and/or increased sample size after the original pipeline batch run had finished.
