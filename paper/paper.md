@@ -103,44 +103,44 @@ For example, when only positive values were acceptable or when 0 was not a permi
 
 Regarding shared model elements across all intensity functions, one such component of all models presented hereafter is the likelihood function
 
-$$\tag{1}L \sim Normal(y, \mathrm{noise})$$
+$$\tag{1}L \sim \mathrm{Normal}(y, \mathrm{noise})$$
 
-with $y$ as the predicted intensity and $noise$ as the free parameter describing the standard deviation of measurement noise.
+with $y$ as the predicted intensity and $\mathrm{noise}$ as the free parameter describing the standard deviation of measurement noise.
 This definition encodes the assumption that observed intensities are the result of normally distributed noise around the true intensity values of a peak.
 In turn, the noise parameter is defined as
 
-$$\tag{2}noise \sim LogNormal(\log_{10} max(10, noise_{guess}), 1)$$
+$$\tag{2}\mathrm{noise} \sim \mathrm{LogNormal}(\log_{10} \mathrm{max}(10, \mathrm{noise}_{\mathrm{guess}}), 1)$$
 
 The log-normal distribution where the logarithm of the random variable follows a normal distribution was chosen partly to exclude negative values from the solution space and also due to its shape attributing a higher fraction of the probability density to lower values provided the standard deviation is defined sufficiently high.
-This prior is defined in a raw data-dependent manner as the $noise_{guess}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.  
+This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.  
 
 The intensity function itself is defined as the sum of a linear baseline function and a peak intensity function, the latter of which is composed of a given distribution's probability density function (PDF) scaled up to the peak size by the area or height parameter.
 The linear baseline
 
-$$\tag{3}y_{baseline}(t) = at+b$$
+$$\tag{3}y_{\mathrm{baseline}}(t) = at+b$$
 
 features the slope and intersect parameters $a$ and $b$, respectively, both of which were given a normally distributed prior.
 The data-dependent guesses for these priors are obtained by constructing a line through the means of the first and last three data points of a given intensity data set which oftentimes already resulted in a good fit.
-Hence, the determined values for slope ($a_{guess}$) and intercept ($b_{guess}$) are used as the means for their pertaining priors and the standard deviations are defined as fractions of them with minima set to 0.5 and 0.05, respectively.
+Hence, the determined values for slope ($a_{\mathrm{guess}}$) and intercept ($b_{\mathrm{guess}}$) are used as the means for their pertaining priors and the standard deviations are defined as fractions of them with minima set to 0.5 and 0.05, respectively.
 Here, the exact definition of the standard deviations was less important than simply obtaining an uninformative prior which, while based on the rough fit for the baseline, possesses a sufficient degree of independence from it, thus allowing deviations by the Bayesian parameter estimation.
 
 $$\tag{4}
     a \sim 
     \begin{cases}
-        Normal(a_{guess}, \frac{|a_{guess}|}{5})   &  if\ \frac{|a_{guess}|}{5}\geq0.5\\
-        Normal(a_{guess}, 0.5)                   & otherwise\\
+        \mathrm{Normal}(a_{\mathrm{guess}}, \frac{|a_{\mathrm{guess}}|}{5}) & if\ \frac{|a_{guess}|}{5}\geq0.5\\
+        \mathrm{Normal}(a_{\mathrm{guess}}, 0.5) & otherwise\\
     \end{cases}
 $$
 
 $$\tag{5}
     b \sim 
     \begin{cases}
-        Normal(b_{guess}, \frac{|b_{guess}|}{6})   & if\ \frac{|b_{guess}|}{6}\geq0.05\\
-        Normal(b_{guess}, 0.05)                   & otherwise\\
+        \mathrm{Normal}(b_{\mathrm{guess}}, \frac{|b_{\mathrm{guess}}|}{6}) & if\ \frac{|b_{guess}|}{6}\geq0.05\\
+        \mathrm{Normal}(b_{\mathrm{guess}}, 0.05) & otherwise\\
     \end{cases}
 $$
 
-The initial guesses $noise_{guess}$, $a_{guess}$, and $b_{guess}$ are calculated from raw time and intensity by the  $\texttt{initial\_guesses()}$ function from the $\texttt{models}$ submodule.
+The initial guesses $\mathrm{noise}_{\mathrm{guess}}$, $a_{\mathrm{guess}}$, and $b_{\mathrm{guess}}$ are calculated from raw time and intensity by the  $\texttt{initial\_guesses()}$ function from the $\texttt{models}$ submodule.
 Beyond this point, it is sensible to categorize models into single and double peak models since these subgroups share a larger common basis.
 Starting with single peak models, the normal-shaped model (Figure 1a) requires only three additional parameters for defining its intensity function.
 
@@ -169,15 +169,15 @@ Aside from that, their priors remained unaltered except for the peak mean $\mu$.
 To provide a flexible solution to find double peak means across the whole time frame, the implementation of additional parameters proved indispensable.
 More precisely, the mean of both peaks or group mean was introduced as a hyperprior (eq. 6) with a broad normal prior which enabled it to vary across the time frame as needed.
 
-$$\tag{6}\mu_{\mu} \sim Normal\biggl(min(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)$$
+$$\tag{6}\mu_{\mu} \sim \mathrm{Normal}\biggl(\mathrm{min}(t) + \frac{\Delta t}{2}, \frac{\Delta t}{6}\biggr)$$
 
 By defining a separation parameter representing the distance between the sub-peaks of a double peak
 
-$$\tag{7}separation \sim Gamma\biggl(\frac{\Delta t}{6}, \frac{\Delta t}{12}\biggr)$$
+$$\tag{7}\mathrm{separation} \sim \mathrm{Gamma}\biggl(\frac{\Delta t}{6}, \frac{\Delta t}{12}\biggr)$$
 
 the offset of each peak's mean parameter from the group mean is calculated as
 
-$$\tag{8}\delta = \begin{bmatrix} - \frac{separation}{2}\\\frac{separation}{2}\end{bmatrix}.$$
+$$\tag{8}\delta = \begin{bmatrix} - \frac{\mathrm{separation}}{2}\\\frac{\mathrm{separation}}{2}\end{bmatrix}$$
 
 The priors for the mean parameters of each subpeak were then defined in dependence of $\mu_{\mu}$ and $\delta$ as
 
@@ -198,7 +198,7 @@ Beyond these key peak parameters, all PyMC models created by $\texttt{PeakPerfor
 For example, the time series, i.e. the analyzed raw data, as well as the initial guesses for noise, baseline slope, and baseline intercept are kept as constant data variables to facilitate debugging and reproducibility.
 Examples for deterministic model variables in addition to peak area or height are the predicted intensity values and the signal-to-noise ratio defined here as
 
-$$\tag{11}sn = \frac{h}{noise}.$$
+$$\mathrm{sn} = \frac{h}{\mathrm{noise}}$$
 
 
 # Results and Discussion
@@ -320,15 +320,15 @@ Here, a slight skew was defined as an $\alpha$ parameter of 1 resulting in peak 
 With a sample size of 100 noisy, randomly generated data sets, we show that nearly identical estimates for peak area and height, as well as their respective uncertainties are obtained regardless of the utilized model (Fig. 6b).
 The exhibited mean values are based on fractions of the key peak parameters area and height between results obtained with a normal and skew normal model which were defined as
 
-$$\tag{13}F_{n / sn} = \frac{A_{normal}}{A_{skew \ normal}}$$
+$$\tag{13}F_{n / \mathrm{sn}} = \frac{A_{\mathrm{normal}}}{A_{\mathrm{skew \ normal}}}$$
 
 where $A_{normal}$ and $A_{skew \ normal}$ are the estimated areas with normal and skew normal models, respectively.
 
 In the third stage, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) and the fraction of the obtained areas was determined as
 
-$$\tag{14}F_{MQ / PP} = \frac{A_{MultiQuant}}{A_{PeakPerformance}}$$
+$$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
 
-where $A_{MultiQuant}$ denominates the area yielded by MultiQuant and $A_{PeakPerformance}$ the area from $\texttt{PeakPerformance}$.
+where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
 Beyond the comparability of the resulting peak area ratio means portrayed in Figure 6c, it is relevant to state that 103 signals from MultiQuant (54~\% of total signals) were manually modified.
 Of these, 31~\% were false positives and 69~\% were manually re-integrated.
 These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
