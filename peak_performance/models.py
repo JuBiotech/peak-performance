@@ -1,19 +1,20 @@
+# PeakPerformance
+# Copyright (C) 2023 Forschungszentrum Jülich GmbH
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-PeakPerformance
-Copyright (C) 2023 Forschungszentrum Jülich GmbH
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+This module contains functions for creating various kinds of peak models and to make initial guesses for their parameters.
 """
 
 from enum import Enum
@@ -28,12 +29,19 @@ import scipy.stats as st
 
 
 class ModelType(str, Enum):
-    """Class containing all implemented model types."""
+    """Enum of default model types."""
 
     Normal = "normal"
+    """Shape of a Gaussian Normal PDF."""
+
     SkewNormal = "skew_normal"
+    """Shape of a skewed Normal PDF."""
+
     DoubleNormal = "double_normal"
+    """Superposition of two ``Normal`` peaks."""
+
     DoubleSkewNormal = "double_skew_normal"
+    """Superposition of two ``SkewedNormal`` peaks."""
 
 
 def guess_noise(intensity):
@@ -392,10 +400,9 @@ def std_skew_calculation(scale, alpha):
         Skewness parameter of the skew normal distribution.
 
     Returns
-    ----------
+    -------
     std
         Standard deviation of a skew normal distribution.
-    -------
     """
     return np.sqrt(scale**2 * (1 - (2 * alpha**2) / ((alpha**2 + 1) * np.pi)))
 
@@ -414,7 +421,7 @@ def mean_skew_calculation(loc, scale, alpha):
         Skewness parameter of the skew normal distribution.
 
     Returns
-    ----------
+    -------
     mean
         Arithmetic mean of a skew normal distribution.
     """
@@ -488,7 +495,7 @@ def height_calculation(area, loc, scale, alpha, mode_skew):
         Mode of the skew normal distribution.
 
     Returns
-    ----------
+    -------
     mean
         Arithmetic mean of a skew normal distribution.
     """

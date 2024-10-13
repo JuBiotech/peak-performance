@@ -1,19 +1,20 @@
+# PeakPerformance
+# Copyright (C) 2023 Forschungszentrum Jülich GmbH
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-PeakPerformance
-Copyright (C) 2023 Forschungszentrum Jülich GmbH
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Defines steps for a pipeline to process LC-MS-MS data.
 """
 
 import importlib
@@ -1186,7 +1187,7 @@ def pipeline(
         Data format (suffix) of the raw data, default is '.npy'.
 
     Returns
-    ----------
+    -------
     path_results
         Path variable pointing to the newly created folder for this batch.
     """
@@ -1223,7 +1224,7 @@ def pipeline_restart(
         Path variable pointing to the directory of the broken PeakPerformance batch
 
     Returns
-    ----------
+    -------
     path_results_new
         Path variable pointing to the newly created folder for the restarted batch.
     """
@@ -1322,7 +1323,7 @@ def parse_files_for_model_selection(signals: pandas.DataFrame) -> Dict[str, str]
         DataFrame containing the signals tab of Template.xlsx.
 
     Returns
-    ----------
+    -------
     files_for_selection
         Dict with file names as keys and unique identifiers as values.
     """
@@ -1429,7 +1430,7 @@ def model_selection_check(
         to be accepted.
 
     Returns
-    ----------
+    -------
     selected_model
         Name of the selected model type.
     """
@@ -1472,7 +1473,7 @@ def selection_loop(
         "waic": widely applicable information criterion)
 
     Returns
-    ----------
+    -------
     result_df
         DataFrame containing the ranking and scores of the model selection.
     model_dict
@@ -1564,7 +1565,7 @@ def model_selection(path_raw_data: Union[str, os.PathLike], *, ic: str = "loo"):
         "waic": widely applicable information criterion)
 
     Returns
-    ----------
+    -------
     comparison_results
         DataFrame containing all rankings from model selection.
     model_dict
