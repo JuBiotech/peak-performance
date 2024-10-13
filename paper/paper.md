@@ -79,11 +79,11 @@ __Table 1:__ Normal distributions from which parameters were drawn randomly to c
 
 | **parameter**      | **model (1st test)**    | **model (2nd test)**  |
 | ------------------ | ----------------------- | ----------------------- |
-| area               | $\mathcal{N}(8, 0.5)$   | -                       |
-| standard deviation | $\mathcal{N}(0.5, 0.1)$ | $\mathcal{N}(0.5, 0.1)$ |
-| skewness           | $\mathcal{N}(0, 2)$     | -                       |
-| baseline intercept | $\mathcal{N}(25, 1)$    | $\mathcal{N}(25, 1)$    |
-| baseline slope     | $\mathcal{N}(0, 1)$     | $\mathcal{N}(0, 1)$     |
+| area               | $$\mathcal{N}(8, 0.5)$$   | -                       |
+| standard deviation | $$\mathcal{N}(0.5, 0.1)$$ | $$\mathcal{N}(0.5, 0.1)$$ |
+| skewness           | $$\mathcal{N}(0, 2)$$    | -                       |
+| baseline intercept | $$\mathcal{N}(25, 1)$$    | $$\mathcal{N}(25, 1)$$    |
+| baseline slope     | $$\mathcal{N}(0, 1)$$     | $$\mathcal{N}(0, 1)$$     |
 
 In marginal cases when the shape of a single peak had a slight skew, the automated model selection would at times settle on a normal or a skew normal model.
 Therefore, it was relevant to investigate whether this choice would lead to a significant discrepancy in estimated peak parameters.
