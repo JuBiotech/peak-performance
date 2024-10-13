@@ -114,7 +114,7 @@ In turn, the noise parameter is defined as
 $$\tag{2}\mathrm{noise} \sim \mathrm{LogNormal}(\log_{10} \mathrm{max}(10, \mathrm{noise}_{\mathrm{guess}}), 1)$$
 
 The log-normal distribution where the logarithm of the random variable follows a normal distribution was chosen partly to exclude negative values from the solution space and also due to its shape attributing a higher fraction of the probability mass to lower values provided the standard deviation is defined sufficiently high.
-This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 \% of intensity values included in a given time frame and their respective mean values.
+This prior is defined in a raw data-dependent manner as the $\mathrm{noise}_{\mathrm{guess}}$ amounts to the standard deviation of the differences of the first and final 15 % of intensity values included in a given time frame and their respective mean values.
 
 The intensity function itself is defined as the sum of a linear baseline function and a peak intensity function, the latter of which is composed of a given distribution's probability density function (PDF) scaled up to the peak size by the area or height parameter.
 The linear baseline
@@ -154,7 +154,7 @@ Accordingly, the resulting prior is rather compressed and weakly informative.
 The prior for the standard deviation of the normal-shaped peak model was defined with a half-normal distribution, once again to avoid values equaling or below 0.
 As a half normal distribution only features a standard deviation, this was set to $\frac{\Delta t}{3}$.
 The final parameter is the peak height used for scaling up the distribution to match the size of the peak.
-Here, a rather uninformative half-normal distribution with a scale amounting to 95 \% of the highest intensity value in the time frame was selected.
+Here, a rather uninformative half-normal distribution with a scale amounting to 95 % of the highest intensity value in the time frame was selected.
 
 The second featured single peak model is based on the skew normal distribution (Figure 1b) which has an additional skewness parameter $\alpha$ enabling a one-sided distortion of the peak or resulting in identity to the normal-shaped peak model when $\alpha=0$.
 Hence, the prior of $\alpha$ is constituted by a normal distribution centered on 0 with a standard deviation of 3.5 to allow for a sufficiently large range of possible values for $\alpha$ and thus a realistic skew.
@@ -234,7 +234,7 @@ If e.g. a standard mixture containing all targets was measured, this would be co
 An additional feature lets the user exclude specific model types to save computation time and improve the accuracy of model selection by for example excluding double peak models when a single peak was observed.
 Upon provision of the required information, the automated model selection can be started using the $\texttt{model\_selection()}$ function from the pipeline module and will be performed successively for each mass trace.
 Essentially, every type of model which has not been excluded by the user needs to be instantiated, sampled, and the log-likelihood needs to be calculated.
-Subsequently, the results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146, @RN145].
+Subsequently, the results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
 This function returns a DataFrame showing the results of the models in order of their placement on the ranking which is decided by the expected log pointwise predictive density.
 The best model for each mass trace is then written to the Excel template file.
 
@@ -252,7 +252,7 @@ Another pertinent example of such a use case are isotopic labeling experiments f
 Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is conducted using a No-U-Turn Sampler (NUTS) [@RN173], preferably - if installed in the Python environment - the nutpie sampler [@nutpie] due to its highly increased performance compared to the default sampler of PyMC.
 Before sampling from the posterior distribution, a prior predictive check is performed the results of which can be accessed and evaluated after the fact.
 When a posterior distribution has been obtained, the main filtering step is next in line.
-The first criterion is constituted by checking the convergence of the Markov chains towards a common solution for the posterior represented by the potential scale reduction factor [@RN152], also referred to as the \^{R} statistic or Gelman-Rubin diagnostic.
+The first criterion is constituted by checking the convergence of the Markov chains towards a common solution for the posterior represented by the potential scale reduction factor [@RN152], also referred to as the $\hat{R}$ statistic or Gelman-Rubin diagnostic.
 If this factor is above 1.05 for any parameter, convergence was not reached and the sampling will be repeated once with a much higher number of tuning samples.
 If the filter is not passed a second time, the pertaining signal is rejected.
 Harnessing the advantages of the uncertainty quantification, a second criterion calculates the ratio of the resulting standard deviation of a peak parameter to its mean and discards signals exceeding a threshold.
@@ -265,7 +265,7 @@ If a signal was accepted as a peak, the final simulation step is a posterior pre
 After completing a cycle of the data pipeline or prematurely exiting it through one of the filters, the results need to be communicated and made available to the user.
 This is done in multiple ways:
 The most complete report is found in an Excel file called "peak_data_summary.xlsx".
-Here, each analyzed time series has multiple rows (one per peak parameter) with the columns containing estimation results in the form of mean and standard deviation (sd) of the marginal posterior distribution, highest density interval (HDI), and the \^{R} statistic among other metrics.
+Here, each analyzed time series has multiple rows (one per peak parameter) with the columns containing estimation results in the form of mean and standard deviation (sd) of the marginal posterior distribution, highest density interval (HDI), and the $\hat{R}$ statistic among other metrics.
 Additional columns provide information on the acquisition and mass trace in question.
 Finally, there are columns stating whether the signal was recognized as a peak, if applicable the reason for the rejection of the signal, the utilized model for the simulation, and in case of a double peak a column specifying the peak number ("1st" or "2nd").
 Accordingly, when a signal is rejected, it will nonetheless be added to the Excel report file and the exact reason for its rejection is detailed.
@@ -274,7 +274,7 @@ As implied by the name, from the peak parameters only the peak area remains and 
 Since subsequent data analyses will most likely rely on the peak area, first and foremost, this sheet should facilitate the further usage of the data.
 The most valuable result, however, are the inference data objects saved to disk for each signal for which a peak function was successfully fitted.
 Conveniently, the inference data objects saved as $\texttt{*.nc}$ files contain all data and metadata related to the Bayesian parameter estimation, enabling the user to perform diagnostics or create custom visualizations not already provided by $\texttt{PeakPerformance}$.
-Regarding data visualization with the matplotlib package [@matplotlib, @matplotlibzenodo], $\texttt{PeakPerformance}$'s $\texttt{plots}$ module offers the generation of two diagram types for each successfully fitted peak.
+Regarding data visualization with the matplotlib package [@matplotlib; @matplotlibzenodo], $\texttt{PeakPerformance}$'s $\texttt{plots}$ module offers the generation of two diagram types for each successfully fitted peak.
 The posterior plot presents the fit of the intensity function alongside the raw data points.
 The first row of Figure 4 presents two such examples where the single peak diagram shows the histidine (His) fragment with a m/z ratio of 110 Da and the double peak diagram the leucine (Leu) and isoleucine (Ile) fragments with a m/z ratio of 86 Da.
 
@@ -291,7 +291,7 @@ __Table 2:__ Depiction of the results for the most important peak parameters of 
 ![](./summary_joint.svg){width="100%"}
 
 In this case, the fits were successful and convergence was reached for all parameters.
-Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 \% HDI.
+Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.
 
 Another important feature of $\texttt{PeakPerformance}$ is constituted by the easy access to diagnostic metrics for extensive quality control.
 Using the data stored in an inference data object of a fit, the user can utilize the ArviZ package to generate various diagnostic plots.
@@ -332,8 +332,8 @@ In the third stage, experimental peak data was analyzed with both $\texttt{PeakP
 $$\tag{14}F_{\mathrm{MQ} / \mathrm{PP}} = \frac{A_{\mathrm{MQ}}}{A_{\mathrm{PP}}}$$
 
 where $A_{\mathrm{MQ}}$ denominates the area yielded by MultiQuant and $A_{\mathrm{PP}}$ the area from $\texttt{PeakPerformance}$.
-Beyond the comparability of the resulting peak area ratio means portrayed in Figure 6c, it is relevant to state that 103 signals from MultiQuant (54~\% of total signals) were manually modified.
-Of these, 31~\% were false positives and 69~\% were manually re-integrated.
+Beyond the comparability of the resulting peak area ratio means portrayed in Figure 6c, it is relevant to state that 103 signals from MultiQuant (54 % of total signals) were manually modified.
+Of these, 31 % were false positives and 69 % were manually re-integrated.
 These figures are the result of a relatively high share of double peaks in the test sample which generally give a lot more cause for manual interference than single peaks.
 In contrast, however, the $\texttt{PeakPerformance}$ pipeline was only started once and merely two single peaks and one double peak were fit again with a different model and/or increased sample size after the original pipeline batch run had finished.
 Among the 192 signals of the test data set, there were 7 noisy, low intensity signals without a clear peak which were recognized as a peak only by either one or the other software and were hence omitted from this comparison.
