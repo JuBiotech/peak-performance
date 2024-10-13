@@ -1,0 +1,16 @@
+name: pp_env
+channels:
+  - conda-forge
+dependencies:
+  - arviz
+  - jupyter
+  - matplotlib
+  - numba
+  - numpy
+  - nutpie
+  - openpyxl
+  - pip
+  - pymc
+  - python=3.11
+  - pip:
+    - peak-performance
