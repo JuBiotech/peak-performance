@@ -144,6 +144,6 @@ The authors thank Tobias Latour for providing experimental LC-MS/MS data for the
 No competing interest is declared.
 
 ### Data availability
-The datasets generated during and/or analysed during the current study are available from the corresponding author on reasonable request.
+The datasets generated during and/or analysed during the current study are available in version 0.7.1 of the [Zenodo record](https://zenodo.org/records/11189842).
 
 # Bibliography
