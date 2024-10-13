@@ -11,7 +11,8 @@ If you have already installed Miniconda, you can install Mamba on top of it but 
 The newest conda version should also work, just replace `mamba` with `conda` in step 2.)
 ```
 
-2. Create a new Python environment in the command line using the provided environment.yml file in the repo. You have to download environment.yml first and navigate to its location within the command line interface. Then execute the following command:
+2. Create a new Python environment in the command line using the provided [`environment.yml`](https://github.com/JuBiotech/peak-performance/blob/main/environment.yml) file from the repo.
+   Download `environment.yml` first, then navigate to its location on the command line interface and run the following command:
 ```
 mamba env create -f environment.yml
 ```
