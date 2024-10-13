@@ -71,9 +71,8 @@ Since the inference data is stored alongside graphs and report sheets, users may
 
 ## Validation of $\texttt{PeakPerformance}$
 Several stages of validation were employed to prove the suitability of $\texttt{PeakPerformance}$ for chromatographic peak data analysis.
-The goals were to showcase the efficacy of $\texttt{PeakPerformance}$ utilizing noisy synthetic data, to investigate cases where a peak could reasonably be fit with either of the single peak models, and finally to use experimental data to compare results obtained with $\texttt{PeakPerformance}$ to those from the commercial vendor software Sciex MultiQuant.
-
-For the first test, 500 random data sets were generated with the NumPy random module [@harris2020array] by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
+For the first and second tests, 500 random data sets were generated with the NumPy random module [@harris2020array] by drawing from the normal distributions detailed in Table 1 except for the mean parameter which was held constant at a value of 6.
+Additionally, in case of the second test, the area was set to 8 and the skewness parameter $\alpha$ to 1.
 Subsequently, normally distributed random noise ($\mathcal{N}(0, 0.6)$ or $\mathcal{N}(0, 1.2)$ for data sets with the tag "higher noise") was added to each data point.
 The amount of data points per time was chosen based on an LC-MS/MS method routinely utilized by the authors and accordingly set to one data point per 1.8 s.
 
@@ -86,11 +85,6 @@ __Table 1:__ Normal distributions from which parameters were drawn randomly to c
 | skewness           | $\mathcal{N}(0, 2)$    | -                       |
 | baseline intercept | $\mathcal{N}(25, 1)$    | $\mathcal{N}(25, 1)$    |
 | baseline slope     | $\mathcal{N}(0, 1)$     | $\mathcal{N}(0, 1)$     |
-
-In marginal cases when the shape of a single peak had a slight skew, the automated model selection would at times settle on a normal or a skew normal model.
-Therefore, it was relevant to investigate whether this choice would lead to a significant discrepancy in estimated peak parameters.
-Accordingly, for the second test synthetic data sets were generated with the NumPy random module according to Table 1 and noise was added as described before.
-The residual parameters were held constant, i.e. the mean was fixed to 6, the area to 8, and the skewness parameter $\alpha$ to 1.
 
 For the third and final test, experimental peak data was analyzed with both $\texttt{PeakPerformance}$ (version 0.7.0) and Sciex MultiQuant (version 3.0.3) with human supervision, i.e. the results were visually inspected and corrected if necessary.
 The data set consisted of 192 signals comprised of 123 single peaks, 50 peaks as part of double peaks, and 19 noise signals.
@@ -106,8 +100,7 @@ As portrayed in an example notebook in the code repository, only a few simple Py
 ![](./Fig3_PP-standalone.png)
 __Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
 
-Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension.
-For each peak, such a file has to be provided according to the naming convention specified in $\texttt{PeakPerformance}$'s documentation and gathered in one directory.
+Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension for each peak and place them in one directory.
 If a complete time series of a 30 - 90 min LC-MS/MS run were to be submitted to the program, however, the target peak would make up an extremely small portion of this data.
 Additionally, other peaks with the same mass and fragmentation pattern may have been observed at different retention times.
 Therefore, it was decided from the outset that in order to enable proper peak fitting, only a fraction of such a time series with a range of 3 - 5 times the peak width and roughly centered on the target peak would be accepted as an input.
@@ -122,8 +115,7 @@ If this is not the case, an optional automated model selection step can be perfo
 It is then assumed that within one batch run, all instances of a mass trace across all acquisitions can be fitted with the same type of model.
 For this purpose, the user must provide the name of an acquisition, i.e. sample, where a clear and representative peak for the given mass trace was observed.
 If e.g. a standard mixture containing all targets was measured, this would be considered a prime candidate.
-An additional feature lets the user exclude specific model types to save computation time and improve the accuracy of model selection by for example excluding double peak models when a single peak was observed.
-Upon provision of the required information, the automated model selection can be started using the $\texttt{model\_selection()}$ function from the pipeline module and will be performed successively for each mass trace.
+The automated model selection can be started using the $\texttt{model\_selection()}$ function from the pipeline module and will be performed successively for each mass trace.
 The results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
 The best model for each mass trace is then written to the Excel template file.
 
