@@ -11,16 +11,16 @@ tags:
 authors:
   - name: Jochen Nießer
     orcid: 0000-0001-5397-0682
-    affiliation: 1
+    affiliation: 1, 2
   - name: Michael Osthege
     orcid: 0000-0002-2734-7624
     affiliation: 1
   - name: Eric von Lieres
     orcid: 0000-0002-0309-8408
-    affiliation: "1, 2"
+    affiliation: "1, 3"
   - name: Wolfgang Wiechert
     orcid: 0000-0001-8501-0694
-    affiliation: "1, 2"
+    affiliation: "1, 3"
   - name: Stephan Noack
     orcid: 0000-0001-9784-3626
     affiliation: 1
@@ -28,8 +28,10 @@ authors:
 affiliations:
  - name: Institute for Bio- and Geosciences (IBG-1), Forschungszentrum Jülich GmbH, Jülich, Germany
    index: 1
- - name: Computational Systems Biotechnology, RWTH Aachen University, Aachen, Germany
+ - name: RWTH Aachen University, Aachen, Germany
    index: 2
+ - name: Computational Systems Biotechnology, RWTH Aachen University, Aachen, Germany
+   index: 3
 
 date: 12th of August 2024
 bibliography:
