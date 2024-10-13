@@ -103,7 +103,7 @@ For example, when only positive values were acceptable or when 0 was not a permi
 
 Regarding shared model elements across all intensity functions, one such component of all models presented hereafter is the likelihood function
 
-$$\tag{1}L \sim Normal(y, noise)$$
+$$\tag{1}L \sim Normal(y, \mathrm{noise})$$
 
 with $y$ as the predicted intensity and $noise$ as the free parameter describing the standard deviation of measurement noise.
 This definition encodes the assumption that observed intensities are the result of normally distributed noise around the true intensity values of a peak.
