@@ -605,3 +605,4 @@ idata_summary_*.xlsx
 idata_*
 *Sandbox*.ipynb
 !/docs/source/notebooks/*.png
+!/docs/source/notebooks/paper raw data/**/*.npy
