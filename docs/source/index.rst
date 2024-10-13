@@ -46,6 +46,8 @@ The documentation features various notebooks that demonstrate the usage and inve
    notebooks/Ex3_Pipeline_with_larger_example_dataset.ipynb
    notebooks/Investigation_doublepeak_separation.ipynb
    notebooks/Investigation_noise_sigma.ipynb
+   notebooks/Processing_test_1_raw_data.ipynb
+   notebooks/Create_validation_plot_from_raw_data.ipynb
 
 
 API Reference
