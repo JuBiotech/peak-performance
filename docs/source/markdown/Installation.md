@@ -11,20 +11,7 @@ If you have already installed Miniconda, you can install Mamba on top of it but 
 The newest conda version should also work, just replace `mamba` with `conda` in step 2.)
 ```
 
-2. Create a new Python environment (replace "name_of_environment" with your desired name) in the command line via
+2. Create a new Python environment in the command line using the provided environment.yml file in the repo. You have to download environment.yml first and navigate to its location within the command line interface. Then execute the following command:
 ```
-mamba create -c conda-forge -n name_of_environment pymc nutpie arviz jupyter matplotlib openpyxl "python=3.10"
-```
-3. Install PeakPerformance:
-- __Recommended__: Clone the PeakPerformance repository, then open the command line, navigate to your local clone, activate the Python environment created in the previous step, and install PeakPerformance via
-```
-pip install -e .
-```
-- __Alternative a__: Activate the Python environment created in the previous step and install PeakPerformance via PyPI using
-```
-pip install peak-performance
-```
-- __Alternative b__: Download the latest Python wheel, then open the command line, navigate to the directory containing the wheel, activate the Python environment created above, and install PeakPerformance via
-```
-pip install name_of_wheel.whl
+mamba env create -f environment.yml
 ```
