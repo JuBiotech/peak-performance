@@ -63,7 +63,7 @@ $\texttt{PeakPerformance}$ is an open source Python package compatible with Wind
 At the time of manuscript submission, it features three modules: `pipeline`, `models`, and `plotting`.
 Due to its modular design, $\texttt{PeakPerformance}$ can easily be expanded by adding e.g. additional models for deviating peak shapes or different plots.
 Currently, the featured peak models describe peaks in the shape of normal or skew normal distributions, as well as double peaks of normal or skewed normal shape.
-The normal distribution is regarded as the ideal peak shape and common phenomena like tailing and fronting can be expressed by the skew normal distribution [@RN144].\\
+The normal distribution is regarded as the ideal peak shape and common phenomena like tailing and fronting can be expressed by the skew normal distribution [@RN144].
 Bayesian inference is conducted utilizing the PyMC package [@RN150] with the external sampler $\texttt{nutpie}$ for improved performance [@nutpie].
 Both model selection and analysis of inference data objects are realized with the ArviZ package [@RN147].
 Since the inference data is stored alongside graphs and report sheets, users may employ the ArviZ package or others for further analysis of the results if necessary.
