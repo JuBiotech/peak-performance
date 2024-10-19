@@ -6,7 +6,7 @@ dependencies:
   - jupyter
   - matplotlib
   - numba
-  - numpy
+  - numpy<2
   - nutpie
   - openpyxl
   - pip
