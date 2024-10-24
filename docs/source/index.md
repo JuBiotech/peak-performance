@@ -51,8 +51,9 @@ You can also download the latest version from [GitHub](https://github.com/JuBiot
 
 markdown/Preparing_raw_data
 markdown/Peak_model_composition
-markdown/PeakPerformance_validation
 markdown/PeakPerformance_workflow
+markdown/PeakPerformance_validation
+notebook/Recreate_data_from_scratch
 markdown/Diagnostic_plots
 markdown/How_to_adapt_PeakPerformance_to_your_data
 ```
