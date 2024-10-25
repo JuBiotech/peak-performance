@@ -93,6 +93,8 @@ Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is c
 Before sampling from the posterior distribution, a prior predictive check is performed.
 When a posterior distribution has been obtained, the main filtering step is next in line which checks the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
 If a signal was accepted as a peak, a posterior predictive check is conducted and added to the inference data object resulting from the model simulation.
+Regarding the performance of the simulation, in our tests an analysis of a single peaks took 20 s to 30 s and of a double peaks 25 s to 90 s.
+This is of course dependent on the power of the computer as well as whether an additional simulation with an increased number of samples needs to be conducted.
 
 
 ## Peak fitting results and diagnostic plots
