@@ -7,12 +7,13 @@ Navigate to `docs/source/notebooks` and run the `Create_results_in_figure_2.ipyn
 It is separated into two sections which work and are structured in an analogous manner.
 The first creates the results figure for the single peak and the second for the double peak.
 Both sections walk through the following sequential steps:
-  1. open and plot example raw data
-  2. define a model
-  3. perform both sampling and posterior predictive sampling
-  4. display the summary DataFrame containing the results of the peak fitting
-  5. display cumulative plot of the posterior predictive check
-  6. display the posterior predictive check and the peak fit against the raw data points.
+
+1. open and plot example raw data
+2. define a model
+3. perform both sampling and posterior predictive sampling
+4. display the summary DataFrame containing the results of the peak fitting
+5. display cumulative plot of the posterior predictive check
+6. display the posterior predictive check and the peak fit against the raw data points.
 
 ## Recreate the validation plot from the documentation
 
