@@ -56,6 +56,8 @@ Since this is a time-consuming, not to mention tedious, procedure and introduces
 The advantage of this approach is the complete integration of all relevant parameters – i.e. baseline, peak area and height, mean, signal-to-noise ratio etc. – into one single model through which all parameters are estimated simultaneously.
 Furthermore, Bayesian inference comes with uncertainty quantification for all peak model parameters, and thus does not merely yield a point estimate as would commonly be the case.
 It also grants access to novel metrics for avoiding false positives and negatives by rejecting signals where a) a convergence criterion of the peak fitting procedure was not fulfilled or b) the uncertainty of the estimated parameters exceeded a user-defined threshold.
+By employing peak fitting to uncover peak parameters – most importantly the area –, this approach thus differs from recent applications of Bayesian statistics to chromatographic peak data which e.g. focussed on peak detection [@vivo2012bayesian; @woldegebriel2015probabilistic], method optimization [@wiczling2016much] and simulations of chromatography [@briskot2019prediction; @yamamoto2021uncertainty].
+The first studies to be published about this topic contain perhaps the technique most similar in spirit to the present one since functions made of an idealized peak shape and a noise term are fitted but beyond this common starting point the methodolody is quiet distinct [@kelly1971estimation; @kelly1971application].
 
 # Materials and Methods
 ## Implementation
@@ -63,7 +65,7 @@ $\texttt{PeakPerformance}$ is an open source Python package compatible with Wind
 At the time of manuscript submission, it features three modules: `pipeline`, `models`, and `plotting`.
 Due to its modular design, $\texttt{PeakPerformance}$ can easily be expanded by adding e.g. additional models for deviating peak shapes or different plots.
 Currently, the featured peak models describe peaks in the shape of normal or skew normal distributions, as well as double peaks of normal or skewed normal shape.
-The normal distribution is regarded as the ideal peak shape and common phenomena like tailing and fronting can be expressed by the skew normal distribution [@RN144].\\
+The normal distribution is regarded as the ideal peak shape and common phenomena like tailing and fronting can be expressed by the skew normal distribution [@RN144].
 Bayesian inference is conducted utilizing the PyMC package [@RN150] with the external sampler $\texttt{nutpie}$ for improved performance [@nutpie].
 Both model selection and analysis of inference data objects are realized with the ArviZ package [@RN147].
 Since the inference data is stored alongside graphs and report sheets, users may employ the ArviZ package or others for further analysis of the results if necessary.
@@ -93,6 +95,8 @@ Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is c
 Before sampling from the posterior distribution, a prior predictive check is performed.
 When a posterior distribution has been obtained, the main filtering step is next in line which checks the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
 If a signal was accepted as a peak, a posterior predictive check is conducted and added to the inference data object resulting from the model simulation.
+Regarding the performance of the simulation, in our tests an analysis of a single peaks took 20 s to 30 s and of a double peaks 25 s to 90 s.
+This is of course dependent on the power of the computer as well as whether an additional simulation with an increased number of samples needs to be conducted.
 
 
 ## Peak fitting results and diagnostic plots
