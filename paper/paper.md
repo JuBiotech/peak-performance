@@ -117,6 +117,8 @@ Since a posterior predictive check is based on drawing samples from the likeliho
 Accordingly, this plot enables users to judge whether the selected model can accurately explain the data.
 To complete the example, Table 2 shows the results of the fit in the form of mean, standard deviation, and HDI of each parameter's marginal posterior.
 
+\pagebreak
+
 __Table 2:__ Depiction of the results for the most important peak parameters of a single peak fit with the skew normal model and a double peak fit with the double normal model. Mean, area, and height have been highlighted in bold print as they constitute the most relevant parameters for further data evaluation purposes. The results correspond to the fits exhibited in Figure 2.
 
 ![](./summary_joint.svg){width="100%"}
