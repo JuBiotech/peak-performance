@@ -25,7 +25,7 @@ jobs:
       run: |
         pytest -v --cov-report xml --cov=peak_performance --cov-report term-missing peak_performance
     - name: Upload coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
     - name: Test Wheel build, install and import
