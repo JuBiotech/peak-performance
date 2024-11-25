@@ -56,8 +56,8 @@ Since this is a time-consuming, not to mention tedious, procedure and introduces
 The advantage of this approach is the complete integration of all relevant parameters – i.e. baseline, peak area and height, mean, signal-to-noise ratio etc. – into one single model through which all parameters are estimated simultaneously.
 Furthermore, Bayesian inference comes with uncertainty quantification for all peak model parameters, and thus does not merely yield a point estimate as would commonly be the case.
 It also grants access to novel metrics for avoiding false positives and negatives by rejecting signals where a) a convergence criterion of the peak fitting procedure was not fulfilled or b) the uncertainty of the estimated parameters exceeded a user-defined threshold.
-By employing peak fitting to uncover peak parameters – most importantly the area –, this approach thus differs from recent applications of Bayesian statistics to chromatographic peak data which e.g. focussed on peak detection [@vivo2012bayesian; @woldegebriel2015probabilistic], method optimization [@wiczling2016much] and simulations of chromatography [@briskot2019prediction; @yamamoto2021uncertainty].
-The first studies to be published about this topic contain perhaps the technique most similar in spirit to the present one since functions made of an idealized peak shape and a noise term are fitted but beyond this common starting point the methodolody is quiet distinct [@kelly1971estimation; @kelly1971application].
+By employing peak fitting to uncover peak parameters – most importantly the area – this approach thus differs from recent applications of Bayesian statistics to chromatographic peak data which e.g. focussed on peak detection [@vivo2012bayesian; @woldegebriel2015probabilistic], method optimization [@wiczling2016much] and simulations of chromatography [@briskot2019prediction; @yamamoto2021uncertainty].
+The first studies to be published about this topic contain perhaps the technique most similar in spirit to the present one since functions made of an idealized peak shape and a noise term are fitted but beyond this common starting point the methodology is quite distinct [@kelly1971estimation; @kelly1971application].
 
 # Materials and Methods
 ## Implementation
@@ -77,22 +77,19 @@ Since the inference data is stored alongside graphs and report sheets, users may
 $\texttt{PeakPerformance}$ accommodates the use of a pre-manufactured data pipeline for standard applications (Fig. 1) as well as the creation of custom data pipelines using only its core functions.
 The provided data analysis pipeline was designed in a user-friendly way and is covered by multiple example notebooks.
 
-Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension for each peak according as described in detail in the documentation.
+Before using $\texttt{PeakPerformance}$, the user has to supply raw data files containing a NumPy array with time in the first and intensity in the second dimension for each peak as described in detail in the documentation.
 Using the $\texttt{prepare\_model\_selection()}$ method, an Excel template file ("Template.xlsx") for inputting user information is prepared and stored in the raw data directory.
 
 Since targeted LC-MS/MS analyses essentially cycle through a list of mass traces for every sample, a model type has to be assigned to each mass trace.
 If this is not done by the user, an optional automated model selection step will be performed, where one exemplary peak per mass trace is analyzed with all models to identify the most appropriate one.
-The automated model selection can be started using the $\texttt{model\_selection()}$ function from the pipeline module and will be performed successively for each mass trace.
-The results for each model are ranked with the $\texttt{compare()}$ function of the ArviZ package based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
+Its results for each model are ranked based on Pareto-smoothed importance sampling leave-one-out cross-validation (LOO-PIT) [@RN146; @RN145].
 
 ![](./Fig3_PP-standalone.png)
 __Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured in $\texttt{PeakPerformance}$.
 
 Subsequently, the peak analysis pipeline can be started with the function $\texttt{pipeline()}$ from the $\texttt{pipeline}$ module.
 Depending on whether the "pre-filtering" option was selected, an optional filtering step will be executed to reject signals where clearly no peak is present before sampling, thus saving computation time.
-This filtering step combines the $\texttt{find\_peaks()}$ function from the SciPy package [@scipy] with a user-defined minimum signal-to-noise threshold and may reject a great many signals before sampling, e.g. in the case of isotopic labeling experiments where every theoretically achievable mass isotopomer needs to be investigated, yet depending on the input labeling mixture, the majority of them might not be present in actuality.
 Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is conducted using a No-U-Turn Sampler (NUTS) [@RN173], preferably - if installed in the Python environment - the nutpie sampler [@nutpie] due to its highly increased performance compared to the default sampler of PyMC.
-Before sampling from the posterior distribution, a prior predictive check is performed.
 When a posterior distribution has been obtained, the main filtering step is next in line which checks the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
 If a signal was accepted as a peak, a posterior predictive check is conducted and added to the inference data object resulting from the model simulation.
 Regarding the performance of the simulation, in our tests an analysis of a single peaks took 20 s to 30 s and of a double peaks 25 s to 90 s.
@@ -124,7 +121,7 @@ __Table 2:__ Depiction of the results for the most important peak parameters of 
 ![](./summary_joint.svg){width="100%"}
 
 In this case, the fits were successful and convergence was reached for all parameters.
-Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.\\
+Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.
 In the documentation, there is a study featuring simulated and experimental data to validate $\texttt{PeakPerformance}$'s results against a commercially available vendor software for peak integration showing that comparable results are indeed obtained.
 
 
