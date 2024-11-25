@@ -42,8 +42,9 @@ bibliography:
 
 A major bottleneck of chromatography-based analytics has been the elusive fully automated identification and integration of peak data without the need of extensive human supervision.
 The presented Python package $\texttt{PeakPerformance}$ applies Bayesian inference to chromatographic peak fitting, and provides an automated approach featuring model selection and uncertainty quantification.
-Currently, its application is focused on data from targeted liquid chromatography tandem mass spectrometry (LC-MS/MS), but its design allows for an expansion to other chromatographic techniques.
-$\texttt{PeakPerformance}$ is implemented in Python and the source code is available on [GitHub](https://github.com/JuBiotech/peak-performance).
+Regarding peak acceptance, it improves on vendor software solutions with more sophisticated, multi-layered metrics for decision making based on convergence of the parameter estimation, as well as the uncertainties of peak parameters.
+Currently, its application is focused on data from targeted liquid chromatography tandem mass spectrometry (LC-MS/MS), but its design allows for an expansion to other chromatographic techniques and accommodates users with little programming experience by supplying convenience functions and relying on Microsoft Excel for data input and reporting.
+$\texttt{PeakPerformance}$ is implemented in Python, its source code is available on [GitHub](https://github.com/JuBiotech/peak-performance), and a through documentation is available under [https://peak-performance.rtfd.io](https://peak-performance.rtfd.io).
 It is unit-tested on Linux and Windows and accompanied by documentation as well as example notebooks.
 
 # Statement of need
@@ -123,16 +124,6 @@ __Table 2:__ Depiction of the results for the most important peak parameters of 
 In this case, the fits were successful and convergence was reached for all parameters.
 Most notably and for the first time, the measurement noise was taken into account when determining the peak area as represented by its standard deviation and as can be observed in the posterior predictive plots where the noisy data points fall within the boundary of the 95 % HDI.
 In the documentation, there is a study featuring simulated and experimental data to validate $\texttt{PeakPerformance}$'s results against a commercially available vendor software for peak integration showing that comparable results are indeed obtained.
-
-
-# Conclusions
-$\texttt{PeakPerformance}$ is a tool for automated LC-MS/MS peak data analysis employing Bayesian inference.
-It provides built-in uncertainty quantification by Bayesian parameter estimation and thus for the first time takes the measurement noise of an LC-MS/MS device into account when integrating peaks.
-Regarding peak acceptance, it improves on vendor software solutions with more sophisticated, multi-layered metrics for decision making based on convergence of the parameter estimation, as well as the uncertainties of peak parameters.
-Finally, it allows the addition of new models to describe peak intensity functions with just a few minor code changes, thus lending itself to expansion to data from other chromatographic techniques.
-The design of $\texttt{PeakPerformance}$ accommodates users with little programming experience by supplying convenience functions and relying on Microsoft Excel for data input and reporting.
-Its code repository on GitHub features automated unit tests, and an automatically built documentation [https://peak-performance.rtfd.io](https://peak-performance.rtfd.io).
-
 
 ### Author contributions
 $\texttt{PeakPerformance}$ was conceptualized by JN and MO.
