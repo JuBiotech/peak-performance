@@ -34,8 +34,8 @@ affiliations:
    index: 3
 
 date: 12th of August 2024
-bibliography:
-  - literature.bib
+bibliography: literature.bib
+
 ---
 
 # Summary
