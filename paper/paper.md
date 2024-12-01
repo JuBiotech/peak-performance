@@ -44,7 +44,7 @@ A major bottleneck of chromatography-based analytics has been the elusive fully 
 The presented Python package $\texttt{PeakPerformance}$ applies Bayesian inference to chromatographic peak fitting, and provides an automated approach featuring model selection and uncertainty quantification.
 Regarding peak acceptance, it improves on vendor software solutions with more sophisticated, multi-layered metrics for decision making based on convergence of the parameter estimation, as well as the uncertainties of peak parameters.
 Currently, its application is focused on data from targeted liquid chromatography tandem mass spectrometry (LC-MS/MS), but its design allows for an expansion to other chromatographic techniques and accommodates users with little programming experience by supplying convenience functions and relying on Microsoft Excel for data input and reporting.
-$\texttt{PeakPerformance}$ is implemented in Python, its source code is available on [GitHub](https://github.com/JuBiotech/peak-performance), and a through documentation is available under [https://peak-performance.rtfd.io](https://peak-performance.rtfd.io).
+$\texttt{PeakPerformance}$ is implemented in Python, its source code is available on [GitHub](https://github.com/JuBiotech/peak-performance), and a thorough documentation is available under [https://peak-performance.rtfd.io](https://peak-performance.rtfd.io).
 It is unit-tested on Linux and Windows and accompanied by documentation as well as example notebooks.
 
 # Statement of need
@@ -93,7 +93,7 @@ Depending on whether the "pre-filtering" option was selected, an optional filter
 Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is conducted using a No-U-Turn Sampler (NUTS) [@RN173], preferably - if installed in the Python environment - the nutpie sampler [@nutpie] due to its highly increased performance compared to the default sampler of PyMC.
 When a posterior distribution has been obtained, the main filtering step is next in line which checks the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
 If a signal was accepted as a peak, a posterior predictive check is conducted and added to the inference data object resulting from the model simulation.
-Regarding the performance of the simulation, in our tests an analysis of a single peaks took 20 s to 30 s and of a double peaks 25 s to 90 s.
+Regarding the performance of the simulation, in our tests an analysis of a single peak took 20 s to 30 s and of a double peak 25 s to 90 s.
 This is of course dependent on the power of the computer as well as whether an additional simulation with an increased number of samples needs to be conducted.
 
 
