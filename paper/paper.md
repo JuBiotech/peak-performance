@@ -42,10 +42,10 @@ bibliography: literature.bib
 
 A major bottleneck of chromatography-based analytics has been the elusive fully automated identification and integration of peak data without the need of extensive human supervision.
 The presented Python package $\texttt{PeakPerformance}$ applies Bayesian inference to chromatographic peak fitting, and provides an automated approach featuring model selection and uncertainty quantification.
-Regarding peak acceptance, it improves on vendor software solutions with more sophisticated, multi-layered metrics for decision making based on convergence of the parameter estimation, as well as the uncertainties of peak parameters.
+Regarding peak acceptance, it improves on vendor software solutions with more sophisticated, multi-layered metrics for decision making based on convergence of the parameter estimation as well as the uncertainties of peak parameters.
 Currently, its application is focused on data from targeted liquid chromatography tandem mass spectrometry (LC-MS/MS), but its design allows for an expansion to other chromatographic techniques and accommodates users with little programming experience by supplying convenience functions and relying on Microsoft Excel for data input and reporting.
 $\texttt{PeakPerformance}$ is implemented in Python, its source code is available on [GitHub](https://github.com/JuBiotech/peak-performance), and a thorough documentation is available under [https://peak-performance.rtfd.io](https://peak-performance.rtfd.io).
-It is unit-tested on Linux and Windows and accompanied by documentation as well as example notebooks.
+It is unit-tested on Linux and Windows and accompanied by example notebooks.
 
 # Statement of need
 
@@ -90,11 +90,11 @@ __Figure 1:__ Overview of the pre-manufactured data analysis pipeline featured i
 
 Subsequently, the peak analysis pipeline can be started with the function $\texttt{pipeline()}$ from the $\texttt{pipeline}$ module.
 Depending on whether the "pre-filtering" option was selected, an optional filtering step will be executed to reject signals where clearly no peak is present before sampling, thus saving computation time.
-Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is conducted using a No-U-Turn Sampler (NUTS) [@RN173], preferably - if installed in the Python environment - the nutpie sampler [@nutpie] due to its highly increased performance compared to the default sampler of PyMC.
-When a posterior distribution has been obtained, the main filtering step is next in line which checks the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
+Upon passing the first filter, a Markov chain Monte Carlo (MCMC) simulation is conducted using a No-U-Turn Sampler (NUTS) [@RN173], preferably - if installed in the Python environment - the $\texttt{nutpie}$ sampler [@nutpie] due to its highly increased performance compared to the default sampler of PyMC.
+When a posterior distribution has been obtained, the main filtering step is next in line checking the convergence of the Markov chains via the potential scale reduction factor [@RN152] or $\hat{R}$ statistic and based on the uncertainty of the determined peak parameters.
 If a signal was accepted as a peak, a posterior predictive check is conducted and added to the inference data object resulting from the model simulation.
 Regarding the performance of the simulation, in our tests an analysis of a single peak took 20 s to 30 s and of a double peak 25 s to 90 s.
-This is of course dependent on the power of the computer as well as whether an additional simulation with an increased number of samples needs to be conducted.
+This is of course dependent on the type of sampler, the power of the computer as well as whether an additional simulation with an increased number of samples needs to be conducted.
 
 
 ## Peak fitting results and diagnostic plots
@@ -108,7 +108,7 @@ The posterior plot presents the fit of the intensity function alongside the raw 
 The first row of Figure 2 presents two such examples where the single peak diagram shows the histidine (His) fragment with a m/z ratio of 110 Da and the double peak diagram the leucine (Leu) and isoleucine (Ile) fragments with a m/z ratio of 86 Da.
 
 ![](./Fig4_peak_results.png)
-__Figure 2:__ Results plots for a single His peak and a double Leu and Ile peak depicting the peak fit (first row) and the posterior predictive checks (second row) alongside the raw data. The numerical results are listed in table 2.
+__Figure 2:__ Results plots for a single His peak and a double Leu and Ile peak depicting the peak fit (first row) and the posterior predictive checks (second row) alongside the raw data. The numerical results are listed in Table 2.
 
 The posterior predictive plots in the second row of Figure 4 are provided for visual posterior predictive checks, namely the comparison of observed and predicted data distribution.
 Since a posterior predictive check is based on drawing samples from the likelihood function, the result represents the theoretical range of values encompassed by the model.
