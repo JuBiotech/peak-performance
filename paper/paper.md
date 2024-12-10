@@ -57,7 +57,7 @@ Since this is a time-consuming, not to mention tedious, procedure and introduces
 The advantage of this approach is the complete integration of all relevant parameters – i.e. baseline, peak area and height, mean, signal-to-noise ratio etc. – into one single model through which all parameters are estimated simultaneously.
 Furthermore, Bayesian inference comes with uncertainty quantification for all peak model parameters, and thus does not merely yield a point estimate as would commonly be the case.
 It also grants access to novel metrics for avoiding false positives and negatives by rejecting signals where a) a convergence criterion of the peak fitting procedure was not fulfilled or b) the uncertainty of the estimated parameters exceeded a user-defined threshold.
-By employing peak fitting to uncover peak parameters – most importantly the area – this approach thus differs from recent applications of Bayesian statistics to chromatographic peak data which e.g. focussed on peak detection [@vivo2012bayesian; @woldegebriel2015probabilistic], method optimization [@wiczling2016much] and simulations of chromatography [@briskot2019prediction; @yamamoto2021uncertainty].
+By employing peak fitting to uncover peak parameters – most importantly the area – this approach thus differs from recent applications of Bayesian statistics to chromatographic peak data which e.g. focused on peak detection [@vivo2012bayesian; @woldegebriel2015probabilistic], method optimization [@wiczling2016much] and simulations of chromatography [@briskot2019prediction; @yamamoto2021uncertainty].
 The first studies to be published about this topic contain perhaps the technique most similar in spirit to the present one since functions made of an idealized peak shape and a noise term are fitted but beyond this common starting point the methodology is quite distinct [@kelly1971estimation; @kelly1971application].
 
 # Materials and Methods
@@ -138,6 +138,6 @@ The authors thank Tobias Latour for providing experimental LC-MS/MS data for the
 No competing interest is declared.
 
 ### Data availability
-The datasets generated during and/or analysed during the current study are available in version 0.7.1 of the [Zenodo record](https://zenodo.org/records/11189842).
+The datasets generated during and/or analyzed during the current study are available in version 0.7.1 of the [Zenodo record](https://zenodo.org/records/11189842).
 
 # Bibliography
