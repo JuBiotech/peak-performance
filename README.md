@@ -42,5 +42,5 @@ When contributing code, create a local clone of PeakPerformance, create a new br
 
 # How to cite
 Head over to Zenodo to [generate a BibTeX citation](https://doi.org/10.5281/zenodo.10255543) for the latest release.  
-In addition to the utilized software version, cite our scientific publication over at the Journal of Open-Source Software (JOSS).
+In addition to the utilized software version, cite our scientific publication over at the Journal of Open Source Software (JOSS).
 A detailed citation can be found in CITATION.cff and in the sidebar.
