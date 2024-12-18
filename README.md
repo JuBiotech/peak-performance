@@ -2,6 +2,7 @@
 [![pipeline](https://github.com/jubiotech/peak-performance/workflows/pipeline/badge.svg)](https://github.com/JuBiotech/peak-performance/actions)
 [![coverage](https://codecov.io/gh/jubiotech/peak-performance/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuBiotech/peak-performance)
 [![documentation](https://readthedocs.org/projects/peak-performance/badge/?version=latest)](https://peak-performance.readthedocs.io/en/latest)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.07313/status.svg)](https://doi.org/10.21105/joss.07313)
 [![DOI](https://zenodo.org/badge/713469041.svg)](https://zenodo.org/doi/10.5281/zenodo.10255543)
 
 # About PeakPerformance
@@ -41,4 +42,5 @@ When contributing code, create a local clone of PeakPerformance, create a new br
 
 # How to cite
 Head over to Zenodo to [generate a BibTeX citation](https://doi.org/10.5281/zenodo.10255543) for the latest release.
-A publication has just been submitted to a scientific journal. Once published, this section will be updated.
+In addition to the utilized software version, please cite our scientific publication over at the Journal of Open Source Software (JOSS).
+A detailed citation can be found in CITATION.cff and in the sidebar.
