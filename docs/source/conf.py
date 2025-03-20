@@ -21,7 +21,7 @@ from peak_performance import __version__
 
 project = "PeakPerformance"
 copyright = "2023, Forschungszentrum Jülich GmbH"
-author = "Michael Osthege"
+author = "Jochen Nießer, Michael Osthege"
 
 # The full version, including alpha/beta/rc tags
 release = __version__
