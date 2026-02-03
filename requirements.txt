@@ -1,6 +1,6 @@
 arviz
 matplotlib
-numpy<2
+numpy<3
 pandas
 pymc>=5.9.1
 pytensor
