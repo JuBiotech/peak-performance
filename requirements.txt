@@ -2,7 +2,7 @@ arviz
 matplotlib
 numpy<3
 pandas
-pymc>=5.9.1
+pymc>=5.12.0
 pytensor
 scipy
 openpyxl
